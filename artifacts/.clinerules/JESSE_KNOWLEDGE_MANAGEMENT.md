@@ -96,7 +96,7 @@ Before processing any user request, internally verify:
 
 #### When Installed at Preferred Location (${USER_HOME_DIR}/Cline/)
 - **Global Rules**: All JESSE_*.md files remain in their installed state at `${USER_HOME_DIR}/Cline/Rules/`
-- **Project-Specific Knowledge**: `<project_root>/JESSE_KNOWLEDGE_MANAGEMENT.md` contains **ONLY** project-related information:
+- **Project-Specific Knowledge**: `<project_root>/.clinerules/JESSE_KNOWLEDGE_MANAGEMENT.md` contains **ONLY** project-related information:
   - Essential Knowledge Base section
   - Project-specific context
   - Current and active WIP tasks
