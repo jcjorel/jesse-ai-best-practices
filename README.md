@@ -262,6 +262,84 @@ ${HOME}/Cline/Workflows/
 └── JESSE_KNOWLEDGE_MANAGEMENT.md # Combined system + project knowledge
 ```
 
+---
+
+## � Framework Integration
+
+### For AI Coding Assistants
+The framework automatically integrates with [Cline](https://github.com/cline/cline) and similar AI coding assistants through:
+
+1. **Mandatory Session Initialization**: Loads essential knowledge at session start
+2. **Context-Aware Operation**: Adapts behavior based on installation location
+3. **Automatic Knowledge Capture**: Captures external knowledge without manual triggers
+4. **Enforced Standards**: Prevents non-compliant code generation
+
+### For Development Teams
+- **Consistent Documentation**: Enforced standards across all team members
+- **Knowledge Continuity**: Persistent learning capture across team sessions
+- **Quality Assurance**: Automated compliance checking and standards enforcement
+- **Workflow Automation**: Standardized processes for common development tasks
+
+## 📈 Benefits
+
+### For Individual Developers
+- **Reduced Context Switching**: Persistent knowledge across sessions
+- **Automated Documentation**: Standards-compliant documentation generation
+- **Quality Assurance**: Automated compliance and consistency checking
+- **Accelerated Learning**: Structured capture and organization of discoveries
+
+### For Development Teams
+- **Knowledge Sharing**: Centralized learning and pattern capture
+- **Consistent Standards**: Enforced documentation and coding practices
+- **Reduced Onboarding**: New team members inherit accumulated knowledge
+- **Process Automation**: Standardized workflows for common tasks
+
+### For AI Coding Assistants
+- **Enhanced Context**: Rich knowledge base for better decision making
+- **Consistent Behavior**: Standardized responses across different sessions
+- **Quality Control**: Enforced standards prevent common AI coding issues
+- **Efficient Operation**: Optimized context window usage with lazy loading
+
+## 🔍 Advanced Features
+
+### Knowledge Base Integration
+- **Git Repository Analysis**: Automatic cloning, indexing, and knowledge extraction
+- **PDF Document Processing**: LLM-powered understanding and chunking
+- **Web Resource Capture**: Automatic capture from Perplexity and web browsing
+- **Cross-Reference Management**: Prevents information duplication across documents
+
+### Task Management
+- **Parallel Task Risk Assessment**: Warns about potential conflicts in multi-task scenarios
+- **File Restriction Controls**: Scope limitation for task isolation
+- **Automated Progress Tracking**: Status updates with timestamp precision
+- **Knowledge Extraction**: Automatic learning capture at task completion
+
+### Quality Assurance
+- **Zero-Tolerance Policies**: Non-negotiable standards enforcement
+- **Consistency Verification**: Automated checking across all knowledge files
+- **Version Control Integration**: Proper git commit message generation
+- **Test Result Capture**: Automatic test outcome documentation
+
+## 📞 Support & Community
+
+- **Documentation**: Complete usage guides in [HOWTO_USE.md](HOWTO_USE.md)
+- **Contributions**: Framework designed for extension and customization
+
+---
+
+**🚀 Ready to Get Started?**
+
+1. **Install**: Run the installation process above
+2. **Initialize**: Let the framework set up your first session
+3. **Explore**: Check out [HOWTO_USE.md](HOWTO_USE.md) for comprehensive usage
+4. **Create**: Start your first WIP task with `/jesse_wip_task_create.md`
+
+*Transform your AI coding assistant into an intelligent development partner with persistent knowledge, automated workflows, and enforced quality standards.*
+
+---
+
+---
+
 # 🚨🔐 CRITICAL: USER IDENTITY SETUP (MANDATORY) 🔐🚨
 
 ---
@@ -367,75 +445,3 @@ ${HOME}/Cline/Rules/JESSE_USER_IDENTITY.md
 - **🛡️ User privacy may be compromised**
 
 ---
-
-## � Framework Integration
-
-### For AI Coding Assistants
-The framework automatically integrates with [Cline](https://github.com/cline/cline) and similar AI coding assistants through:
-
-1. **Mandatory Session Initialization**: Loads essential knowledge at session start
-2. **Context-Aware Operation**: Adapts behavior based on installation location
-3. **Automatic Knowledge Capture**: Captures external knowledge without manual triggers
-4. **Enforced Standards**: Prevents non-compliant code generation
-
-### For Development Teams
-- **Consistent Documentation**: Enforced standards across all team members
-- **Knowledge Continuity**: Persistent learning capture across team sessions
-- **Quality Assurance**: Automated compliance checking and standards enforcement
-- **Workflow Automation**: Standardized processes for common development tasks
-
-## 📈 Benefits
-
-### For Individual Developers
-- **Reduced Context Switching**: Persistent knowledge across sessions
-- **Automated Documentation**: Standards-compliant documentation generation
-- **Quality Assurance**: Automated compliance and consistency checking
-- **Accelerated Learning**: Structured capture and organization of discoveries
-
-### For Development Teams
-- **Knowledge Sharing**: Centralized learning and pattern capture
-- **Consistent Standards**: Enforced documentation and coding practices
-- **Reduced Onboarding**: New team members inherit accumulated knowledge
-- **Process Automation**: Standardized workflows for common tasks
-
-### For AI Coding Assistants
-- **Enhanced Context**: Rich knowledge base for better decision making
-- **Consistent Behavior**: Standardized responses across different sessions
-- **Quality Control**: Enforced standards prevent common AI coding issues
-- **Efficient Operation**: Optimized context window usage with lazy loading
-
-## 🔍 Advanced Features
-
-### Knowledge Base Integration
-- **Git Repository Analysis**: Automatic cloning, indexing, and knowledge extraction
-- **PDF Document Processing**: LLM-powered understanding and chunking
-- **Web Resource Capture**: Automatic capture from Perplexity and web browsing
-- **Cross-Reference Management**: Prevents information duplication across documents
-
-### Task Management
-- **Parallel Task Risk Assessment**: Warns about potential conflicts in multi-task scenarios
-- **File Restriction Controls**: Scope limitation for task isolation
-- **Automated Progress Tracking**: Status updates with timestamp precision
-- **Knowledge Extraction**: Automatic learning capture at task completion
-
-### Quality Assurance
-- **Zero-Tolerance Policies**: Non-negotiable standards enforcement
-- **Consistency Verification**: Automated checking across all knowledge files
-- **Version Control Integration**: Proper git commit message generation
-- **Test Result Capture**: Automatic test outcome documentation
-
-## 📞 Support & Community
-
-- **Documentation**: Complete usage guides in [HOWTO_USE.md](HOWTO_USE.md)
-- **Contributions**: Framework designed for extension and customization
-
----
-
-**🚀 Ready to Get Started?**
-
-1. **Install**: Run the installation process above
-2. **Initialize**: Let the framework set up your first session
-3. **Explore**: Check out [HOWTO_USE.md](HOWTO_USE.md) for comprehensive usage
-4. **Create**: Start your first WIP task with `/jesse_wip_task_create.md`
-
-*Transform your AI coding assistant into an intelligent development partner with persistent knowledge, automated workflows, and enforced quality standards.*
