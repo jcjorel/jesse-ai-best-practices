@@ -17,12 +17,12 @@ The JESSE AI Best Practices Framework provides AI coding assistants with:
 ### Installation Process
 When you want to install this framework, simply ask your AI coding assistant (like Cline):
 
-**"Please install the JESSE AI Best Practices Framework"**
+**"Please install the JESSE AI Best Practices Framework at https://github.com/jcjorel/jesse-ai-best-practices"**
 
 The AI will guide you through an interactive installation process:
 
 1. **Choose Installation Type**: The AI will ask whether you prefer:
-   - **Global Installation** (Recommended): Available across all projects in `${HOME}/Cline/Rules/`
+   - **Global Installation** (Recommended): Available across all projects in `${HOME}/Cline/Rules/` and `${HOME}/Cline/Workflows/`
    - **Project-Level Installation**: Contained within current project in `.clinerules/`
 
 2. **Automatic Setup**: The AI will:
