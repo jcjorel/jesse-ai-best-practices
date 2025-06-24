@@ -1,6 +1,49 @@
 # JESSE AI Best Practices Framework
 
-A comprehensive framework that transforms AI coding assistants (particularly [Cline](https://github.com/cline/cline)) into intelligent, knowledge-aware development partners through structured knowledge management, automated workflows, and enforced coding standards.
+A comprehensive framework that transforms AI coding assistants (particularly [Cline](https://github.com/cline/cline)) into intelligent, knowledge-aware development partners through structured knowledge management, automated workflows, enforced coding standards and Amazon-style PR-FAQ/Working Backwards business description support.
+
+
+## 📢 PR-FAQ DEMONSTRATION
+*The following PR-FAQ was created using the JESSE AI Framework's Amazon PR/FAQ workflow - demonstrating the framework's own capabilities*
+
+### PRESS RELEASE
+
+**Development Teams Transform AI Coding Assistants Into Intelligent Partners with JESSE AI Framework**
+**Persistent knowledge management and automated workflows eliminate context loss and enforce consistent coding standards**
+
+**PARIS, FRANCE** – **June 24, 2025** – Development teams can now maintain context and enforce coding standards across AI assistant sessions with the JESSE AI Best Practices Framework, a comprehensive system that transforms tools like Cline into intelligent, knowledge-aware development partners.
+
+Today, developers face frustration when AI coding assistants lose context between sessions, generate inconsistent code, and fail to maintain project knowledge. This means teams waste time re-explaining requirements and debugging inconsistent implementations.
+
+JESSE AI Framework solves this by providing persistent knowledge management, 28+ automated workflows, and enforced coding standards. Teams can now capture learnings automatically, maintain context across sessions, and ensure consistent code quality with zero-tolerance compliance policies.
+
+"We built this framework because our AI assistants kept forgetting what we'd learned in previous sessions," said Jean-Charles Jorel, Framework Creator. "Now our AI development partner remembers everything and maintains our coding standards automatically."
+
+To get started, development teams simply ask their AI assistant to install the framework from the GitHub repository. The system automatically sets up knowledge management, loads essential workflows, and begins capturing context for future sessions.
+
+"Our AI assistant went from helpful but forgetful to genuinely intelligent," said Sarah Chen, Lead Developer at TechCorp. "It now remembers our architecture decisions and enforces our documentation standards automatically."
+
+Get started at: https://github.com/jcjorel/jesse-ai-best-practices
+
+### FREQUENTLY ASKED QUESTIONS
+
+**Q: What is the JESSE AI Framework?**
+A: A comprehensive system that adds persistent knowledge management, automated workflows, and enforced coding standards to AI coding assistants like Cline.
+
+**Q: How does it work?**
+A: The framework automatically captures knowledge from web research, test results, and development activities, storing it persistently across sessions while enforcing consistent coding standards.
+
+**Q: How do I install it?**
+A: Simply ask your AI coding assistant: "Please install the JESSE AI Best Practices Framework from https://github.com/jcjorel/jesse-ai-best-practices"
+
+**Q: What's included?**
+A: 28+ automated workflows, persistent knowledge management system, enforced documentation standards, git repository integration, PDF processing, and comprehensive task management.
+
+---
+
+*End of PR-FAQ Demonstration - The framework documentation continues below*
+
+---
 
 ## 🎯 Project Goal
 
@@ -17,7 +60,7 @@ The JESSE AI Best Practices Framework provides AI coding assistants with:
 ### Installation Process
 When you want to install this framework, simply ask your AI coding assistant (like [Cline](https://github.com/cline/cline)):
 
-**"Please install the JESSE AI Best Practices Framework at https://github.com/jcjorel/jesse-ai-best-practices"**
+**"Please install (or update) the JESSE AI Best Practices Framework at https://github.com/jcjorel/jesse-ai-best-practices"**
 
 The AI will guide you through an interactive installation process:
 
