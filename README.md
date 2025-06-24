@@ -9,6 +9,7 @@ A comprehensive framework that transforms AI coding assistants (particularly [Cl
 ### PRESS RELEASE
 
 **Development Teams Transform AI Coding Assistants Into Intelligent Partners with JESSE AI Framework**
+
 **Persistent knowledge management and automated workflows eliminate context loss and enforce consistent coding standards**
 
 **PARIS, FRANCE** – **June 24, 2025** – Development teams can now maintain context and enforce coding standards across AI assistant sessions with the JESSE AI Best Practices Framework, a comprehensive system that transforms tools like Cline into intelligent, knowledge-aware development partners.
@@ -76,6 +77,12 @@ The AI will guide you through an interactive installation process:
    - Initialize templates and knowledge base
 
 3. **Verification**: The AI will verify successful installation and provide a summary
+
+> **🚨 CRITICAL SECURITY REQUIREMENT - USER IDENTITY SETUP**
+> 
+> **MANDATORY POST-INSTALLATION STEP**: The AI installation process **MUST** interactively collect user identity information and create `JESSE_USER_IDENTITY.md` in the global installation directory (`${HOME}/Cline/Rules/`).
+> 
+> **⚠️ SECURITY WARNING**: This file contains PII (Personally Identifiable Information) and **MUST NEVER** be placed in any project repository. The installation process automatically adds protective `.gitignore` patterns to prevent accidental commits.
 
 ### Manual Installation (Alternative)
 If you prefer manual installation:
@@ -255,7 +262,113 @@ ${HOME}/Cline/Workflows/
 └── JESSE_KNOWLEDGE_MANAGEMENT.md # Combined system + project knowledge
 ```
 
-## 🔧 Framework Integration
+# 🚨🔐 CRITICAL: USER IDENTITY SETUP (MANDATORY) 🔐🚨
+
+---
+
+## ⚠️ EXTREMELY CRITICAL SECURITY REQUIREMENT ⚠️
+
+### 🚨 MANDATORY FILE CREATION - NO EXCEPTIONS 🚨
+
+**THE FRAMEWORK WILL NOT FUNCTION WITHOUT THIS FILE**
+
+The framework **ABSOLUTELY REQUIRES** a `JESSE_USER_IDENTITY.md` file containing user information for personalized AI assistant behavior.
+
+---
+
+## 🛡️ SECURITY AND LOCATION REQUIREMENTS - STRICTLY ENFORCED 🛡️
+
+### 🚫 NEVER EVER IN PROJECT REPOSITORY 🚫
+- **❌ NEVER IN PROJECT DIRECTORY**: This file **MUST NEVER** be placed in any project repository
+- **❌ NEVER IN .clinerules/**: This file **MUST NEVER** be placed in project-level installation
+- **❌ NEVER COMMITTED TO GIT**: Contains PII that would violate privacy if committed
+
+### ✅ GLOBAL LOCATION ONLY - STRICTLY ENFORCED ✅
+- **📍 ONLY VALID LOCATION**: `${HOME}/Cline/Rules/JESSE_USER_IDENTITY.md`
+- **🏠 USER HOME DIRECTORY ONLY**: Must be in user's personal directory structure
+- **🌐 GLOBAL INSTALLATION TARGET**: Available across all projects, never project-specific
+
+### 🔐 PII PROTECTION RATIONALE 🔐
+- **⚠️ CONTAINS SENSITIVE PII**: Personal and corporate identity information
+- **🛡️ PRIVACY COMPLIANCE**: Prevents accidental exposure in version control
+- **🔒 ACCESS CONTROL**: Remains in user's personal directory structure
+- **🚫 AUTOMATIC PROTECTION**: Installation adds `.gitignore` patterns to prevent accidents
+
+---
+
+## 🤖 INTERACTIVE INSTALLATION PROCESS - MANDATORY 🤖
+
+**THE AI INSTALLATION PROCESS MUST INTERACTIVELY COLLECT ALL THIS INFORMATION:**
+
+### 📋 COMPLETE REQUIRED USER INFORMATION FIELDS (9 FIELDS) 📋
+
+```markdown
+# User Identity Configuration
+# 🚨 THIS FILE CONTAINS PII - NEVER COMMIT TO ANY REPOSITORY 🚨
+
+## Personal Information
+- **User Firstname**: [Your first name]
+- **User Lastname**: [Your last name]
+- **User Corporate Login**: [Your company username/login]
+- **User Job Description**: [Your role/position, e.g., "Senior Software Engineer", "DevOps Specialist"]
+
+## Location Information  
+- **User Country**: [Your country]
+- **User Town**: [Your city/town]
+- **User Timezone**: [Your timezone, e.g., Europe/Paris, America/New_York]
+
+## Company Information
+- **User Company Name**: [Your company name]
+- **User Company Corporate URL**: [Your company website URL]
+```
+
+---
+
+## 🚨 MANDATORY INSTALLATION BEHAVIOR - STRICTLY ENFORCED 🚨
+
+### 🤖 AI Assistant Installation Steps 🤖
+
+1. **🔍 File Existence Check**: AI checks if `${HOME}/Cline/Rules/JESSE_USER_IDENTITY.md` exists
+2. **✅ If File Exists**: Load and verify completeness, prompt for any missing fields from the 9 required fields
+3. **❌ If File Missing**: Interactive prompt for **ALL 9 REQUIRED FIELDS** listed above
+4. **📝 File Creation**: Immediately create file with structured content at **GLOBAL LOCATION ONLY**
+5. **✅ Verification**: Confirm file creation and correct location - **NEVER in project directory**
+
+### 🛡️ AUTOMATIC .gitignore PROTECTION - CRITICAL SAFETY NET 🛡️
+
+**THE INSTALLATION PROCESS AUTOMATICALLY ADDS THESE PROTECTIVE PATTERNS TO PROJECT `.gitignore`:**
+
+```gitignore
+# JESSE AI Framework - User Identity Protection
+# 🚨 CRITICAL: This file contains PII and must NEVER be committed 🚨
+# These patterns prevent accidental inclusion in any repository
+JESSE_USER_IDENTITY.md
+**/JESSE_USER_IDENTITY.md
+.clinerules/JESSE_USER_IDENTITY.md
+${HOME}/Cline/Rules/JESSE_USER_IDENTITY.md
+```
+
+### 🔐 SECURITY RATIONALE - WHY THIS MATTERS 🔐
+
+- **🛡️ PII Protection**: User identity information is sensitive personal data that requires protection
+- **⚖️ Privacy Compliance**: Prevents accidental exposure in version control systems and public repositories
+- **🌐 Global Scope**: Single secure location serves all projects while maintaining user privacy
+- **🔒 Access Control**: File remains exclusively in user's personal directory structure
+- **🚫 Repository Isolation**: Complete separation from any project codebase or version control
+
+---
+
+## 🚨 VIOLATION CONSEQUENCES 🚨
+
+**If `JESSE_USER_IDENTITY.md` is found in any project repository:**
+- **❌ Framework will refuse to operate**
+- **⚠️ Security violation warning will be displayed**
+- **🔒 AI assistant will require immediate file relocation**
+- **🛡️ User privacy may be compromised**
+
+---
+
+## � Framework Integration
 
 ### For AI Coding Assistants
 The framework automatically integrates with [Cline](https://github.com/cline/cline) and similar AI coding assistants through:
@@ -314,19 +427,13 @@ The framework automatically integrates with [Cline](https://github.com/cline/cli
 ## 📞 Support & Community
 
 - **Documentation**: Complete usage guides in [HOWTO_USE.md](HOWTO_USE.md)
-- **Issue Reporting**: Use `/reportbug` command within [Cline](https://github.com/cline/cline) sessions
 - **Contributions**: Framework designed for extension and customization
-- **Feedback**: Knowledge management system captures usage patterns for improvement
-
-## 📄 License
-
-[Your chosen license - MIT, Apache 2.0, etc.]
 
 ---
 
 **🚀 Ready to Get Started?**
 
-1. **Install**: Run the one-command installation above
+1. **Install**: Run the installation process above
 2. **Initialize**: Let the framework set up your first session
 3. **Explore**: Check out [HOWTO_USE.md](HOWTO_USE.md) for comprehensive usage
 4. **Create**: Start your first WIP task with `/jesse_wip_task_create.md`
