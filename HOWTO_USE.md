@@ -24,16 +24,14 @@ graph TD
 ```
 
 #### 1. Installation Verification
-After running the installation command from README.md, verify your setup:
+After completing the AI-guided installation process from README.md, verify your setup:
 
 ```bash
 # Check global installation
-ls -la "${HOME}/Cline/Rules/"
-ls -la "${HOME}/Cline/Workflows/"
+ls -la "${HOME}/Cline/Rules/" && ls -la "${HOME}/Cline/Workflows/"
 
 # OR check project-level installation
-ls -la ".clinerules/"
-ls -la ".clinerules/workflows/"
+ls -la ".clinerules/" && ls -la ".clinerules/workflows/"
 ```
 
 #### 2. First Session Initialization

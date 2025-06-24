@@ -12,27 +12,53 @@ The JESSE AI Best Practices Framework provides AI coding assistants with:
 - **🔄 Automated Workflows**: Ready-to-use workflows for common development tasks and knowledge operations
 - **🔗 External Resource Integration**: Seamless integration with git repositories, PDFs, and web resources
 
-## 🚀 Quick Installation for AI Coding Assistants
+## 🚀 AI-Guided Installation
 
-### One-Command Installation
+### Installation Process
+When you want to install this framework, simply ask your AI coding assistant (like Cline):
+
+**"Please install the JESSE AI Best Practices Framework"**
+
+The AI will guide you through an interactive installation process:
+
+1. **Choose Installation Type**: The AI will ask whether you prefer:
+   - **Global Installation** (Recommended): Available across all projects in `${HOME}/Cline/Rules/`
+   - **Project-Level Installation**: Contained within current project in `.clinerules/`
+
+2. **Automatic Setup**: The AI will:
+   - Create necessary directory structures
+   - Copy all framework files to the chosen location
+   - Set up the knowledge management system
+   - Configure appropriate `.gitignore` rules
+   - Initialize templates and knowledge base
+
+3. **Verification**: The AI will verify successful installation and provide a summary
+
+### Manual Installation (Alternative)
+If you prefer manual installation:
+
 ```bash
-# Clone to temporary directory and install automatically
-git clone https://github.com/your-org/jesse-ai-best-practices.git /tmp/jesse-ai-setup && cd /tmp/jesse-ai-setup && bash artifacts/install.sh
-```
+# Clone the framework
+git clone https://github.com/your-org/jesse-ai-best-practices.git
 
-### What This Does
-1. **Clones the framework** to a temporary directory
-2. **Prompts for installation location**:
-   - **Global Installation** (Recommended): `${HOME}/Cline/Rules/` - Available across all projects
-   - **Project-Level Installation**: `<current-project>/.clinerules/` - Project-specific setup
-3. **Sets up directory structure** with proper `.gitignore` rules
-4. **Initializes knowledge management** system with templates
-5. **Activates framework** for immediate use
+# For Global Installation (Recommended)
+mkdir -p "${HOME}/Cline/Rules" "${HOME}/Cline/Workflows"
+cp JESSE_*.md "${HOME}/Cline/Rules/"
+cp -r workflows/* "${HOME}/Cline/Workflows/" 2>/dev/null || echo "Workflows will be available in project-level mode"
+
+# For Project-Level Installation
+mkdir -p .clinerules/workflows
+cp JESSE_*.md .clinerules/
+cp -r workflows/* .clinerules/workflows/ 2>/dev/null || echo "Workflows directory structure created"
+```
 
 ### Post-Installation Verification
 ```bash
-# Verify installation (run from any project directory)
-ls -la "${HOME}/Cline/Rules/" || ls -la ".clinerules/"
+# Verify global installation
+ls -la "${HOME}/Cline/Rules/" && ls -la "${HOME}/Cline/Workflows/"
+
+# OR verify project-level installation  
+ls -la ".clinerules/" && ls -la ".clinerules/workflows/"
 ```
 
 ## 🏗️ System Architecture
