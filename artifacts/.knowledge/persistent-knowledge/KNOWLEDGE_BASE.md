@@ -1,5 +1,5 @@
 # Project Knowledge Base
-*Last Updated: 2025-06-21T06:00:30Z*
+*Last Updated: 2025-06-24T17:48:00Z*
 
 ## Session-Specific Knowledge Loading Strategy
 **LAZY LOADING APPROACH**: Knowledge bases related to the current session task are loaded on-demand when specifically needed, rather than automatically at session initialization. This approach:
@@ -32,7 +32,7 @@
 **PDF Chunk Naming Convention**: PDF chunks are stored with specific naming pattern:
 - **Location**: `<project_root>/.knowledge/pdf-knowledge/<imported_pdf_name>/pdf_chunks/`
 - **Naming Format**: `<imported_pdf_name>_pages_<page_number_start>_<page_number_end>.pdf`
-- **Example**: `.knowledge/pdf-knowledge/nova_user_guide/pdf_chunks/nova_user_guide_pages_001_020.pdf`
+- **Example**: `.knowledge/pdf-knowledge/user_manual/pdf_chunks/user_manual_pages_001_020.pdf`
 
 **Locating PDF Chunks**: To find the correct PDF chunk(s) to read:
 1. Identify the imported PDF name from the knowledge base entry
@@ -48,9 +48,9 @@
 
 ## Knowledge Entry Requirements
 **MANDATORY**: All knowledge entries must include one or more trust sources to enable deep-dive verification and validation. Trust sources can be:
-- Complete relative file paths to codebase files (e.g., `nova-sonic-speech-app/backend/services/nova_sonic_service.py`)
-- Git cloned repository references (e.g., `.knowledge/git-clones/aws-sdk-python_kb.md`)
-- Web URLs with specific sections (e.g., `https://docs.aws.amazon.com/bedrock/latest/userguide/nova-sonic.html#streaming`)
+- Complete relative file paths to codebase files (e.g., `src/services/api_service.py`)
+- Git cloned repository references (e.g., `.knowledge/git-clones/framework-docs_kb.md`)
+- Web URLs with specific sections (e.g., `https://docs.example.com/api/v1/authentication.html`)
 - Documentation file references (e.g., `doc/DESIGN.md#architecture-overview`)
 
 **Format**: Each knowledge entry must end with:
@@ -61,16 +61,21 @@
 ```
 
 ## Project Purpose
-Nova Sonic UI is a speech-to-text application that integrates with AWS Nova Sonic services to provide real-time audio transcription capabilities. The project features a FastAPI backend with WebM/Opus audio processing, comprehensive testing infrastructure, and Docker containerization for deployment flexibility.
+[Replace this section with your project's purpose and description]
+
+**Example Template**:
+```
+[Project Name] is a [type of application] that [main functionality] to provide [key value proposition]. The project features [key technical components] with [deployment/infrastructure details].
 
 **Trust Sources**:
-- Codebase: `nova-sonic-speech-app/README.md`
-- Codebase: `nova-sonic-speech-app/documentation/ARCHITECTURE.md`
+- Codebase: `README.md`
+- Codebase: `documentation/ARCHITECTURE.md`
+```
 
 ## Perplexity Query Results
 *No Perplexity queries recorded yet*
 
-## Web Resources
+## Web Resources  
 *No web resources captured yet*
 
 ## PDF Large Files Requiring Processing
@@ -78,165 +83,46 @@ Nova Sonic UI is a speech-to-text application that integrates with AWS Nova Soni
 
 ## Patterns and Solutions
 
-### Real-Time Audio Processing with asyncio Integration
-**Pattern**: Bridge callback-based audio APIs with asyncio using queues for simultaneous recording and playback
-**Context**: Real-time audio applications require consistent timing with async operations integration
+### [Pattern Name Template]
+**Pattern**: [Brief description of the pattern or solution]
+**Context**: [When and why this pattern is useful]
 **Implementation**:
-- Use asyncio.Queue to bridge sounddevice callbacks with async generators
-- Separate threads for recording callbacks and playback queue processing
-- 40ms audio chunks (640 samples at 16kHz) for consistent real-time processing
-- Zero-copy operations using numpy views for efficient audio data handling
-**Benefits**: Enables real-time audio processing in asyncio applications without blocking event loop
+- [Key implementation detail 1]
+- [Key implementation detail 2]
+- [Key implementation detail 3]
+**Benefits**: [Advantages of using this pattern]
 
 **Trust Sources**:
-- Codebase: `nova-sonic-speech-app/services/audio_device_manager.py`
-- Implementation: AudioDeviceManager class with callback-to-async bridging
+- [Source Type]: [Complete path/URL/reference]
 
-### Audio Performance Statistics Collection
-**Pattern**: Accurate callback timing measurement with burst filtering and initialization bias elimination
-**Context**: Audio callback statistics require filtering out system artifacts for accurate performance measurement
-**Implementation**:
-- Filter burst intervals (<10ms) which are audio system artifacts, not real callback intervals
-- Exclude first callback from statistics to eliminate initialization bias
-- Use nanosecond precision timing with separate tracking for processing, queue, and total times
-- Implement Welford's algorithm for stable variance calculation in real-time
-**Benefits**: Provides accurate performance metrics for audio optimization and troubleshooting
-
-**Trust Sources**:
-- Codebase: `nova-sonic-speech-app/services/audio_device_manager.py`
-- Implementation: CallbackStats class with burst filtering logic
-
-### Queue-Based Audio Playback with Blocking Mode
-**Pattern**: Non-blocking audio playback with optional blocking completion using sentinel values
-**Context**: Audio playback requires both responsive non-blocking operation and completion confirmation capability
-**Implementation**:
-- Background thread processes playback queue continuously
-- Sentinel values (None) signal completion points for blocking mode
-- threading.Event with asyncio.run_in_executor for async-compatible blocking
-- Queue-based architecture prevents audio dropouts during playback
-**Benefits**: Flexible playback control with both fire-and-forget and wait-for-completion modes
-
-**Trust Sources**:
-- Codebase: `nova-sonic-speech-app/services/audio_device_manager.py`
-- Implementation: AudioDeviceManager playback methods with sentinel pattern
-
-### Per-Chunk Sample Rate Switching for Multi-Source Audio
-**Pattern**: AudioChunk metadata with per-chunk sample rate switching maintaining strict FIFO order
-**Context**: Applications using multiple audio sources with different sample rates (Polly 16kHz, Nova Sonic 24kHz)
-**Implementation**:
-- AudioChunk class encapsulates audio data with sample rate metadata and completion tracking
-- Playback worker recreates OutputStream only when chunk sample rate differs from current stream rate
-- Maintains strict FIFO processing order regardless of sample rate changes
-- Per-chunk completion events enable precise blocking synchronization for specific audio chunks
-**Benefits**: Seamless multi-source audio support without reordering, minimal stream recreation overhead
-
-**Trust Sources**:
-- Codebase: `nova-sonic-speech-app/services/audio_device_manager.py`
-- Production Test: `nova-sonic-speech-app/tests/test_autonomous_nova_sonic_conversation.py` execution log
-
-### Precise Blocking Audio Playback with Chunk-Specific Completion
-**Pattern**: UUID-based completion tracking for precise blocking synchronization in queue-based audio playback
-**Context**: Need to wait for specific audio chunks to complete playback, not just any chunk completion
-**Implementation**:
-- Each AudioChunk gets unique UUID and optional threading.Event for blocking mode
-- Playback worker signals completion after successful audio playback for each chunk
-- Blocking mode waits for the specific chunk's completion event with timeout
-- Works correctly even when multiple audio chunks are queued
-**Benefits**: Precise synchronization control, eliminates race conditions in blocking audio playback
-
-**Trust Sources**:
-- Codebase: `nova-sonic-speech-app/services/audio_device_manager.py`
-- Production Test: Successful blocking synchronization in Nova Sonic conversation test
-
-### Immediate Audio Buffer Clearing with Graceful Current Chunk Handling
-**Pattern**: Thread-safe queue clearing while preserving current playback and properly handling blocking chunks
-**Context**: Need responsive audio control to immediately stop queued audio without disrupting current playback
-**Implementation**:
-- Iterates through playback queue extracting all items without stopping playback thread
-- Signals completion events for any blocking chunks to unblock waiting callers
-- Allows current ~40ms audio chunk to finish naturally before clearing takes effect
-- Returns count of cleared items for caller feedback and debugging
-**Benefits**: Non-destructive responsive audio control, prevents audio overlap in conversation systems
-
-**Trust Sources**:
-- Codebase: `nova-sonic-speech-app/services/audio_device_manager.py`
-- Production Test: Automatic buffer clearing in Nova Sonic conversation preventing audio overlap
-
-### Nova Sonic JSON Event Streaming Protocol
-**Pattern**: AWS Nova Sonic requires structured JSON event sequence for bidirectional streaming
-**Context**: Nova Sonic bidirectional streaming API uses event-driven architecture, not raw PCM streaming
-**Implementation**: 
-- Event sequence: sessionStart → promptStart → SYSTEM content → USER audio → contentEnd → promptEnd → sessionEnd
-- Audio chunks: 32ms chunks (1024 bytes at 16kHz, 16-bit, mono) with base64 encoding
-- SYSTEM role content is mandatory before any USER content
-**Benefits**: Provides structured communication with clear error messages and proper event handling
-
-**Trust Sources**:
-- Git Clone: `.knowledge/git-clones/amazon-nova-samples_kb.md`
-- Codebase: `nova-sonic-speech-app/tests/debug_nova_sonic_event_stream.py`
-
-### AWS Experimental SDK Credential Chain Integration
-**Pattern**: Convert boto3 session credentials to AWS Experimental SDK compatible format
-**Context**: AWS Experimental SDK requires specific credential resolver that differs from standard boto3 approach
-**Implementation**:
-- Use boto3.Session() to get standard AWS credentials
-- Convert to AWSCredentialsIdentity with access_key, secret_key, and session_token
-- Create StaticCredentialsResolver with credentials parameter
-- Configure BedrockRuntimeClient with aws_credentials_identity_resolver
-**Benefits**: Enables AWS CLI profiles, environment variables, and IAM roles to work with experimental SDK
-
-**Trust Sources**:
-- Git Clone: `.knowledge/git-clones/aws-sdk-python_kb.md`
-- Codebase: `nova-sonic-speech-app/tests/debug_nova_sonic_experimental_sdk.py`
-
-### Amazon Nova Samples Workshop Event Streaming
-**Pattern**: Complete 10-event JSON streaming sequence for Nova Sonic bidirectional communication
-**Context**: Production-ready Nova Sonic implementation requires exact event sequence from amazon-nova-samples
-**Implementation**:
-- Generate unique IDs for prompt_name, system_content_name, audio_content_name
-- Send JSON events as bytes via BidirectionalInputPayloadPart.bytes_
-- Include audioInputConfiguration and audioOutputConfiguration with proper media types
-- Use 16kHz input, 24kHz output LPCM configuration
-**Benefits**: Follows official AWS samples patterns for production-ready Nova Sonic integration
-
-**Trust Sources**:
-- Git Clone: `.knowledge/git-clones/amazon-nova-samples_kb.md`
-- Web URL: `https://github.com/aws-samples/amazon-nova-samples/blob/main/speech-to-speech/sample-codes/console-python/nova_sonic.py`
-
-### Aggressive Timeout Management for Streaming APIs
-**Pattern**: Wrap streaming response collection in nested async functions with multiple timeout layers
-**Context**: Streaming APIs can hang indefinitely without proper timeout management
-**Implementation**:
-- Primary timeout: asyncio.wait_for() around entire response collection (10s)
-- Secondary timeout: Safety limits on chunk count and processing time
-- Graceful degradation: Return empty results on timeout, allow test to continue
-**Benefits**: Prevents indefinite hanging while maintaining robust error handling
-
-**Trust Sources**:
-- Codebase: `nova-sonic-speech-app/tests/test_autonomous_nova_sonic_conversation.py`
-- Codebase: `nova-sonic-speech-app/tests/debug_nova_sonic_experimental_sdk.py`
+*Add your project-specific patterns and solutions here using the template above*
 
 ## Development Environment
 ### Virtual Environment
-**Location**: `nova-sonic-speech-app/venv`
-**Usage**: Must be activated before executing any Python commands in the project
-**Activation Command**: `source nova-sonic-speech-app/venv/bin/activate`
-**Purpose**: Isolates project dependencies from system Python environment
+**Location**: [Path to virtual environment, e.g., `venv/` or `project-name/venv`]
+**Usage**: Must be activated before executing any commands in the project
+**Activation Command**: `source [path-to-venv]/bin/activate`
+**Purpose**: Isolates project dependencies from system environment
 
 **Trust Sources**:
-- Codebase: `nova-sonic-speech-app/README.md`
-- Codebase: `nova-sonic-speech-app/backend/requirements.txt`
+- Codebase: `README.md`
+- Codebase: `requirements.txt` or `package.json`
+
+### [Additional Environment Setup]
+*Add additional development environment details as needed*
 
 ## External APIs
-### AWS Nova Sonic
-**Purpose**: Provides speech-to-text transcription services
-**Key Endpoints**: Real-time streaming transcription API
-**Authentication**: AWS credentials via boto3
-**Usage Notes**: Supports WebM/Opus audio format with streaming capabilities
+### [API Name Template]
+**Purpose**: [What this API provides]
+**Key Endpoints**: [Main endpoints or services used]
+**Authentication**: [Authentication method]
+**Usage Notes**: [Important implementation notes]
 
 **Trust Sources**:
-- Codebase: `nova-sonic-speech-app/backend/services/nova_sonic_service.py`
-- Codebase: `nova-sonic-speech-app/documentation/NOVA_SONIC_API.md`
+- Codebase: [Path to service integration code]
+- Documentation: [Path to API documentation]
+
+*Add your project's external API integrations here*
 
 ## Project PR/FAQ Documents
 
@@ -281,7 +167,7 @@ Nova Sonic UI is a speech-to-text application that integrates with AWS Nova Soni
 3. Your completed analysis will automatically populate this section
 
 **Trust Sources**:
-- Coach Workflow: `.clinerules/workflows/jesse_amazon_prfaq_coach.md`
+- Coach Workflow: `/jesse_amazon_prfaq_coach.md`
 - Amazon Examples: Real internal Amazon PR/FAQ examples included in coach
 - Working Backwards Directory: `working_backwards/current/` and `working_backwards/archive/`
 
@@ -289,30 +175,20 @@ Nova Sonic UI is a speech-to-text application that integrates with AWS Nova Soni
 **Note**: These knowledge bases are loaded on-demand when specifically needed for the current session task, following the lazy loading strategy described above.
 
 ### Git Clone Knowledge Bases
-#### amazon-nova-samples
-- **Repository**: https://github.com/aws-samples/amazon-nova-samples.git
-- **Purpose**: Official AWS samples for Amazon Nova models including Nova Sonic speech-to-speech
-- **Knowledge Base**: `.knowledge/git-clones/amazon-nova-samples_kb.md`
-- **Key Resources**: Production-ready Nova Sonic implementation patterns, bidirectional streaming examples, tool integration patterns
-- **Clone Date**: 2025-06-19T22:35:00Z
-- **Loading Trigger**: When Nova Sonic implementation patterns or official AWS samples are needed
+*No git clone knowledge bases configured yet*
 
-#### aws-sdk-python
-- **Repository**: https://github.com/boto/boto3.git
-- **Purpose**: AWS SDK for Python (Boto3) reference for Nova Sonic API integration
-- **Knowledge Base**: `.knowledge/git-clones/aws-sdk-python_kb.md`
-- **Key Resources**: Bedrock Runtime client, Nova Sonic model integration, experimental SDK features
-- **Clone Date**: 2025-06-19T17:14:56Z
-- **Loading Trigger**: When AWS SDK integration details or experimental SDK features are required
+**To add a git clone knowledge base**:
+1. Use the Git Clone Import workflow: `/jesse_wip_kb_git_clone_import.md`
+2. The workflow will clone the repository and create the knowledge base
+3. Git clones are stored in `.knowledge/git-clones/[repo-name]/`
+4. Knowledge bases are created as `.knowledge/git-clones/[repo-name]_kb.md`
 
 ### PDF Knowledge Bases
-#### nova-user-guide (PDF Import)
-- **Source**: AWS Nova User Guide PDF Documentation (Official)
-- **Purpose**: Complete AWS Nova documentation including comprehensive Nova Sonic reference
-- **Knowledge Base**: `.knowledge/pdf-knowledge/nova_user_guide/nova_user_guide_kb.md`
-- **Key Resources**: Nova Sonic architecture, bidirectional streaming API, speech-to-speech examples, prompting best practices, tool integration, error handling patterns
-- **Import Status**: In Progress (2/26 chunks analyzed)
-- **Critical Findings**: JSON event streaming approach confirmed correct, SYSTEM role requirement identified, EnvironmentCredentialsResolver pattern documented
-- **Download Date**: 2025-06-20T17:36:47Z
-- **Size**: 44.49MB PDF (508 pages, 26 chunks)
-- **Loading Trigger**: When comprehensive Nova Sonic documentation or official AWS guidance is needed
+*No PDF knowledge bases imported yet*
+
+**To import a PDF knowledge base**:
+1. Use the PDF Import workflow: `/jesse_wip_kb_pdf_import.md`
+2. The workflow will process the PDF and create indexed knowledge base
+3. PDFs are stored in `.knowledge/pdf-knowledge/[pdf-name]/`
+4. Knowledge bases are created as `.knowledge/pdf-knowledge/[pdf-name]/[pdf-name]_kb.md`
+5. PDF chunks are stored in `.knowledge/pdf-knowledge/[pdf-name]/pdf_chunks/`
