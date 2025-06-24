@@ -34,7 +34,7 @@ A: A comprehensive system that adds persistent knowledge management, automated w
 A: The framework automatically captures knowledge from web research, test results, and development activities, storing it persistently across sessions while enforcing consistent coding standards.
 
 **Q: How do I install it?**
-A: Simply ask your AI coding assistant: "Please install the JESSE AI Best Practices Framework from https://github.com/jcjorel/jesse-ai-best-practices"
+A: Simply ask your AI coding assistant: "Please install (or update) the JESSE AI Best Practices Framework from https://github.com/jcjorel/jesse-ai-best-practices"
 
 **Q: What's included?**
 A: 28+ automated workflows, persistent knowledge management system, enforced documentation standards, git repository integration, PDF processing, and comprehensive task management.
