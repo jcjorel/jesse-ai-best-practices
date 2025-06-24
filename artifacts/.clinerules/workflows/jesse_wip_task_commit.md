@@ -49,11 +49,11 @@ Create a commit message following this mandatory format:
 [Implementation details]
 <WHAT was changed and HOW>
 
-[Testing performed]
-<Validation and testing done>
-
 [Impact analysis]
 <Systems affected by this change>
+
+[Testing performed]
+<Validation and testing done>
 
 [Related items]
 - Issue: #<number>
@@ -76,10 +76,12 @@ Create a commit message following this mandatory format:
 - Use git diff data to ensure accuracy
 
 #### 4.3 [Implementation details]
+- **Maximum 4 lines (except when there are more than 4 major functional or technical changes)**
 - List specific files modified (from git diff --name-only)
 - Explain algorithms/approaches used
 - Document architectural decisions
 - Include line counts from git diff --stat
+- Use bullet points for conciseness
 
 #### 4.4 [Testing performed]
 - **CRITICAL**: Only state tests were performed if you have concrete proof of test execution
@@ -90,10 +92,12 @@ Create a commit message following this mandatory format:
 - If no testing was performed, state "No testing performed" explicitly
 
 #### 4.5 [Impact analysis]
+- **Maximum 4 lines (except when there are more than 4 major functional or technical changes)**
 - List affected components/systems
 - Identify potential side effects
 - Document breaking changes
 - Note configuration impacts
+- Use bullet points for conciseness
 
 #### 4.6 [Related items]
 - Link to issues/PRs
@@ -132,6 +136,19 @@ git commit -m "type(scope): subject" -m "[Commit intent]..." -m "[Implementation
 ```
 
 ## Implementation Notes
+
+### Definition of Major Functional or Technical Changes
+The 4-line limit exception applies when a commit contains more than 4 of these major change types:
+
+- **New API endpoints or significant API modifications**
+- **Database schema changes (tables, columns, indexes)**
+- **New architectural components or services**
+- **Security-related modifications**
+- **Performance optimizations affecting multiple systems**
+- **Breaking changes to existing functionality**
+- **Integration with new external services**
+- **Bug fixes requiring changes across 3+ files/modules**
+- **Configuration changes affecting system behavior**
 
 ### Git Diff Integration
 Always use git diff data to populate:
@@ -247,10 +264,12 @@ logic to maintain seamless audio processing even when network issues occur.
 ### 3.2 [Implementation details] Section
 **Purpose**: Document WHAT was changed and HOW
 **Requirements**:
+- **Maximum 4 lines (except when there are more than 4 major functional or technical changes)**
 - List specific files modified with brief descriptions
 - Explain key algorithms or approaches used
 - Document architectural decisions made
 - Include technical reasoning for implementation choices
+- Use concise bullet points to stay within limit
 
 **Example**:
 ```
@@ -283,10 +302,12 @@ logic to maintain seamless audio processing even when network issues occur.
 ### 3.4 [Impact analysis] Section
 **Purpose**: Document the scope and effects of changes
 **Requirements**:
+- **Maximum 4 lines (except when there are more than 4 major functional or technical changes)**
 - List all affected components or systems
 - Identify potential side effects
 - Document breaking changes (if any)
 - Note configuration or deployment impacts
+- Use concise bullet points to stay within limit
 
 **Example**:
 ```
@@ -343,7 +364,7 @@ service by automatically reconnecting and preserving audio data.
 - Docs: Added reconnection section to NOVA_SONIC_API.md
 ```
 
-### 4.2 Bug Fix Example
+### 4.2 Bug Fix Example (4-Line Limit Compliant)
 ```
 fix(auth): Resolve token expiration race condition in parallel requests
 
@@ -356,7 +377,6 @@ but subsequent requests used the old token before the refresh completed.
 - Added token refresh mutex in aws_credentials_manager.py
 - Implemented request queuing during token refresh
 - Cache refreshed tokens with 5-minute early expiration
-- Added request_id tracking for debugging
 - Modified _ensure_valid_token() to be thread-safe
 
 [Testing performed]
@@ -423,6 +443,7 @@ Every commit message MUST pass these checks:
 4. ✓ Each section has meaningful content (not placeholder text)
 5. ✓ No single-line commits
 6. ✓ Proper section headers with square brackets
+7. ✓ [Implementation details] and [Impact analysis] ≤ 4 lines (unless >4 major changes)
 
 ### 5.2 Content Quality Standards
 - **Specificity**: Avoid vague descriptions like "fix bug" or "update code"

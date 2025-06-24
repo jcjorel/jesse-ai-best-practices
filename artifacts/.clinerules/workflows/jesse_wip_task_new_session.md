@@ -1,10 +1,10 @@
 # WIP Stack New Session Workflow
 
 ## Purpose
-Force strict adherence to all knowledge management system rules by simulating a fresh Cline session initialization. This workflow ensures that all mandatory behaviors from `JESSE_KNOWLEDGE_MANAGEMENT.md` are executed when they may have been skipped during normal session startup.
+Force strict adherence to all knowledge management system rules by simulating a fresh [Cline](https://github.com/cline/cline) session initialization. This workflow ensures that all mandatory behaviors from `JESSE_KNOWLEDGE_MANAGEMENT.md` are executed when they may have been skipped during normal session startup.
 
 ## When to Use
-- When Cline has skipped automatic session initialization
+- When [Cline](https://github.com/cline/cline) has skipped automatic session initialization
 - When knowledge management rules are not being followed
 - When WIP task context is missing or incomplete
 - When starting work after a break and need full context reload
@@ -121,7 +121,7 @@ Focus on the current WIP task progress and next actions.
 ### After System Issues
 ```
 User: /wip_stack_new_session
-I think Cline missed some initialization steps. Please reload everything.
+I think [Cline](https://github.com/cline/cline) missed some initialization steps. Please reload everything.
 ```
 
 ## Integration with Other Workflows

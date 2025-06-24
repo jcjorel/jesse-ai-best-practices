@@ -1,7 +1,7 @@
 # WIP Task Disable Workflow
 
 ## Purpose
-Temporarily disable automatic reading of the current WIP task assets for the current Cline session. This is a session-only setting that does not persist across sessions.
+Temporarily disable automatic reading of the current WIP task assets for the current [Cline](https://github.com/cline/cline) session. This is a session-only setting that does not persist across sessions.
 
 ## When to Use
 - When working on tasks unrelated to the current WIP task
@@ -23,7 +23,7 @@ Do you want to proceed?"
 Create a session-only flag to prevent WIP task loading:
 - This flag exists only in memory for the current session
 - Does not modify any persistent files
-- Will be reset when starting a new Cline session
+- Will be reset when starting a new [Cline](https://github.com/cline/cline) session
 
 ### 3. Provide Confirmation
 Confirm to the user:
@@ -44,7 +44,7 @@ Note: WIP task auto-loading is currently disabled for this session
 
 ### Session Behavior
 - The disable flag is session-scoped only
-- New Cline sessions will load WIP tasks normally
+- New [Cline](https://github.com/cline/cline) sessions will load WIP tasks normally
 - No persistent state changes are made
 
 ### Knowledge Management Impact
@@ -53,7 +53,7 @@ Note: WIP task auto-loading is currently disabled for this session
 - Only WIP task files are skipped during initialization
 
 ### Re-enabling Options
-1. Start a new Cline session (automatic re-enable)
+1. Start a new [Cline](https://github.com/cline/cline) session (automatic re-enable)
 2. Use `/wip_task_enable` workflow (if needed in same session)
 
 ## Example Usage

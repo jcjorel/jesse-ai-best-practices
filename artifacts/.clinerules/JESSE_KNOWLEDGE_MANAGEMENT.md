@@ -6,7 +6,7 @@
 
 **🚨 CRITICAL SYSTEM REQUIREMENT - NO EXCEPTIONS PERMITTED 🚨**
 
-At the start of EVERY new Cline session, these steps are MANDATORY and MUST be executed BEFORE processing ANY user request. This is a non-negotiable system requirement that takes precedence over all other considerations:
+At the start of EVERY new [Cline](https://github.com/cline/cline) session, these steps are MANDATORY and MUST be executed BEFORE processing ANY user request. This is a non-negotiable system requirement that takes precedence over all other considerations:
 
 #### MANDATORY EXECUTION SEQUENCE:
 1. **MANDATORY STEP 1**: Read this file (JESSE_KNOWLEDGE_MANAGEMENT.md) completely to load system rules and essential knowledge
@@ -35,8 +35,8 @@ At the start of EVERY new Cline session, these steps are MANDATORY and MUST be e
 6. **MANDATORY STEP 6**: Only after ALL above steps are completed successfully, proceed with user request processing
 
 #### SESSION INITIALIZATION TRIGGERS:
-- **New Cline conversation/chat session**
-- **Fresh IDE restart with Cline activation**
+- **New [Cline](https://github.com/cline/cline) conversation/chat session**
+- **Fresh IDE restart with [Cline](https://github.com/cline/cline) activation**
 - **Any context reset or session boundary**
 - **Explicit user request for session reinitialization**
 
@@ -70,7 +70,7 @@ Before processing any user request, internally verify:
 **SESSION BOUNDARY DETECTION**: A new session is detected when:
 - No previous knowledge of Essential Knowledge Base content exists in current context
 - No awareness of current WIP task status exists
-- First interaction in a new Cline conversation thread
+- First interaction in a new [Cline](https://github.com/cline/cline) conversation thread
 - Context has been reset or cleared
 
 **SELF-ENFORCEMENT MECHANISM**: Every time this knowledge management file is accessed:

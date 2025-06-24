@@ -5,7 +5,7 @@ Complete guide to using the JESSE AI Best Practices Framework for enhanced AI-as
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Cline or compatible AI coding assistant
+- [Cline](https://github.com/cline/cline) or compatible AI coding assistant
 - Git (for repository integration)
 - Bash shell (for automated workflows)
 
@@ -35,7 +35,7 @@ ls -la ".clinerules/" && ls -la ".clinerules/workflows/"
 ```
 
 #### 2. First Session Initialization
-When you start a new Cline session, the framework automatically:
+When you start a new [Cline](https://github.com/cline/cline) session, the framework automatically:
 - Loads knowledge management rules
 - Reads persistent knowledge base
 - Loads any active WIP task context
@@ -410,7 +410,7 @@ ls -la "${HOME}/Cline/Rules/" || ls -la ".clinerules/"
 
 ### Getting Help
 
-#### Within Cline Sessions
+#### Within [Cline](https://github.com/cline/cline) Sessions
 ```bash
 # Report issues
 /reportbug
@@ -421,7 +421,7 @@ ls -la "${HOME}/Cline/Rules/" || ls -la ".clinerules/"
 
 #### Self-Diagnosis
 1. **Check Installation**: Verify files exist in expected locations
-2. **Review Logs**: Check Cline output for error messages
+2. **Review Logs**: Check [Cline](https://github.com/cline/cline) output for error messages
 3. **Test Commands**: Try basic workflows like `/jesse_wip_task_create.md`
 4. **Verify Dependencies**: Ensure git and bash are available
 
@@ -467,7 +467,7 @@ The framework automatically:
 - Enforces commit message standards
 
 #### IDE Integration
-- Works seamlessly with VSCode + Cline
+- Works seamlessly with VSCode + [Cline](https://github.com/cline/cline)
 - Maintains file visibility and navigation
 - Preserves syntax highlighting and formatting
 

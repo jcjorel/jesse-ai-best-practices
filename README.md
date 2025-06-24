@@ -1,6 +1,6 @@
 # JESSE AI Best Practices Framework
 
-A comprehensive framework that transforms AI coding assistants (particularly Cline) into intelligent, knowledge-aware development partners through structured knowledge management, automated workflows, and enforced coding standards.
+A comprehensive framework that transforms AI coding assistants (particularly [Cline](https://github.com/cline/cline)) into intelligent, knowledge-aware development partners through structured knowledge management, automated workflows, and enforced coding standards.
 
 ## 🎯 Project Goal
 
@@ -15,7 +15,7 @@ The JESSE AI Best Practices Framework provides AI coding assistants with:
 ## 🚀 AI-Guided Installation
 
 ### Installation Process
-When you want to install this framework, simply ask your AI coding assistant (like Cline):
+When you want to install this framework, simply ask your AI coding assistant (like [Cline](https://github.com/cline/cline)):
 
 **"Please install the JESSE AI Best Practices Framework at https://github.com/jcjorel/jesse-ai-best-practices"**
 
@@ -215,7 +215,7 @@ ${HOME}/Cline/Workflows/
 ## 🔧 Framework Integration
 
 ### For AI Coding Assistants
-The framework automatically integrates with Cline and similar AI coding assistants through:
+The framework automatically integrates with [Cline](https://github.com/cline/cline) and similar AI coding assistants through:
 
 1. **Mandatory Session Initialization**: Loads essential knowledge at session start
 2. **Context-Aware Operation**: Adapts behavior based on installation location
@@ -271,7 +271,7 @@ The framework automatically integrates with Cline and similar AI coding assistan
 ## 📞 Support & Community
 
 - **Documentation**: Complete usage guides in [HOWTO_USE.md](HOWTO_USE.md)
-- **Issue Reporting**: Use `/reportbug` command within Cline sessions
+- **Issue Reporting**: Use `/reportbug` command within [Cline](https://github.com/cline/cline) sessions
 - **Contributions**: Framework designed for extension and customization
 - **Feedback**: Knowledge management system captures usage patterns for improvement
 

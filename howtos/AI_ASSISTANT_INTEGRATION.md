@@ -1,6 +1,6 @@
 # AI Assistant Integration Guide
 
-Complete guide to the JESSE AI Best Practices Framework's integration with AI coding assistants, focusing on Cline integration patterns, session management, and AI-enhanced development workflows.
+Complete guide to the JESSE AI Best Practices Framework's integration with AI coding assistants, focusing on [Cline](https://github.com/cline/cline) integration patterns, session management, and AI-enhanced development workflows.
 
 ## 🤖 AI Assistant Integration Overview
 
@@ -472,7 +472,7 @@ The framework integrates with broader development ecosystem:
 
 #### IDE Integration
 ```bash
-# VSCode + Cline integration:
+# VSCode + [Cline](https://github.com/cline/cline) integration:
 # - File visibility and navigation maintained
 # - Syntax highlighting preserved
 # - Auto-formatting compatibility

@@ -44,7 +44,7 @@ When context window reaches 80% capacity:
    - State preserved in working_backwards/current/
 
    🔄 TO CONTINUE COACHING:
-   1. Start a new Cline conversation session
+   1. Start a new [Cline](https://github.com/cline/cline) conversation session
    2. Say: "Resume Amazon PR/FAQ coaching"
    3. Your progress will be automatically loaded
    4. Coaching will continue from where we left off
