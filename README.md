@@ -233,34 +233,103 @@ For detailed usage instructions, see [HOWTO_USE.md](HOWTO_USE.md) which includes
 
 ## 🛠️ Installation Options
 
-### Global Installation (Recommended)
-**Benefits**: Available across all projects, consistent behavior, centralized management
+### 🌐 Option 1: Global Installation (Recommended)
 
-**Structure**:
+**📋 When to Choose Global:**
+- Working across multiple projects
+- Want consistent AI assistant behavior everywhere
+- Prefer centralized knowledge management
+- Team lead setting standards for entire organization
+
+**✅ Advantages:**
+- Available across all projects immediately
+- Consistent behavior and standards enforcement
+- Centralized knowledge base and workflow management
+- Single location for updates and maintenance
+- Reduced storage overhead (shared across projects)
+
+**📁 Directory Structure:**
 ```
 ${HOME}/Cline/Rules/
-├── JESSE_KNOWLEDGE_MANAGEMENT.md
-├── JESSE_CODE_GENERATION.md
-├── JESSE_CODE_COMMENTS.md
-├── JESSE_MARKDOWN.md
-└── JESSE_SCRATCHPAD.md
+├── JESSE_KNOWLEDGE_MANAGEMENT.md    # System directives only
+├── JESSE_CODE_GENERATION.md         # Coding standards
+├── JESSE_CODE_COMMENTS.md           # Documentation rules
+├── JESSE_MARKDOWN.md                # Markdown standards
+├── JESSE_SCRATCHPAD.md              # Scratchpad management
+└── JESSE_USER_IDENTITY.md           # User PII (auto-created)
 
 ${HOME}/Cline/Workflows/
-├── jesse_wip_task_create.md
-├── jesse_wip_kb_git_clone_import.md
-└── [26 more workflows...]
+├── jesse_wip_task_create.md         # Task management workflows
+├── jesse_wip_kb_git_clone_import.md # Knowledge operations
+├── jesse_wip_task_commit.md         # Git integration
+└── [25+ more workflows...]
+
+<project-root>/JESSE_KNOWLEDGE_MANAGEMENT.md  # Project-specific knowledge only
 ```
 
-### Project-Level Installation
-**Benefits**: Project-specific customization, self-contained setup, version control integration
+**🎯 Project Behavior:**
+- Global rules remain unchanged in `${HOME}/Cline/Rules/`
+- Each project has its own `JESSE_KNOWLEDGE_MANAGEMENT.md` for project-specific content
+- Knowledge base separation: system rules vs. project context
 
-**Structure**:
+---
+
+### 📦 Option 2: Project-Level Installation
+
+**📋 When to Choose Project-Level:**
+- Working on a single project or isolated environment
+- Need project-specific rule customizations
+- Want self-contained setup with version control
+- Testing framework modifications before global deployment
+
+**✅ Advantages:**
+- Project-specific customization of rules and workflows
+- Self-contained setup (no external dependencies)
+- Version control integration for rule changes
+- Team can modify standards specific to project needs
+- Complete isolation from other projects
+
+**❌ Considerations:**
+- Must install separately for each project
+- Inconsistent behavior across different projects
+- Higher storage overhead (duplicated across projects)
+- Manual synchronization of rule updates
+
+**📁 Directory Structure:**
 ```
 <project-root>/.clinerules/
-├── JESSE_*.md                    # All framework rules
-├── workflows/                    # All automated workflows
-└── JESSE_KNOWLEDGE_MANAGEMENT.md # Combined system + project knowledge
+├── JESSE_KNOWLEDGE_MANAGEMENT.md    # System + project knowledge combined
+├── JESSE_CODE_GENERATION.md         # Coding standards
+├── JESSE_CODE_COMMENTS.md           # Documentation rules
+├── JESSE_MARKDOWN.md                # Markdown standards
+├── JESSE_SCRATCHPAD.md              # Scratchpad management
+└── workflows/                       # All automated workflows
+    ├── jesse_wip_task_create.md
+    ├── jesse_wip_kb_git_clone_import.md
+    ├── jesse_wip_task_commit.md
+    └── [25+ more workflows...]
 ```
+
+**🎯 Project Behavior:**
+- All rules and workflows contained within project directory
+- Single `JESSE_KNOWLEDGE_MANAGEMENT.md` contains both system and project information
+- Complete framework functionality within project scope
+
+---
+
+### 🤔 Decision Guide
+
+| Factor | Global Installation | Project-Level Installation |
+|--------|-------------------|---------------------------|
+| **Multiple Projects** | ✅ Ideal | ❌ Requires multiple installs |
+| **Consistent Standards** | ✅ Enforced globally | ⚠️ May diverge per project |
+| **Customization** | ⚠️ Limited to project knowledge | ✅ Full rule customization |
+| **Version Control** | ❌ Rules not in project repo | ✅ Rules tracked with project |
+| **Storage Efficiency** | ✅ Single shared installation | ❌ Duplicated per project |
+| **Team Collaboration** | ✅ Consistent team experience | ⚠️ Requires coordination |
+| **Maintenance Overhead** | ✅ Single update location | ❌ Must update each project |
+
+**🎯 Recommendation:** Start with **Global Installation** for most use cases. Switch to project-level only if you need significant customization or are working in isolated environments.
 
 ---
 
