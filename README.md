@@ -256,6 +256,7 @@ ${HOME}/Cline/Rules/
 ├── JESSE_CODE_COMMENTS.md           # Documentation rules
 ├── JESSE_MARKDOWN.md                # Markdown standards
 ├── JESSE_SCRATCHPAD.md              # Scratchpad management
+├── JESSE_HINTS.md                   # AI assistant enforcement rules
 └── JESSE_USER_IDENTITY.md           # User PII (auto-created)
 
 ${HOME}/Cline/Workflows/
@@ -303,6 +304,7 @@ ${HOME}/Cline/Workflows/
 ├── JESSE_CODE_COMMENTS.md           # Documentation rules
 ├── JESSE_MARKDOWN.md                # Markdown standards
 ├── JESSE_SCRATCHPAD.md              # Scratchpad management
+├── JESSE_HINTS.md                   # AI assistant enforcement rules
 └── workflows/                       # All automated workflows
     ├── jesse_wip_task_create.md
     ├── jesse_wip_kb_git_clone_import.md
