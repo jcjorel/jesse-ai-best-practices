@@ -139,10 +139,10 @@ Amazon's Working Backwards process follows 5 stages aligned with 5 Customer Ques
 
 ```mermaid
 graph TB
-    A[1. LISTEN<br/>Customer Understanding] --> B[2. DEFINE<br/>Problem Crystallization]
-    B --> C[3. INVENT<br/>Solution Development]
-    C --> D[4. REFINE<br/>Experience Design]
-    D --> E[5. TEST & ITERATE<br/>Success Definition]
+    A[LISTEN<br/>Customer Understanding] --> B[DEFINE<br/>Problem Crystallization]
+    B --> C[INVENT<br/>Solution Development]
+    C --> D[REFINE<br/>Experience Design]
+    D --> E[TEST & ITERATE<br/>Success Definition]
     
     A -.-> F["🎯 Who is the customer?<br/>Specific, research-backed"]
     B -.-> G["❗ What is the problem?<br/>Today, [customer] have to..."]
