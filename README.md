@@ -70,11 +70,13 @@ The AI will guide you through an interactive installation process:
    - **Project-Level Installation**: Contained within current project in `.clinerules/`
 
 2. **Automatic Setup**: The AI will:
+   - Temporarily download/clone the framework files
    - Create necessary directory structures
    - Copy all framework files to the chosen location
    - Set up the knowledge management system
    - Configure appropriate `.gitignore` rules
    - Initialize templates and knowledge base
+   - **Automatically delete the temporary clone** (cleanup handled automatically)
 
 3. **Verification**: The AI will verify successful installation and provide a summary
 
@@ -88,8 +90,9 @@ The AI will guide you through an interactive installation process:
 If you prefer manual installation:
 
 ```bash
-# Clone the framework
-git clone https://github.com/your-org/jesse-ai-best-practices.git
+# Clone the framework (TEMPORARY - will be deleted after installation)
+git clone https://github.com/jcjorel/jesse-ai-best-practices.git
+cd jesse-ai-best-practices
 
 # For Global Installation (Recommended)
 mkdir -p "${HOME}/Cline/Rules" "${HOME}/Cline/Workflows"
@@ -100,7 +103,19 @@ cp -r workflows/* "${HOME}/Cline/Workflows/" 2>/dev/null || echo "Workflows will
 mkdir -p .clinerules/workflows
 cp JESSE_*.md .clinerules/
 cp -r workflows/* .clinerules/workflows/ 2>/dev/null || echo "Workflows directory structure created"
+
+# 🗑️ CRITICAL: Clean up - DELETE the cloned repository (no longer needed)
+cd ..
+rm -rf jesse-ai-best-practices
+
+# ✅ Installation complete - clone has been safely removed
 ```
+
+> ⚠️ **CRITICAL CLEANUP REQUIREMENT**
+> 
+> After installation (manual or AI-guided), the cloned repository **MUST be DELETED** as it's no longer needed. The framework files are now installed in their permanent locations (`${HOME}/Cline/Rules/` or `.clinerules/`).
+> 
+> **Manual cleanup**: `rm -rf jesse-ai-best-practices`
 
 ### Post-Installation Verification
 ```bash
