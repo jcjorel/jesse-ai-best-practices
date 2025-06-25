@@ -213,19 +213,25 @@ The commit workflow automatically verifies:
 
 #### Recommended Branch Strategy
 ```mermaid
-gitgraph
-    commit id: "main"
-    branch feature/auth
-    commit id: "auth: setup"
-    commit id: "auth: validation"
-    checkout main
-    branch feature/database
-    commit id: "db: schema"
-    commit id: "db: migrations"
-    checkout main
-    merge feature/auth
-    merge feature/database
-    commit id: "integration"
+graph TD
+    A[main] --> B[feature/auth]
+    A --> C[feature/database]
+    
+    B --> B1["auth: setup"]
+    B1 --> B2["auth: validation"]
+    
+    C --> C1["db: schema"]
+    C1 --> C2["db: migrations"]
+    
+    B2 --> D[merge to main]
+    C2 --> D
+    D --> E["integration commit"]
+    
+    style A fill:#e1f5fe
+    style B fill:#f3e5f5
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+    style E fill:#e1f5fe
 ```
 
 **Branch Naming Convention**:
