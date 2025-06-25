@@ -112,7 +112,7 @@ Before processing any user request, internally verify:
 
 #### Preferred Location Installation Protocol
 1. **System Files**: JESSE_*.md files installed at `${USER_HOME_DIR}/Cline/Rules/` are never modified after installation
-2. **Project Knowledge File**: Create `<project_root>/JESSE_KNOWLEDGE_MANAGEMENT.md` containing:
+2. **Project Knowledge File**: Create `<project_root>/.clinerules/JESSE_KNOWLEDGE_MANAGEMENT.md` containing:
    ```markdown
    # Project Knowledge Management
    *This file contains project-specific knowledge while system rules remain at ${USER_HOME_DIR}/Cline/Rules/*
@@ -127,8 +127,15 @@ Before processing any user request, internally verify:
 After installation, verify:
 - [ ] User choice was explicitly requested and confirmed
 - [ ] Files are installed at chosen location
-- [ ] If preferred location: project knowledge file created with appropriate content separation
+- [ ] If preferred location: project knowledge file created with appropriate content separation at `<project_root>/.clinerules/JESSE_KNOWLEDGE_MANAGEMENT.md`
 - [ ] All workflow references remain functional regardless of installation location
+
+#### Critical File Location Reminder
+**IMPORTANT**: When using global deployment (`${USER_HOME_DIR}/Cline/Rules/`), the project-specific knowledge file must ALWAYS be created at:
+- ✅ **CORRECT**: `<project_root>/.clinerules/JESSE_KNOWLEDGE_MANAGEMENT.md`
+- ❌ **INCORRECT**: `<project_root>/JESSE_KNOWLEDGE_MANAGEMENT.md` (this is the root cause of common installation errors)
+
+This ensures proper project isolation and prevents conflicts with global framework rules.
 
 ### Knowledge Capture Rules
 - **Automatic Capture**: When user says "remember this", "capture this knowledge", or similar phrases, automatically append structured information to appropriate knowledge files
