@@ -289,7 +289,7 @@ graph LR
     C --> D[Assign Boundaries]
     D --> E[Start Development]
     
-    C --> C1[/jesse_wip_task_create.md]
+    C --> C1[jesse_wip_task_create.md]
     D --> D1[File/Directory Scope]
     D --> D2[Dependency Management]
 ```
