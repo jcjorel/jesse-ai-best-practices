@@ -99,7 +99,6 @@ After successful capture, respond with:
 - Never omit parts of the conversation for brevity
 
 ### Special Considerations
-- **NO MARKDOWN_CHANGELOG.md**: Due to hidden directory restriction (.clinerules/)
 - Captured files are ephemeral documents, not authoritative sources
 - Files in captured_chats/ should NEVER be read back as context
 

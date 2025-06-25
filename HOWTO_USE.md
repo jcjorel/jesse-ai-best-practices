@@ -364,6 +364,7 @@ For detailed information on specific topics, see the `howtos/` directory:
 ### Advanced Integration
 - **[AI Assistant Integration](howtos/AI_ASSISTANT_INTEGRATION.md)**: Framework integration patterns
 - **[Team Collaboration](howtos/TEAM_COLLABORATION.md)**: Multi-developer usage patterns
+- **[Amazon PR/FAQ Coach](howtos/AMAZON_PRFAQ_COACH.md)**: Working Backwards methodology and strategic vision documents
 
 ## 🐛 Troubleshooting
 
