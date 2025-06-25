@@ -16,7 +16,7 @@ A comprehensive framework that transforms AI coding assistants (particularly [Cl
 
 Today, developers face frustration when AI coding assistants lose context between sessions, generate inconsistent code, and fail to maintain project knowledge. This means teams waste time re-explaining requirements and debugging inconsistent implementations.
 
-JESSE AI Framework solves this by providing persistent knowledge management, 28+ automated workflows, and enforced coding standards. Teams can now capture learnings automatically, maintain context across sessions, and ensure consistent code quality with zero-tolerance compliance policies.
+JESSE AI Framework solves this by providing persistent knowledge management, 29+ automated workflows, and enforced coding standards. Teams can now capture learnings automatically, maintain context across sessions, and ensure consistent code quality with zero-tolerance compliance policies.
 
 "We built this framework because our AI assistants kept forgetting what we'd learned in previous sessions," said Jean-Charles Jorel, Framework Creator. "Now our AI development partner remembers everything and maintains our coding standards automatically."
 
@@ -38,7 +38,7 @@ A: The framework automatically captures knowledge from web research, test result
 A: Simply ask your AI coding assistant: "Please install (or update) the JESSE AI Best Practices Framework from https://github.com/jcjorel/jesse-ai-best-practices"
 
 **Q: What's included?**
-A: 28+ automated workflows, persistent knowledge management system, enforced documentation standards, git repository integration, PDF processing, and comprehensive task management.
+A: 29+ automated workflows, persistent knowledge management system, enforced documentation standards, git repository integration, PDF processing, and comprehensive task management.
 
 ---
 
@@ -176,7 +176,7 @@ graph TB
 - **Language-Specific Templates**: Python, JavaScript, Bash, and more
 
 ### Automated Workflows
-- **28+ Ready-to-Use Workflows**: From task creation to knowledge management
+- **29+ Ready-to-Use Workflows**: From task creation to knowledge management
 - **Git Repository Integration**: Clone, index, and extract knowledge from external repos
 - **PDF Processing**: Import, chunk, and index PDF documents with LLM understanding
 - **Consistency Checking**: Automated verification of knowledge base integrity
@@ -263,7 +263,7 @@ ${HOME}/Cline/Workflows/
 ├── jesse_wip_task_create.md         # Task management workflows
 ├── jesse_wip_kb_git_clone_import.md # Knowledge operations
 ├── jesse_wip_task_commit.md         # Git integration
-└── [25+ more workflows...]
+└── [26+ more workflows...]
 
 <project-root>/JESSE_KNOWLEDGE_MANAGEMENT.md  # Project-specific knowledge only
 ```
@@ -309,7 +309,7 @@ ${HOME}/Cline/Workflows/
     ├── jesse_wip_task_create.md
     ├── jesse_wip_kb_git_clone_import.md
     ├── jesse_wip_task_commit.md
-    └── [25+ more workflows...]
+    └── [26+ more workflows...]
 ```
 
 **🎯 Project Behavior:**

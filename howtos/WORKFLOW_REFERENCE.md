@@ -4,7 +4,7 @@ Complete catalog of all available workflows in the JESSE AI Best Practices Frame
 
 ## 🔄 Workflow System Overview
 
-The framework provides 28+ automated workflows organized into logical categories for comprehensive development lifecycle support.
+The framework provides 29+ automated workflows organized into logical categories for comprehensive development lifecycle support.
 
 ```mermaid
 graph TB
@@ -12,7 +12,7 @@ graph TB
         TM[Task Management<br/>7 workflows]
         KM[Knowledge Management<br/>6 workflows]
         QA[Quality Assurance<br/>4 workflows]
-        DEV[Development Support<br/>5 workflows]
+        DEV[Development Support<br/>6 workflows]
     end
     
     subgraph "Specialized Workflows"
@@ -292,6 +292,47 @@ graph TB
 - Updated file headers with change timestamps
 - Task progress updated
 - Knowledge base consistency maintained
+
+### Framework Management
+
+#### `/jesse_framework_upgrade.md`
+**Purpose**: Upgrade the JESSE AI Best Practices Framework with clean execution environment
+**Usage**: Update framework to latest version while preserving user data and configurations
+**Triggers**:
+- New framework features or updates available
+- Framework files may be outdated or corrupted
+- Need to refresh framework configuration and templates
+- Recommended by framework maintainers or release notes
+
+```bash
+# Usage
+/jesse_framework_upgrade.md
+
+# Process:
+# 1. Temporarily disables WIP task auto-loading for current session
+# 2. Confirms upgrade intention with user
+# 3. Executes framework installation process
+# 4. Verifies upgrade completion
+# 5. Provides session restart guidance
+```
+
+**Outputs**:
+- Updated framework files (JESSE_*.md, workflows)
+- Preserved user data and configurations
+- Refreshed templates and documentation
+- Verification of successful upgrade
+- Guidance for session restart to restore normal operation
+
+**Safety Features**:
+- **Non-destructive**: Preserves all user data, knowledge bases, and WIP tasks
+- **Session-scoped**: WIP task disable is temporary and session-only
+- **Incremental**: Updates framework files while preserving user customizations
+- **Reversible**: No permanent changes to user workflow or data
+
+**Integration with Other Workflows**:
+- Complements `/jesse_wip_task_disable.md` (uses same WIP disable mechanism)
+- Pairs with `/jesse_wip_task_new_session.md` for post-upgrade initialization
+- Safe to use at any time regardless of current WIP task status
 
 ### Workflow Execution Support
 

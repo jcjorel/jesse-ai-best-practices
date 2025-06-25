@@ -234,7 +234,7 @@ The framework leverages Model Context Protocol (MCP) servers for enhanced capabi
 
 ### Workflow Tool Integration
 
-The framework provides 28+ automated workflows accessible through simple commands:
+The framework provides 29+ automated workflows accessible through simple commands:
 
 #### Workflow Execution Pattern
 ```bash
