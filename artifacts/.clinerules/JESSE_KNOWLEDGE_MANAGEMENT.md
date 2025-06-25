@@ -242,12 +242,11 @@ Users can invoke knowledge management workflows using `/[workflow-name].md` synt
 *Last Updated: 2025-06-21T23:20:00Z*
 
 ## Current Work-in-Progress Task
-**Active Task**: nova_sonic_autonomous_conversation_test
-**Status**: Test passing but not yet marked complete per user request
-**Last Updated**: 2025-06-24T16:02:04Z
-**Phase**: Testing successful - awaiting user decision on completion
-**Priority**: High - Nova Sonic integration working correctly
-**Next Action**: Awaiting user instructions on next steps
+**Active Task**: None
+**Status**: None
+**Last Updated**: YYYY-MM-DDThh:mm:ssZ
+**Phase**: None
+**Next Action**: "Define a current WIP task"
 
 ## Other Active Tasks
 *Note: These tasks exist but are NOT loaded automatically. Use /jesse_wip_task_switch to make one current.*
