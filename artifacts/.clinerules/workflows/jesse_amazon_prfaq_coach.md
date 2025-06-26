@@ -94,7 +94,7 @@ When user requests to resume coaching in a new session:
 Before launching the Amazon PR/FAQ coach, the standard mandatory knowledge base loading MUST be performed according to `JESSE_KNOWLEDGE_MANAGEMENT.md` session initialization protocol **BUT WITH SELECTIVE EXCLUSIONS**:
 
 ### Required Pre-Coach Execution Sequence:
-1. **MANDATORY STEP 1**: Read `JESSE_KNOWLEDGE_MANAGEMENT.md` completely to load system rules and essential knowledge
+1. **MANDATORY STEP 1**: Read `.clinerules/JESSE_KNOWLEDGE_MANAGEMENT.md` completely to load system rules and essential knowledge
 2. **MANDATORY STEP 2**: Read `.knowledge/persistent-knowledge/KNOWLEDGE_BASE.md` for accumulated project knowledge
 3. **MANDATORY STEP 3**: **LOAD WORKING BACKWARDS CONTEXT** - IF `<project_root>/working_backwards/` directory exists, automatically load ALL files within it to provide existing PR/FAQ and strategic planning context
 4. **MANDATORY STEP 4**: **SKIP AVAILABLE KB LOADING** - Intentionally exclude git clone and PDF knowledge base files to maintain clean coaching context
