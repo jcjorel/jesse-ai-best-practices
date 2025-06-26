@@ -179,3 +179,105 @@ Before sending any response about system functionality:
 - [ ] Avoided temporal references to implementation timing
 
 **REMINDER**: Present all implemented functionality as the normal, expected way the system operates, not as special additions or improvements.
+
+---
+
+## 🚨 CRITICAL ENFORCEMENT RULE: PORTABLE FILE PATH STANDARDS 🚨
+
+### 📁 PATH PORTABILITY REQUIREMENTS
+
+**PORTABLE FILE PATH STANDARDS - STRICTLY ENFORCED:**
+
+- **✅ ALWAYS USE ${HOME} VARIABLE**: All file paths referencing user directories must use ${HOME} environment variable
+- **❌ NEVER USE ABSOLUTE USER PATHS**: Prohibit hardcoded absolute paths containing user directories
+- **❌ NEVER USE PLATFORM-SPECIFIC PATHS**: Avoid /home/username, /Users/username, C:\Users\username patterns
+- **❌ NEVER HARDCODE USER NAMES**: Eliminate any hardcoded usernames in file paths
+
+### 🛡️ ABSOLUTE PATH PROHIBITION
+
+**FORBIDDEN PATH PATTERNS:**
+
+- `/home/[username]/...` - Linux/Unix absolute user paths
+- `/Users/[username]/...` - macOS absolute user paths  
+- `C:\Users\[username]\...` - Windows absolute user paths
+- Any path containing hardcoded usernames or user-specific directories
+- **Examples of PROHIBITED patterns**:
+  - `/home/jcjorel/Cline/Rules/...`
+  - `/Users/johnsmith/Documents/...`
+  - `C:\Users\admin\AppData\...`
+
+### ✅ REQUIRED ${HOME} USAGE PATTERNS
+
+**MANDATORY PORTABLE PATH FORMATS:**
+
+- **Environment Variable**: `${HOME}/Cline/Rules/...`
+- **Shell Variable**: `$HOME/.config/...`
+- **Cross-Platform**: `~/Documents/...` (tilde expansion)
+- **Documentation**: Always reference user directories via ${HOME}
+
+**CORRECT EXAMPLES:**
+- `${HOME}/Cline/Rules/JESSE_USER_IDENTITY.md`
+- `${HOME}/.config/application/settings.json`
+- `$HOME/Documents/project-files/`
+- `~/workspace/repositories/`
+
+### 📝 CODE AND DOCUMENTATION STANDARDS
+
+**AI ASSISTANT MUST ENFORCE IN:**
+
+1. **Documentation Files**: All .md files with file path references
+2. **Configuration Files**: Shell scripts, config files, environment setups
+3. **Code Comments**: Any file path references in code comments
+4. **Installation Instructions**: Setup and installation documentation
+5. **Workflow Files**: All workflow .md files with path specifications
+6. **Environment Variables**: Configuration and setup scripts
+
+### 🤖 ENFORCEMENT MECHANISMS
+
+**AI ASSISTANT MUST:**
+
+1. **Path Validation**: Scan all generated content for hardcoded user paths
+2. **Automatic Conversion**: Replace absolute user paths with ${HOME} variable
+3. **Pre-Generation Check**: Validate path portability before creating any content
+4. **Cross-Reference Validation**: Ensure consistency across all related files
+5. **Documentation Review**: Check existing files for non-portable path patterns
+
+### ⚠️ VIOLATION CONSEQUENCES
+
+**IF HARDCODED USER PATHS ARE DETECTED:**
+- **Immediate Correction Required**: Stop and fix path before proceeding
+- **File Review Mandate**: Audit all related files for similar violations
+- **Consistency Enforcement**: Update all references to use portable format
+- **Documentation Update**: Revise any affected documentation immediately
+
+### 🌍 PORTABILITY BENEFITS
+
+**WHY PORTABLE PATHS MATTER:**
+
+- **Cross-User Compatibility**: Code works for any user without modification
+- **System Portability**: Functions across Linux, macOS, and Windows systems
+- **Documentation Clarity**: Instructions remain valid for all users
+- **Maintenance Simplification**: Reduces user-specific customization requirements
+- **Professional Standards**: Follows software development best practices
+
+### 🚫 NON-NEGOTIABLE ENFORCEMENT
+
+**THESE RULES HAVE NO EXCEPTIONS:**
+- Path portability standards cannot be bypassed for convenience
+- Hardcoded user paths must be eliminated immediately when detected
+- ${HOME} variable usage is mandatory for all user directory references
+- Cross-platform compatibility requirements cannot be ignored
+
+---
+
+## 🎯 AI ASSISTANT PATH PORTABILITY CHECKLIST
+
+Before generating any content with file paths:
+
+- [ ] Verified no hardcoded user directory paths exist
+- [ ] Confirmed all user paths use ${HOME} or equivalent variables
+- [ ] Checked cross-platform path compatibility
+- [ ] Validated path portability across different users
+- [ ] Ensured consistency with existing portable path standards
+
+**REMINDER**: All file paths referencing user directories must use portable environment variables to ensure compatibility across different users and systems.
