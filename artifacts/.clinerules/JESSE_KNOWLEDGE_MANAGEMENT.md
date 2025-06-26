@@ -169,6 +169,44 @@ This ensures proper project isolation and prevents conflicts with global framewo
 - **Task Switching**: Use `/jesse_wip_task_switch.md` workflow to change which task is current
 - **Single Task Focus**: Only one WIP task can be "current" at any time to maintain clear context
 
+### Git Branch Integration Policy
+**CRITICAL**: WIP tasks include comprehensive Git branch management integration:
+
+#### Git Branch Tracking
+- **All WIP tasks track their associated Git branch** in WIP_TASK.md Git Integration section
+- **Branch information includes**: Branch name, parent branch, creation timestamp, and status
+- **Branch status values**: Active, Merged, Deleted
+- **Branch naming convention**: Proposed format `jesse-wip/[task_name]` but user can customize
+
+#### Git Safety Requirements
+- **Clean Working Directory Prerequisite**: ALL WIP task operations require clean Git working directory
+  - **Task Creation**: Cannot create WIP task with uncommitted changes
+  - **Task Switching**: Cannot switch WIP tasks with uncommitted changes  
+  - **Task Completion**: Git operations require clean state for merge assistance
+- **Mandatory Commit Flow**: WIP task files must be committed before Git branch operations
+- **Branch Isolation**: Each WIP task can have its own dedicated Git branch for work isolation
+
+#### Git Branch Management Features
+- **Task Creation**: Offers branch creation with parent branch selection and custom naming
+- **Task Switching**: Automatic Git branch switching when tasks use different branches
+- **Task Completion**: Comprehensive merge assistance with multiple merge strategies:
+  - Fast-Forward Merge (clean linear history)
+  - Three-Way Merge (preserves branch context)
+  - Squash and Merge (single commit for feature)
+  - Rebase and Merge (clean linear history with individual commits)
+- **Branch Cleanup**: Explicit user choice for branch deletion after merge
+
+#### Multiple Tasks Branch Conflict Management
+- **Same Branch Detection**: System detects when multiple WIP tasks share the same branch
+- **Manual Management Warning**: Users warned about manual Git management requirements
+- **Branch Deletion Restrictions**: Automatic branch operations disabled when multiple tasks share branch
+- **User Guidance**: Clear explanations provided for complex Git scenarios
+
+#### Git Repository Validation
+- **Repository Detection**: All workflows validate Git repository presence before offering Git features
+- **Fallback Behavior**: WIP tasks function normally in non-Git environments
+- **Error Handling**: Comprehensive Git operation failure recovery with clear user guidance
+
 ### Git Clone Storage Policy
 **CRITICAL**: All git clones are stored **EXCLUSIVELY** in `<project_root>/.knowledge/git-clones/` directory.
 
