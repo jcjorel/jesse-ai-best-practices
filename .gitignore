@@ -1,0 +1,49 @@
+# JESSE AI Framework - Knowledge Management System
+# Ignore actual git clone directories but keep knowledge base files
+.knowledge/git-clones/*/
+!.knowledge/git-clones/*.md
+!.knowledge/git-clones/README.md
+
+# JESSE AI Framework - User Identity Protection
+# 🚨 CRITICAL: This file contains PII and must NEVER be committed 🚨
+# These patterns prevent accidental inclusion in any repository
+JESSE_USER_IDENTITY.md
+**/JESSE_USER_IDENTITY.md
+.clinerules/JESSE_USER_IDENTITY.md
+${HOME}/Cline/Rules/JESSE_USER_IDENTITY.md
+
+# Temporary files and directories
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# IDE and editor files
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Node.js (if needed for tooling)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python (if needed for tooling)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# General backup files
+*.bak
+*.backup
