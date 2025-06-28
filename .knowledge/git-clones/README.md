@@ -20,7 +20,22 @@ This directory contains knowledge bases extracted from external git repositories
 ```
 
 ## Available Knowledge Bases
-*No git clone knowledge bases have been imported yet*
+
+### FastMCP - Modern MCP Framework
+**Repository**: https://github.com/jlowin/fastmcp  
+**Purpose**: Comprehensive Python framework for building Model Context Protocol (MCP) servers and clients  
+**Key Features**: Production-ready MCP implementation with authentication, multiple transports, OpenAPI integration, comprehensive testing  
+**Knowledge Base**: [fastmcp_kb.md](fastmcp_kb.md)  
+**Added**: 2025-06-27T11:46:00Z  
+**Relevance**: Modern MCP server development patterns for JESSE Framework MCP server modernization
+
+### Cline AI Assistant - MCP Integration Reference
+**Repository**: https://github.com/cline/cline.git  
+**Purpose**: Autonomous AI coding assistant VSCode extension with comprehensive MCP integration for understanding how to integrate and interact with MCP servers  
+**Key Features**: Multi-server MCP support, marketplace integration, tool auto-approval, real-time management, rich UI integration  
+**Knowledge Base**: [cline_kb.md](cline_kb.md)  
+**Added**: 2025-06-27T12:17:00Z  
+**Relevance**: MCP client-side integration patterns, server discovery, connection management, and user interaction patterns for JESSE Framework MCP development
 
 ## How to Add Git Clone Knowledge Bases
 Use the Git Clone Import workflow to add external repositories:

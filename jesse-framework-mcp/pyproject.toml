@@ -1,0 +1,128 @@
+###############################################################################
+# IMPORTANT: This header comment is designed for GenAI code review and maintenance
+# Any GenAI tool working with this file MUST preserve and update this header
+###############################################################################
+# [GenAI coding tool directive]
+# - Maintain this header with all modifications
+# - Update History section with each change
+# - Keep only the 4 most recent records in the history section. Sort from newer to older.
+# - Preserve Intent, Design, and Constraints sections
+# - Use this header as context for code reviews and modifications
+# - Ensure all changes align with the design principles
+# - Respect system prompt directives at all times
+###############################################################################
+# [Source file intent]
+# Configuration file for JESSE Framework MCP Server package with build-time
+# embedding of JESSE rules and workflows from artifacts/ directory.
+###############################################################################
+# [Source file design principles]
+# - Uses Hatchling build system with custom build hooks for JESSE content copying
+# - Configures FastMCP as the only runtime dependency
+# - Enables build-time integration of JESSE framework content
+# - Provides stdio transport configuration for MCP protocol
+###############################################################################
+# [Source file constraints]
+# - Must support Python 3.10+ for FastMCP v2.9.2 compatibility
+# - FastMCP version must be compatible with MCP protocol
+# - Build hooks must execute copy_jesse_content.py before packaging
+###############################################################################
+# [Dependencies]
+# system:fastmcp - FastMCP framework for MCP server implementation
+# codebase:build_scripts/copy_jesse_content.py - Build-time content copying
+# codebase:jesse_framework_mcp/__init__.py - Package initialization
+###############################################################################
+# [GenAI tool change history]
+# 2025-06-27T15:06:02Z : Updated Python version requirement to 3.10+ for FastMCP v2.9.2 by CodeAssistant
+# * Changed requires-python from ">=3.8" to ">=3.10" for FastMCP compatibility
+# * Updated Python classifiers and tool configurations to match requirement
+# 2025-06-27T17:10:30Z : Updated FastMCP dependency to v2.9.2 for Phase 2 modernization by CodeAssistant
+# * Changed dependency from "fastmcp~=2.9.0" to "fastmcp~=2.9.2"
+# * Phase 2 of JESSE MCP FastMCP modernization - resource architecture
+# 2025-06-27T01:21:00Z : Initial project configuration with build hooks by CodeAssistant
+# * Created pyproject.toml with Hatchling build system
+# * Configured custom build hook for JESSE content copying
+# * Set up FastMCP dependency and stdio transport configuration
+###############################################################################
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jesse-framework-mcp"
+version = "0.1.0"
+description = "MCP Server for JESSE AI Framework - Complete Rules and Workflows"
+authors = [
+    {name = "JESSE Framework", email = "contact@jesse-framework.dev"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+dependencies = [
+    "fastmcp~=2.9.2",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Code Generators",
+]
+
+[project.urls]
+Homepage = "https://github.com/jesse-framework/jesse-framework-mcp"
+Repository = "https://github.com/jesse-framework/jesse-framework-mcp"
+Documentation = "https://github.com/jesse-framework/jesse-framework-mcp#readme"
+
+[project.scripts]
+jesse-framework-mcp = "jesse_framework_mcp:main"
+
+# Build configuration with custom hook for JESSE content copying
+[tool.hatch.build.hooks.custom]
+path = "build_scripts/copy_jesse_content.py"
+
+# Include embedded content in wheel distribution
+[tool.hatch.build.targets.wheel.shared-data]
+"embedded_content" = "jesse_framework_mcp/embedded_content"
+
+# Package data configuration for setuptools compatibility
+[tool.setuptools.package-data]
+jesse_framework_mcp = [
+    "embedded_content/*.md",
+    "embedded_content/workflows/*.md"
+]
+
+# Development dependencies
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=4.0.0",
+    "mypy>=0.950",
+]
+
+# Tool configurations for development
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
