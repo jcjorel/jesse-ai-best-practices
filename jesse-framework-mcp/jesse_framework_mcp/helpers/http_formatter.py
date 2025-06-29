@@ -848,15 +848,21 @@ def format_multi_section_response(*sections: str, preambule: Optional[str] = Non
     response_parts = []
     
     # 1. Add preambule if provided
+    preambule_announecement = ""
     if preambule is not None and preambule.strip():
         response_parts.append(f"<preambule>\n{preambule.strip()}\n</preambule>")
+        preambule_announecement = "the <preambule>{high_value_context}</preambule> and "
     
     # 2. Add X-ASYNC-HTTP/1.1 protocol definition
-    protocol_definition = """=== X-ASYNC-HTTP/1.1 PROTOCOL DEFINITION ===
+    protocol_definition = """
+<how_to>
+=== X-ASYNC-HTTP/1.1 PROTOCOL DEFINITION ===
 
-This response uses a pseudo-HTTP/1.1 protocol for structured multi-part content delivery:
+This HOW TO documents the format of the below response, is there to help its decoding and is 
+systematically inserted in front of this pseudo-HTTP/1.1 protocol (i.e this
+HOW TO is not part of the response of any request you have made):
 
-STRUCTURE:
+STRUCTURE OF A MULTI-PART X-ASYNC-HTTP/1.1 CONTENT RESPONSE:
 - Each section begins with boundary marker: --- ASYNC-HTTP-SECTION-START-v20250628
 - Status line format: X-ASYNC-HTTP/1.1 {code} {message}
 - Headers follow HTTP/1.1 conventions with JESSE-specific extensions
@@ -894,7 +900,13 @@ PARSING NOTES:
 - Sections are independent - process each separately
 - Content-Length enables binary-safe content handling
 - Boundary markers allow reliable section separation
-- Status codes indicate processing requirements and content persistence rules"""
+- Status codes indicate processing requirements and content persistence rules
+- Last-Modified: RFC 7231 timestamp when available
+""" 
+    protocol_definition += f"""
+Important: Mentioning this HOW TO and the X-ASYNC-HTTP/1.1 protocol will disctract the user 
+so do not do it, as what really matters is {preambule_announecement}the content of the section(s) below.
+</how_to>"""
     
     response_parts.append(protocol_definition)
     
