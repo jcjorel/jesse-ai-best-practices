@@ -34,6 +34,12 @@
 # <codebase>: jesse_framework_mcp.constants for HTTP format constants
 ###############################################################################
 # [GenAI tool change history]
+# 2025-06-29T21:10:36Z : Added HTTP 241 status code for immediate attention context-dependent content by CodeAssistant
+# * Added HTTP 241 "Context Dependent Content requiring IMMEDIATE attention" status code for critical task-specific content
+# * Extended HttpStatus class with CONTEXT_DEPENDENT_IMMEDIATE = 241 constant
+# * Updated get_default_message() method to include mapping for status code 241
+# * Enhanced X-ASYNC-HTTP/1.1 protocol definition to document the new 241 status code
+# * Zero breaking changes - all existing functionality preserved, new status code is additive
 # 2025-06-29T17:26:26Z : Added HTTP 240 status code, preambule parameter, and protocol definition by CodeAssistant
 # * Added HTTP 240 "Context Dependent Content" status code for task-specific content that must never be persisted in knowledge bases
 # * Added optional preambule parameter to format_multi_section_response() with XML tag wrapping
@@ -51,14 +57,6 @@
 # * Content-Location headers now show portable paths like file://{PROJECT_ROOT}/... instead of resolved filesystem paths
 # * Maintains cross-platform portability and environment independence for MCP resource headers
 # * Zero breaking changes - all existing functionality preserved with improved portability
-# 2025-06-28T06:47:00Z : Enhanced HttpPath with writable flag and replaced Path objects with HttpPath throughout by CodeAssistant
-# * Added writable flag to HttpPath class constructor with default false (readonly)
-# * Added is_writable() and get_last_modified_rfc7231() methods to HttpPath
-# * Updated format_http_section() to use Union[str, HttpPath] instead of Union[str, Path]
-# * Added Content-Writable header with true/false values based on writable flag
-# * Replaced all Path object handling with HttpPath objects for consistency
-# * Updated last_modified parameter to accept only HttpPath objects
-# * Enhanced error handling and documentation for HttpPath integration
 ###############################################################################
 
 import os
@@ -82,6 +80,7 @@ class HttpStatus:
     """
     OK = 200
     CONTEXT_DEPENDENT = 240
+    CONTEXT_DEPENDENT_IMMEDIATE = 241
     NOT_FOUND = 404
     FORBIDDEN = 403
     INTERNAL_SERVER_ERROR = 500
@@ -108,6 +107,7 @@ class HttpStatus:
         return {
             200: "OK",
             240: "Context Dependent Content",
+            241: "Context Dependent Content requiring IMMEDIATE attention",
             404: "Not Found", 
             403: "Forbidden",
             500: "Internal Server Error"
@@ -808,6 +808,53 @@ def format_http_section(
     return formatted_section
 
 
+def extract_http_sections_from_multi_response(multi_response: str) -> tuple[str, Optional[str]]:
+    """
+    Extract HTTP sections and preambule from multi-section ASYNC-HTTP response.
+    Removes the <how_to> protocol definition section for session initialization.
+    
+    Args:
+        multi_response: Complete multi-section response from format_multi_section_response()
+        
+    Returns:
+        Tuple of (http_sections_content, preambule_content_or_none)
+        - http_sections_content: All HTTP sections without how_to wrapper
+        - preambule_content_or_none: Preambule content or None if no preambule
+        
+    Raises:
+        ValueError: When multi_response format is invalid or malformed
+    """
+    # Step 1: Extract preambule if present
+    preambule_content = None
+    remaining_content = multi_response
+    
+    preambule_start = remaining_content.find('<preambule>')
+    if preambule_start != -1:
+        preambule_end = remaining_content.find('</preambule>')
+        if preambule_end != -1:
+            # Extract preambule content (without XML tags)
+            preambule_content = remaining_content[preambule_start + 11:preambule_end].strip()
+            # Remove preambule section from content
+            remaining_content = remaining_content[preambule_end + 12:].strip()
+    
+    # Step 2: Skip how_to section
+    how_to_start = remaining_content.find('<how_to>')
+    if how_to_start != -1:
+        how_to_end = remaining_content.find('</how_to>')
+        if how_to_end != -1:
+            # Remove how_to section entirely
+            remaining_content = remaining_content[how_to_end + 9:].strip()
+    
+    # Step 3: Extract HTTP sections (everything after how_to removal)
+    http_sections = remaining_content.strip()
+    
+    # Step 4: Validate we have HTTP sections
+    if not http_sections or 'ASYNC-HTTP-SECTION-START' not in http_sections:
+        raise ValueError("No valid HTTP sections found in multi-response")
+    
+    return http_sections, preambule_content
+
+
 def format_multi_section_response(*sections: str, preambule: Optional[str] = None) -> str:
     """
     [Function intent]
@@ -882,6 +929,7 @@ KEY HEADERS:
 STATUS CODES:
 - 200 OK: Content successfully loaded and available
 - 240 Context Dependent Content: Task-specific content, never persist in knowledge bases
+- 241 Context Dependent Content requiring IMMEDIATE attention: Critical task-specific content requiring urgent processing
 - 403 Forbidden: Access denied to resource
 - 404 Not Found: Resource does not exist
 - 500 Internal Server Error: Processing failure

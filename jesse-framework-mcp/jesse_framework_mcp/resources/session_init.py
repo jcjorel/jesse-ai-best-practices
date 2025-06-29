@@ -55,10 +55,17 @@ from typing import List, Dict, Any
 
 from fastmcp import Context
 from ..main import server
-from ..helpers.http_formatter import format_multi_section_response, format_http_section, ContentCriticality, HttpPath
+from ..helpers.http_formatter import (
+    format_multi_section_response, 
+    format_http_section, 
+    ContentCriticality, 
+    HttpPath,
+    extract_http_sections_from_multi_response
+)
 from ..helpers.project_root import get_project_root, get_project_setup_guidance
 from .framework_rules import get_rule_by_name, get_available_rule_names
-from .project_resources import get_project_context_summary, get_project_knowledge, get_project_gitignore_files
+from .project_resources import get_project_context_summary, get_project_knowledge
+from .gitignore import get_project_gitignore_files, get_gitignore_compliance_status
 from .wip_tasks import get_wip_tasks_inventory
 from .knowledge import get_git_clones_readme, get_pdf_knowledge_readme
 from .workflows import get_embedded_workflow_files, get_workflow_description, get_workflow_category
@@ -210,21 +217,38 @@ async def get_session_init_context(ctx: Context) -> str:
             error_section = create_error_section("Knowledge Base Indexes", str(e), ContentCriticality.INFORMATIONAL)
             sections.append(error_section)
         
-        # === SECTION 7: PROJECT GITIGNORE FILES ===
+        # === SECTION 7: GITIGNORE COMPLIANCE (CONDITIONAL) ===
         current_section += 1
-        await ctx.report_progress((current_section - 1) * 100 // total_sections, 100, f"Loading Gitignore Files ({current_section}/{total_sections})")
+        await ctx.report_progress((current_section - 1) * 100 // total_sections, 100, f"Checking Gitignore Compliance ({current_section}/{total_sections})")
         
         try:
-            # Unwrap FastMCP function before calling
-            gitignore_func = unwrap_fastmcp_function(get_project_gitignore_files)
-            gitignore_response = await gitignore_func(ctx)
-            # The gitignore resource returns a multi-section response, so we need to add it as-is
-            sections.append(gitignore_response)
-            await ctx.info("✓ Loaded Project Gitignore Files")
+            # Use smart compliance checking - only outputs when issues need attention
+            compliance_func = unwrap_fastmcp_function(get_gitignore_compliance_status)
+            compliance_response = await compliance_func(ctx)
+            
+            # Only add section if there are compliance issues to address
+            if compliance_response.strip():  # Non-empty response means issues found
+                # Extract clean HTTP sections without how_to wrapper
+                clean_sections, preambule = extract_http_sections_from_multi_response(compliance_response)
+                sections.append(clean_sections)
+                await ctx.info("⚠️ Gitignore compliance issues found - guidance included")
+            else:
+                await ctx.info("✓ Gitignore compliance verified - no issues")
+                # Major context reduction: no section added when compliant
         except Exception as e:
-            await ctx.error(f"Failed to load Gitignore Files: {str(e)}")
-            error_section = create_error_section("Project Gitignore Files", str(e), ContentCriticality.INFORMATIONAL)
-            sections.append(error_section)
+            await ctx.error(f"Failed to check Gitignore Compliance: {str(e)}")
+            # Fallback to traditional gitignore files display on compliance check failure
+            try:
+                gitignore_func = unwrap_fastmcp_function(get_project_gitignore_files)
+                gitignore_response = await gitignore_func(ctx)
+                # Extract clean HTTP sections without how_to wrapper
+                clean_sections, preambule = extract_http_sections_from_multi_response(gitignore_response)
+                sections.append(clean_sections)
+                await ctx.info("✓ Fallback: Loaded Project Gitignore Files")
+            except Exception as fallback_error:
+                await ctx.error(f"Fallback also failed: {str(fallback_error)}")
+                error_section = create_error_section("Gitignore Compliance & Files", f"Primary: {str(e)}, Fallback: {str(fallback_error)}", ContentCriticality.INFORMATIONAL)
+                sections.append(error_section)
         
         # === FINALIZE MULTI-SECTION RESPONSE ===
         await ctx.report_progress(100, 100, "Finalizing session initialization context...")
