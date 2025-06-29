@@ -34,6 +34,12 @@
 # <codebase>: jesse_framework_mcp.constants for HTTP format constants
 ###############################################################################
 # [GenAI tool change history]
+# 2025-06-29T17:26:26Z : Added HTTP 240 status code, preambule parameter, and protocol definition by CodeAssistant
+# * Added HTTP 240 "Context Dependent Content" status code for task-specific content that must never be persisted in knowledge bases
+# * Added optional preambule parameter to format_multi_section_response() with XML tag wrapping
+# * Integrated comprehensive X-ASYNC-HTTP/1.1 protocol definition explaining format structure, headers, and status codes
+# * Enhanced format_multi_section_response() to be self-documenting with protocol definition section
+# * Zero breaking changes - all existing functionality preserved, new features are optional parameters
 # 2025-06-28T14:22:52Z : Fixed HttpPath file:// URL filesystem operations support by CodeAssistant
 # * Fixed HttpPath constructor to handle file:// URLs by extracting filesystem path while preserving original URL
 # * Updated exists(), is_file(), read_text() and other filesystem methods to work with file:// URLs
@@ -53,11 +59,6 @@
 # * Replaced all Path object handling with HttpPath objects for consistency
 # * Updated last_modified parameter to accept only HttpPath objects
 # * Enhanced error handling and documentation for HttpPath integration
-# 2025-06-28T06:30:35Z : Added HttpPath class for dual-path portable location management by CodeAssistant
-# * Implemented HttpPath class inheriting from Path with dual-path storage capability
-# * Added support for maintaining original portable path strings for Location headers
-# * Enhanced format_http_section() to accept HttpPath objects in location parameter
-# * Integrated HttpPath with existing resolve_portable_path() infrastructure for consistency
 ###############################################################################
 
 import os
@@ -80,6 +81,7 @@ class HttpStatus:
     Class constants for common HTTP status codes with utility method for default messages.
     """
     OK = 200
+    CONTEXT_DEPENDENT = 240
     NOT_FOUND = 404
     FORBIDDEN = 403
     INTERNAL_SERVER_ERROR = 500
@@ -105,6 +107,7 @@ class HttpStatus:
         """
         return {
             200: "OK",
+            240: "Context Dependent Content",
             404: "Not Found", 
             403: "Forbidden",
             500: "Internal Server Error"
@@ -805,25 +808,30 @@ def format_http_section(
     return formatted_section
 
 
-def format_multi_section_response(*sections: str) -> str:
+def format_multi_section_response(*sections: str, preambule: Optional[str] = None) -> str:
     """
     [Function intent]
-    Combine multiple HTTP-formatted sections into a single multi-part response.
-    Creates complete MCP resource responses with multiple content sections.
+    Combine multiple HTTP-formatted sections into a single multi-part response with optional preambule.
+    Creates complete MCP resource responses with protocol definition and multiple content sections.
     
     [Design principles]
+    Optional preambule wrapped in XML tags for contextual information outside HTTP protocol.
+    Self-documenting protocol definition explains X-ASYNC-HTTP/1.1 format to readers.
     Simple concatenation of pre-formatted sections with section separators.
     Maintains individual section integrity while creating cohesive responses.
     
     [Implementation details]
+    Places preambule first (if provided) wrapped in <preambule></preambule> XML tags.
+    Includes X-ASYNC-HTTP/1.1 protocol definition after preambule and before first section.
     Joins sections with double newlines for clear visual separation.
     Assumes all sections are already properly HTTP-formatted.
     
     Args:
         *sections: Variable number of HTTP-formatted section strings
+        preambule: Optional contextual text placed before protocol definition
         
     Returns:
-        Combined multi-part response string
+        Combined multi-part response string with optional preambule and protocol definition
         
     Raises:
         ValueError: When no sections provided or sections are empty
@@ -836,5 +844,62 @@ def format_multi_section_response(*sections: str) -> str:
         if not section or not section.strip():
             raise ValueError(f"Section {i} is empty or contains only whitespace")
     
-    # Join sections with double newlines for clear separation
-    return "\n\n".join(sections)
+    # Build response components
+    response_parts = []
+    
+    # 1. Add preambule if provided
+    if preambule is not None and preambule.strip():
+        response_parts.append(f"<preambule>\n{preambule.strip()}\n</preambule>")
+    
+    # 2. Add X-ASYNC-HTTP/1.1 protocol definition
+    protocol_definition = """=== X-ASYNC-HTTP/1.1 PROTOCOL DEFINITION ===
+
+This response uses a pseudo-HTTP/1.1 protocol for structured multi-part content delivery:
+
+STRUCTURE:
+- Each section begins with boundary marker: --- ASYNC-HTTP-SECTION-START-v20250628
+- Status line format: X-ASYNC-HTTP/1.1 {code} {message}
+- Headers follow HTTP/1.1 conventions with JESSE-specific extensions
+- Empty line separates headers from content body
+- Content is UTF-8 encoded with byte-accurate Content-Length
+
+KEY HEADERS:
+- Content-Location: Portable path with {PROJECT_ROOT}, {HOME} variables
+- Content-Length: Exact UTF-8 byte count for precise parsing
+- Content-Type: MIME type (text/markdown, application/json, etc.)
+- Content-Criticality: CRITICAL (must follow) vs INFORMATIONAL (context only)
+- Content-Description: Human-readable content summary
+- Content-Section: Type classification (workflow, knowledge-base, etc.)
+- Content-Writable: true/false indicating if content should be editable
+- Last-Modified: RFC 7231 timestamp when available
+
+STATUS CODES:
+- 200 OK: Content successfully loaded and available
+- 240 Context Dependent Content: Task-specific content, never persist in knowledge bases
+- 403 Forbidden: Access denied to resource
+- 404 Not Found: Resource does not exist
+- 500 Internal Server Error: Processing failure
+
+CRITICALITY LEVELS:
+- CRITICAL: Framework rules and workflows that must be strictly followed
+- INFORMATIONAL: Knowledge base content and contextual information
+
+PATH VARIABLES:
+- {PROJECT_ROOT}: Current working directory
+- {HOME}: User home directory  
+- {CLINE_RULES}: Global Cline rules directory
+- {CLINE_WORKFLOWS}: Global Cline workflows directory
+
+PARSING NOTES:
+- Sections are independent - process each separately
+- Content-Length enables binary-safe content handling
+- Boundary markers allow reliable section separation
+- Status codes indicate processing requirements and content persistence rules"""
+    
+    response_parts.append(protocol_definition)
+    
+    # 3. Add all HTTP sections
+    response_parts.extend(sections)
+    
+    # 4. Join all parts with double newlines for clear separation
+    return "\n\n".join(response_parts)
