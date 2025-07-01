@@ -3,8 +3,28 @@
 
 ---
 
+# 🚨 FRAMEWORK-WIDE SESSION INITIALIZATION REQUIREMENT 🚨
+
+## Mandatory Session Initialization Command
+**EVERY JESSE FRAMEWORK DEVELOPMENT SESSION MUST START WITH:**
+```bash
+uv run python jesse-framework-mcp/tests/test_project_root.py --dump
+```
+
+**REQUIREMENT LEVEL**: 🔒 **HARD BLOCKING** - Development work cannot proceed without this  
+**SCOPE**: All JESSE Framework development sessions (framework-wide requirement)  
+**MODES**: **BOTH PLAN AND ACT MODES** - This command must be executed even when starting a PLAN session  
+**ENFORCEMENT**: Manual verification required before ANY development activity (planning or implementation)
+**IMPORTANT**: You are allowed to execute this command in PLAN mode.
+
+**⚠️ CRITICAL**: This initialization command is required to be executed **as soon as possible**, regardless of whether you begin in PLAN mode or ACT mode. Planning activities also require proper project context initialization.
+
+**This requirement is documented in detail in**: `.knowledge/persistent-knowledge/KNOWLEDGE_BASE.md`
+
+---
+
 # Essential Knowledge Base
-*Last Updated: 2025-06-27T12:18:00Z*
+*Last Updated: 2025-07-01T10:39:00Z*
 
 ## Current Work-in-Progress Task
 **Active Task**: Knowledge Bases Hierarchical Indexing System

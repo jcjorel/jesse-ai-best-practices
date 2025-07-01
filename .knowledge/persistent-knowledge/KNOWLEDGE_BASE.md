@@ -1,5 +1,38 @@
 # JESSE Framework Development - Project Knowledge Base
-*Last Updated: 2025-06-27T23:35:00Z*
+*Last Updated: 2025-07-01T10:37:00Z*
+
+# 🚨 CRITICAL: Framework-Wide Session Initialization Requirement
+
+## Mandatory Session Initialization Command
+**EVERY JESSE FRAMEWORK DEVELOPMENT SESSION MUST START WITH:**
+```bash
+cd jesse-framework-mcp && uv run python tests/test_project_root.py --dump
+```
+
+**REQUIREMENT LEVEL**: 🔒 **HARD BLOCKING** - Development work cannot proceed without this  
+**SCOPE**: All JESSE Framework development sessions (framework-wide requirement)  
+**ENFORCEMENT**: Manual verification required before any development activity
+**CRITICAL**: You MUST run this command once as soon as possible even in PLAN mode
+
+### What This Command Does:
+- Enriches working context with essential project structure information
+- Provides comprehensive session initialization resource content  
+- Validates project root detection and configuration
+- Ensures proper FastMCP context setup for all development work
+
+### Verification Steps:
+1. Command must complete successfully without errors
+2. Must generate substantial output (multiple sections of project context)
+3. Output must include project structure, session initialization, and resource content
+4. Any errors indicate improper project setup requiring resolution before proceeding
+
+### Consequences of Not Running:
+- ❌ Incomplete project context leading to incorrect development decisions
+- ❌ Missing critical project structure information
+- ❌ Potential code generation in wrong locations or with wrong patterns
+- ❌ Session may fail to understand project architecture and constraints
+
+---
 
 ## Session-Specific Knowledge Loading Strategy
 **LAZY LOADING APPROACH**: Knowledge bases related to the current session task are loaded on-demand when specifically needed, rather than automatically at session initialization. This approach:

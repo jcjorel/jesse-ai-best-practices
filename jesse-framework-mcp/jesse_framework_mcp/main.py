@@ -72,8 +72,13 @@ server = FastMCP("JESSE Framework")
 from . import resources  # Auto-registers all resource handlers
 from .helpers import knowledge_scanners  # Only what's needed for resource support
 from .helpers.http_formatter import format_http_section, ContentCriticality
+from .knowledge_bases import register_knowledge_bases_tools, register_knowledge_bases_resources
 import json
 from datetime import datetime
+
+# Register knowledge bases tools and resources
+register_knowledge_bases_tools(server)
+register_knowledge_bases_resources(server)
 
 # === LIGHTWEIGHT RESOURCE INDEX ===
 

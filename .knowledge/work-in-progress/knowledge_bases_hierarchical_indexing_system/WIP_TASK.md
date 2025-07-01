@@ -1,9 +1,26 @@
 # Task: Knowledge Bases Hierarchical Indexing System
 
+# 🚨 FRAMEWORK-WIDE SESSION INITIALIZATION REQUIREMENT 🚨
+
+## Mandatory Session Initialization Command
+**EVERY JESSE FRAMEWORK DEVELOPMENT SESSION MUST START WITH:**
+```bash
+cd jesse-framework-mcp && uv run python tests/test_project_root.py --dump
+```
+
+**REQUIREMENT LEVEL**: 🔒 **HARD BLOCKING** - Development work cannot proceed without this  
+**SCOPE**: All JESSE Framework development sessions (framework-wide requirement)  
+**ENFORCEMENT**: Manual verification required before any development activity
+**CRITICAL**: You MUST run this command once as soon as possible even in PLAN mode
+
+**This requirement is documented in detail in**: `.knowledge/persistent-knowledge/KNOWLEDGE_BASE.md`
+
+---
+
 ## Git Integration
-- **Branch**: [To be determined during setup]
-- **Parent Branch**: [To be determined if new branch created]
-- **Branch Created**: [Timestamp if new branch created]
+- **Branch**: jesse-wip/knowledge_bases_hierarchical_indexing_system
+- **Parent Branch**: next-gen-mcp
+- **Branch Created**: 2025-07-01T10:29:00Z
 - **Branch Status**: Active
 
 ## Task Context
@@ -230,13 +247,19 @@ class IndexingConfig:
 ## Task Learnings
 
 ### Key Discoveries
-*Initial discoveries will be recorded here as implementation progresses*
+- **Claude 4 Sonnet Model ID**: Must use `"us.anthropic.claude-sonnet-4-20250514-v1:0"` as defined in `llm/strands_agent_driver/models.py`
+- **Hierarchical Processing Constraint**: Leaf-first, bottom-up ONLY - parent summaries built FROM child summaries, never parent context passed to child processing
+- **Implementation Priority**: Core indexing engine first (HierarchicalIndexer → ChangeDetector → KnowledgeBuilder), then special handlers
 
 ### Patterns Identified
-*Implementation patterns will be documented here*
+- **Bottom-Up Assembly Pattern**: Process files in deepest directories independently, then build parent summaries from completed child summaries
+- **Aggregative Hierarchy**: Each directory level aggregates information from its children without passing context downward
+- **Independent Processing**: Each file/directory processes in isolation before contributing to parent summary
 
 ### Challenges & Solutions
-*Technical challenges and their solutions will be captured here*
+- **Context Flow Direction**: Corrected understanding that hierarchy is purely aggregative (child → parent), not contextual (parent → child)
+- **Model Configuration**: Use strands_agent_driver's Claude4SonnetConfig.create_optimized_for_analysis() for consistent summarization
+- **Processing Algorithm**: Depth-first discovery, leaf processing, child-to-parent assembly pattern
 
 ## Task Resources
 

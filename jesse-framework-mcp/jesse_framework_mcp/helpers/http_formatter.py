@@ -62,7 +62,7 @@
 import os
 import datetime
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Any
 
 
 class HttpStatus:
@@ -853,6 +853,79 @@ def extract_http_sections_from_multi_response(multi_response: str) -> tuple[str,
         raise ValueError("No valid HTTP sections found in multi-response")
     
     return http_sections, preambule_content
+
+
+def format_http_response(
+    status_code: int,
+    status_message: str,
+    data: Union[Dict[str, Any], str],
+    content_type: str = "application/json"
+) -> str:
+    """
+    [Function intent]
+    Format a simple HTTP response with status code, headers, and data content.
+    Creates standardized HTTP/1.1-like responses for API and tool integration.
+    
+    [Design principles]
+    Simple HTTP response formatting for API tools and direct responses.
+    Automatic JSON serialization for dictionary data with string passthrough.
+    Consistent status line and header formatting following HTTP/1.1 conventions.
+    
+    [Implementation details]
+    Uses HTTP/1.1 status line format with provided status code and message.
+    Automatically serializes dictionary data to JSON with proper content type.
+    Calculates accurate Content-Length for proper HTTP response formatting.
+    
+    Args:
+        status_code: HTTP status code (200, 404, 500, etc.)
+        status_message: HTTP status message ("OK", "Not Found", etc.)
+        data: Response data (dict for JSON or string for direct content)
+        content_type: MIME type for Content-Type header
+        
+    Returns:
+        Complete HTTP/1.1-formatted response with headers and content
+        
+    Raises:
+        TypeError: When data is not dict or string
+        ValueError: When status_code or status_message are invalid
+    """
+    import json
+    
+    # Validate parameters
+    if not isinstance(status_code, int) or status_code < 100 or status_code > 599:
+        raise ValueError(f"Invalid HTTP status code: {status_code}")
+    
+    if not status_message or not status_message.strip():
+        raise ValueError("HTTP status message cannot be empty")
+    
+    if not content_type or not content_type.strip():
+        raise ValueError("Content-Type cannot be empty")
+    
+    # Process data content
+    if isinstance(data, dict):
+        if content_type == "application/json":
+            content = json.dumps(data, indent=2)
+        else:
+            content = str(data)
+    elif isinstance(data, str):
+        content = data
+    else:
+        raise TypeError(f"Data must be dict or str, got {type(data).__name__}")
+    
+    # Calculate content length
+    content_bytes = content.encode('utf-8')
+    content_length = len(content_bytes)
+    
+    # Build HTTP response
+    response_lines = [
+        f"HTTP/1.1 {status_code} {status_message}",
+        f"Content-Type: {content_type}",
+        f"Content-Length: {content_length}",
+        "",  # Empty line separator
+        content
+    ]
+    
+    return "\n".join(response_lines)
 
 
 def format_multi_section_response(*sections: str, preambule: Optional[str] = None) -> str:
