@@ -21,7 +21,15 @@ This directory contains knowledge bases extracted from PDF documents that provid
 
 ## Available Knowledge Bases
 
-*No PDF knowledge bases have been imported yet.*
+### Amazon Bedrock User Guide
+**PDF File**: bedrock-ug.pdf (3,431 pages)
+**Purpose**: Comprehensive Amazon Bedrock service documentation for AI/ML development context
+**Key Features**: Foundation models, API reference, Agents, Knowledge Bases, Guardrails, Custom models
+**Knowledge Base**: [bedrock_ug_kb.md](bedrock_ug/bedrock_ug_kb.md)
+**Added**: 2025-06-30T00:09:00Z
+**Status**: **IN PROGRESS** - 1 of 172 chunks analyzed
+**Next Action**: Continue import in new session with `/jesse_wip_kb_pdf_import`
+**Relevance**: Critical reference for Bedrock service integration, MCP server development with Bedrock models, and AI application development patterns
 
 ## How to Add PDF Knowledge Bases
 Use the PDF Import workflow to add external PDF documents:
