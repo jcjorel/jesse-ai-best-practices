@@ -8,6 +8,7 @@
 ```bash
 cd jesse-framework-mcp && uv run python tests/test_project_root.py --dump
 ```
+NOTE: Do not forget the "cd" when you launch the command or it will fail!
 
 **REQUIREMENT LEVEL**: 🔒 **HARD BLOCKING** - Development work cannot proceed without this  
 **SCOPE**: All JESSE Framework development sessions (framework-wide requirement)  

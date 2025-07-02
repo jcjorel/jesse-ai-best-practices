@@ -108,19 +108,19 @@ class FileContext:
     """
     [Class intent]
     Immutable context information for individual file processing during indexing.
-    Tracks file metadata, processing state, content analysis results, and error information
+    Tracks file metadata, processing state, raw LLM analysis content, and error information
     for comprehensive file-level operation tracking and debugging.
 
     [Design principles]
     Frozen dataclass ensuring context immutability during concurrent processing.
     Complete file processing state capture for accurate progress reporting.
     Error information preservation enabling detailed failure analysis and recovery.
-    Content metadata storage supporting hierarchical summary generation.
+    Raw LLM content storage supporting direct insertion into hierarchical knowledge files.
 
     [Implementation details]
     File size and timestamp information cached for efficient change detection.
     Processing status tracking enables accurate progress calculation and error handling.
-    Content summary storage supports parent directory knowledge file generation.
+    Raw LLM analysis content stored as-is without parsing or transformation.
     Error details preserved for debugging and retry decision making.
     """
     
@@ -128,7 +128,7 @@ class FileContext:
     file_size: int
     last_modified: datetime
     processing_status: ProcessingStatus = ProcessingStatus.PENDING
-    content_summary: Optional[str] = None
+    knowledge_content: Optional[str] = None  # Raw LLM analysis content stored as-is
     error_message: Optional[str] = None
     processing_start_time: Optional[datetime] = None
     processing_end_time: Optional[datetime] = None
@@ -158,21 +158,21 @@ class FileContext:
     def is_completed(self) -> bool:
         """
         [Class method intent]
-        Checks if file processing has completed successfully with content summary generated.
+        Checks if file processing has completed successfully with knowledge content generated.
         Used for progress calculation and dependency resolution in hierarchical processing.
 
         [Design principles]
         Clear completion criteria enabling accurate progress reporting and workflow control.
-        Summary requirement ensures completed files contribute to parent directory processing.
+        Knowledge content requirement ensures completed files contribute to parent directory processing.
         Boolean return value simplifies conditional logic in processing workflows.
 
         [Implementation details]
-        Requires both COMPLETED status and non-None content summary for true completion.
-        Status check ensures processing workflow completion while summary check validates output.
+        Requires both COMPLETED status and non-None knowledge content for true completion.
+        Status check ensures processing workflow completion while content check validates output.
         Used in parent directory processing to determine child processing readiness.
         """
         return (self.processing_status == ProcessingStatus.COMPLETED and 
-                self.content_summary is not None)
+                self.knowledge_content is not None)
 
 
 @dataclass(frozen=True)

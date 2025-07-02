@@ -146,6 +146,11 @@ class IndexingConfig:
     # Knowledge File Output Configuration
     knowledge_output_directory: Optional[Path] = None  # Directory for generated knowledge files (if None, uses parent of source)
     
+    # Debug Configuration
+    debug_mode: bool = False  # Enable debug mode for LLM output persistence and replay
+    debug_output_directory: Optional[Path] = None  # Directory for debug artifacts (if None, uses temp directory)
+    enable_llm_replay: bool = False  # Use saved LLM outputs instead of making new calls
+    
     def __post_init__(self):
         """
         [Class method intent]
@@ -285,5 +290,8 @@ class IndexingConfig:
             'max_retries': self.max_retries,
             'retry_delay_seconds': self.retry_delay_seconds,
             'continue_on_file_errors': self.continue_on_file_errors,
-            'knowledge_output_directory': str(self.knowledge_output_directory) if self.knowledge_output_directory else None
+            'knowledge_output_directory': str(self.knowledge_output_directory) if self.knowledge_output_directory else None,
+            'debug_mode': self.debug_mode,
+            'debug_output_directory': str(self.debug_output_directory) if self.debug_output_directory else None,
+            'enable_llm_replay': self.enable_llm_replay
         }

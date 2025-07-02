@@ -591,7 +591,7 @@ class HierarchicalIndexer:
                 await ctx.debug(f"Processing file: {file_context.file_path}")
                 
                 # Delegate to knowledge builder
-                updated_context = await self.knowledge_builder.build_file_summary(file_context, ctx)
+                updated_context = await self.knowledge_builder.build_file_knowledge(file_context, ctx)
                 
                 return updated_context
                 
@@ -698,3 +698,26 @@ class HierarchicalIndexer:
         Thread-safe access to status information for concurrent monitoring scenarios.
         """
         return self._current_status
+    
+    async def cleanup(self) -> None:
+        """
+        [Class method intent]
+        Cleans up hierarchical indexer resources including knowledge builder and handler components.
+        Ensures proper resource cleanup and connection closure for all component dependencies.
+
+        [Design principles]
+        Comprehensive resource cleanup ensuring no resource leaks or connection issues.
+        Component cleanup delegation enabling proper resource management across dependencies.
+        Error handling preventing cleanup failures from cascading to calling code.
+
+        [Implementation details]
+        Delegates cleanup to KnowledgeBuilder and handler components for proper resource management.
+        Handles cleanup errors gracefully with appropriate logging and error reporting.
+        """
+        try:
+            if hasattr(self, 'knowledge_builder') and self.knowledge_builder:
+                await self.knowledge_builder.cleanup()
+            
+            logger.info("HierarchicalIndexer cleanup completed")
+        except Exception as e:
+            logger.warning(f"HierarchicalIndexer cleanup error: {e}")
