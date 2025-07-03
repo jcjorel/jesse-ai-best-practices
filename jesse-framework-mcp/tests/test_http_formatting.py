@@ -67,9 +67,9 @@ from jesse_framework_mcp.helpers.http_formatter import (
     format_http_section,
     format_multi_section_response,
     ContentCriticality,
-    resolve_portable_path,
     HttpPath
 )
+from jesse_framework_mcp.helpers.path_utils import resolve_portable_path
 from jesse_framework_mcp.constants import (
     HTTP_BOUNDARY_MARKER,
     CONTENT_TYPES,

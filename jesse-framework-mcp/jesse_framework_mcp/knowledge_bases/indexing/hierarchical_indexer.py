@@ -63,7 +63,7 @@ import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Set
+from typing import List, Optional, Dict, Any
 
 from fastmcp import Context
 
@@ -326,60 +326,11 @@ class HierarchicalIndexer:
         
         if changes:
             await ctx.info(f"Detected {len(changes)} changes requiring processing")
-            # Update processing status based on changes
-            await self._update_contexts_for_changes(root_context, changes, ctx)
+            # Note: Change-based context updates will be implemented when ChangeDetector is complete
         else:
             await ctx.info("No changes detected - all knowledge files are up to date")
     
-    async def _update_contexts_for_changes(self, root_context: DirectoryContext, changes: List[Any], ctx: Context) -> None:
-        """
-        [Class method intent]
-        Updates DirectoryContext and FileContext processing status based on detected changes.
-        Marks changed items for processing while leaving unchanged items as completed
-        to optimize incremental processing performance.
-
-        [Design principles]
-        Selective processing enabling incremental updates without full hierarchy reprocessing.
-        Context status updates reflecting change detection results for processing coordination.
-        Efficient processing by marking only changed items for active processing.
-
-        [Implementation details]
-        Iterates through detected changes updating corresponding context processing status.
-        Marks changed files as PENDING for processing while unchanged files remain COMPLETED.
-        Updates directory processing status based on child change status aggregation.
-        """
-        await ctx.info("Updating context status based on detected changes")
-        
-        # Implementation will be completed when ChangeDetector is implemented
-        # For now, mark all contexts as needing processing
-        await self._mark_all_for_processing(root_context)
     
-    async def _mark_all_for_processing(self, directory_context: DirectoryContext) -> None:
-        """
-        [Class method intent]
-        Recursively marks all files and directories in the hierarchy for processing.
-        Used when full reprocessing is required or when incremental change detection
-        indicates comprehensive updates are needed.
-
-        [Design principles]
-        Comprehensive processing marking ensuring all content receives fresh analysis.
-        Recursive processing ensuring complete hierarchy coverage.
-        Simple processing state management for full reprocessing scenarios.
-
-        [Implementation details]
-        Recursively marks all FileContext objects with PENDING processing status.
-        Recursively marks all DirectoryContext objects with PENDING processing status.
-        Ensures complete hierarchy will be processed during leaf-first processing phase.
-        """
-        # Mark all files for processing
-        for file_context in directory_context.file_contexts:
-            # FileContext is frozen, so we need to create new instances
-            # This will be handled properly when we implement context updates
-            pass
-        
-        # Mark all subdirectories for processing recursively
-        for subdir_context in directory_context.subdirectory_contexts:
-            await self._mark_all_for_processing(subdir_context)
     
     async def _process_directory_hierarchy(self, root_context: DirectoryContext, ctx: Context) -> None:
         """

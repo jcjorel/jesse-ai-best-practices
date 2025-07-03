@@ -329,7 +329,7 @@ async def test_indexer_core_functionality():
         else:
             print("🆕 NO DEBUG DIRECTORY: Fresh execution mode")
 
-        # Create indexing configuration with DEBUG MODE AND REPLAY DISABLED
+        # Create indexing configuration with DEBUG MODE AND REPLAY ENABLED
         config = IndexingConfig(
             indexing_mode=IndexingMode.FULL,
             max_file_size=1024 * 1024,  # 1MB
@@ -338,9 +338,9 @@ async def test_indexer_core_functionality():
             continue_on_file_errors=True,
             enable_progress_reporting=True,
             knowledge_output_directory=indexed_knowledge_dir,  # Specify where knowledge files should be written
-            debug_mode=False,  # 🔧 DEBUG MODE DISABLED (infrastructure preserved)
+            debug_mode=True,  # 🔧 DEBUG MODE ENABLED - captures all LLM interactions
             debug_output_directory=temp_dir / "debug",  # Store debug files in test directory
-            enable_llm_replay=False  # 🔧 REPLAY MODE DISABLED (infrastructure preserved)
+            enable_llm_replay=True  # 🔧 REPLAY MODE ENABLED - reuses cached LLM responses
         )
         print(f"Configuration created: {config.indexing_mode}")
         

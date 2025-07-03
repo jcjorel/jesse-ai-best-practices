@@ -23,11 +23,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Add the llm directory to Python path
-sys.path.insert(0, str(Path(__file__).parent.parent / "llm"))
+# Add the project root to Python path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
-    from strands_agent_driver import (
+    from jesse_framework_mcp.llm.strands_agent_driver import (
         StrandsClaude4Driver,
         Claude4SonnetConfig,
         ConversationMemoryStrategy,
@@ -56,8 +56,11 @@ async def test_basic_configuration():
     performance_config = Claude4SonnetConfig.create_optimized_for_performance()
     
     logger.info(f"Conversation config - Memory strategy: {conversation_config.memory_strategy}")
+    logger.info(f"Conversation config - Suppress reasoning: {conversation_config.suppress_reasoning_output}")
     logger.info(f"Analysis config - Temperature: {analysis_config.temperature}")
+    logger.info(f"Analysis config - Suppress reasoning: {analysis_config.suppress_reasoning_output}")
     logger.info(f"Performance config - Extended thinking: {performance_config.enable_extended_thinking}")
+    logger.info(f"Performance config - Suppress reasoning: {performance_config.suppress_reasoning_output}")
     
     # Test configuration validation
     try:
@@ -182,7 +185,7 @@ async def test_caching_system():
     """Test the caching system independently."""
     logger.info("Testing caching system...")
     
-    from strands_agent_driver.conversation import PromptCache
+    from jesse_framework_mcp.llm.strands_agent_driver.conversation import PromptCache
     
     # Test cache operations
     cache = PromptCache(max_entries=3, ttl_seconds=1)

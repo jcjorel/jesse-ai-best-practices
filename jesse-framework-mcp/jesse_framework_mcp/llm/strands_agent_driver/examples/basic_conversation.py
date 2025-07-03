@@ -47,6 +47,7 @@ async def basic_conversation_example():
     print(f"🧠 Memory Strategy: {config.memory_strategy.value}")
     print(f"💾 Prompt Caching: {config.enable_prompt_caching}")
     print(f"🎯 Extended Thinking: {config.enable_extended_thinking}")
+    print(f"🤫 Suppress Reasoning: {config.suppress_reasoning_output}")
     print()
     
     try:

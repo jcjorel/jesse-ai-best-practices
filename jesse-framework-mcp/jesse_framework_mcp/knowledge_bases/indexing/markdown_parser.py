@@ -38,6 +38,11 @@
 # <codebase>: ..models.knowledge_context - Context structures for integration
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-02T20:30:00Z : Implemented line-number-aware spacing preservation system by CodeAssistant
+# * Added analyze_spacing_patterns() method leveraging mistletoe line_number attributes
+# * Implemented _calculate_appropriate_spacing() for context-aware blank line insertion
+# * Added render_to_markdown_with_spacing() for spacing-aware document rendering
+# * Enhanced replace_section_content() with spacing analysis and preservation
 # 2025-07-01T18:39:00Z : Enhanced section replacement capabilities by CodeAssistant
 # * Added replace_multiple_sections for batch section updates
 # * Implemented extract_section_content_as_text for content inspection
@@ -66,6 +71,12 @@ from mistletoe import Document
 from mistletoe.block_token import Heading, Paragraph, BlockToken
 from mistletoe.span_token import RawText
 from mistletoe.markdown_renderer import MarkdownRenderer
+
+from ...helpers.mistletoe_spacing import (
+    enhance_tokens_with_blank_lines,
+    render_with_spacing_preservation,
+    preserve_llm_spacing
+)
 
 logger = logging.getLogger(__name__)
 
@@ -158,32 +169,37 @@ class MarkdownParser:
             logger.error(f"Failed to parse markdown content: {e}")
             return None
     
-    def find_headers_by_level(self, doc: Document, level: int) -> List[Heading]:
+    def parse_content_with_spacing_enhancement(self, content: str) -> Optional[Document]:
         """
         [Class method intent]
-        Finds all headers of specified level in document AST for structure analysis.
-        Enables systematic header identification for section-based content organization.
+        Parses markdown content and immediately enhances it with spacing preservation attributes.
+        Combines parsing and spacing enhancement for LLM-generated hierarchical content processing.
 
         [Design principles]
-        Level-based header filtering supporting hierarchical document structure analysis.
-        Complete header enumeration enabling comprehensive section identification and processing.
-        Type-safe header collection supporting reliable document structure manipulation.
+        Integrated parsing and spacing enhancement for LLM content with original formatting preservation.
+        Single-step operation reducing boilerplate for hierarchical semantic tree processing.
+        Error handling ensuring parsing or enhancement failures don't disrupt knowledge generation.
 
         [Implementation details]
-        Traverses document AST filtering for Heading tokens with matching level attribute.
-        Returns list of Heading tokens for further processing and content manipulation.
-        Handles empty documents gracefully returning empty list for consistent behavior.
+        Parses content into mistletoe Document and enhances with blank_lines_before attributes.
+        Uses dedicated spacing helper for consistent spacing preservation across the system.
+        Returns enhanced document ready for spacing-aware rendering operations.
         """
-        headers = []
-        if not doc or not hasattr(doc, 'children'):
-            return headers
-        
-        for token in doc.children:
-            if isinstance(token, Heading) and token.level == level:
-                headers.append(token)
-        
-        logger.debug(f"Found {len(headers)} headers at level {level}")
-        return headers
+        try:
+            doc = self.parse_content(content)
+            if not doc:
+                return None
+            
+            # Enhance with spacing attributes using helper
+            enhanced_doc = enhance_tokens_with_blank_lines(doc)
+            
+            logger.debug(f"Successfully parsed and enhanced content with spacing: {len(content)} characters")
+            return enhanced_doc
+            
+        except Exception as e:
+            logger.error(f"Failed to parse content with spacing enhancement: {e}")
+            return None
+    
     
     def find_header_by_text(self, doc: Document, header_text: str) -> Optional[Heading]:
         """
@@ -299,19 +315,19 @@ class MarkdownParser:
         """
         [Class method intent]
         Replaces entire section content following specified header with new content.
-        Preserves original LLM formatting exactly by parsing new content as markdown and inserting tokens.
+        Preserves original LLM formatting and line spacing using line_number-aware spacing analysis.
 
         [Design principles]
-        Section-based content replacement preserving original LLM formatting and spacing.
+        Section-based content replacement preserving original LLM formatting and line spacing.
+        Line-number-aware spacing analysis maintaining original document formatting patterns.
         Boundary-aware replacement respecting document hierarchy and nested header structures.
         Content preservation ensuring header and surrounding sections remain intact during replacement.
-        Native mistletoe parsing ensuring original formatting is preserved through proper AST construction.
 
         [Implementation details]
+        Analyzes original spacing patterns using mistletoe line_number attributes.
         Identifies section boundaries and removes existing content between headers.
         Parses new content as complete markdown document to preserve original token structure.
-        Extracts children from parsed content document and inserts them into target document.
-        Follows mistletoe dev guide patterns for markdown-to-markdown processing.
+        Applies spacing-aware rendering to maintain original line spacing patterns.
         """
         header = self.find_header_by_text(doc, header_text)
         if not header:
@@ -319,11 +335,23 @@ class MarkdownParser:
             return None
         
         try:
+            # Analyze original spacing patterns before modification
+            spacing_map = self.analyze_spacing_patterns(doc)
+            
             # Get current section content to determine replacement boundaries
             section_tokens = self.get_section_content(doc, header)
             
             # Find header position
             header_index = doc.children.index(header)
+            
+            # Capture spacing context around the section
+            prev_token = doc.children[header_index - 1] if header_index > 0 else None
+            next_token = None
+            
+            # Find the next token after the section
+            section_end_index = header_index + len(section_tokens) + 1
+            if section_end_index < len(doc.children):
+                next_token = doc.children[section_end_index]
             
             # Remove existing section content (in reverse order to maintain indices)
             for token in reversed(section_tokens):
@@ -331,17 +359,27 @@ class MarkdownParser:
                     doc.children.remove(token)
             
             # Parse the new content as a complete markdown document to preserve original formatting
-            # This is the key insight from mistletoe dev guide - let mistletoe handle the parsing
             content_doc = Document(new_content)
             
-            # Insert all children from the parsed content document
-            # This preserves the original LLM formatting including spacing
+            # Apply spacing-aware insertion based on context
             insert_index = header_index + 1
-            for token in content_doc.children:
+            for i, token in enumerate(content_doc.children):
+                # Apply appropriate spacing based on context and patterns
+                if hasattr(token, 'line_number'):
+                    # Adjust line number based on insertion context
+                    if prev_token and hasattr(prev_token, 'line_number'):
+                        # Calculate appropriate line number based on spacing patterns
+                        token.line_number = prev_token.line_number + self._calculate_appropriate_spacing(
+                            prev_token, token, spacing_map
+                        )
+                    elif header and hasattr(header, 'line_number'):
+                        # Base spacing on header position
+                        token.line_number = header.line_number + 2 + i
+                
                 doc.children.insert(insert_index, token)
                 insert_index += 1
             
-            logger.debug(f"Replaced section content for header: {header_text} with {len(content_doc.children)} parsed tokens")
+            logger.debug(f"Replaced section content for header: {header_text} with {len(content_doc.children)} parsed tokens using spacing-aware insertion")
             return doc
             
         except Exception as e:
@@ -427,19 +465,16 @@ class MarkdownParser:
     def render_to_markdown(self, doc: Document) -> Optional[str]:
         """
         [Class method intent]
-        Renders mistletoe Document AST back to markdown string format with proper spacing preservation.
+        Renders mistletoe Document AST back to markdown string format.
         Enables conversion of modified AST back to markdown for file writing and content output.
-        Fixes spacing issues where mistletoe's default renderer compresses blank lines.
 
         [Design principles]
         AST-to-markdown conversion preserving document structure and formatting during rendering.
-        Spacing preservation ensuring proper markdown formatting with blank lines after headers.
-        Error handling preventing rendering failures from disrupting document processing workflows.
         Clean markdown output supporting standard markdown compatibility and tool integration.
+        Error handling preventing rendering failures from disrupting document processing workflows.
 
         [Implementation details]
         Uses mistletoe MarkdownRenderer for complete AST-to-markdown conversion.
-        Applies extensive post-processing to restore proper paragraph spacing and formatting.
         Handles rendering exceptions with detailed error reporting and graceful failure recovery.
         Returns None on rendering failure to enable alternative processing strategies.
         """
@@ -447,206 +482,12 @@ class MarkdownParser:
             with MarkdownRenderer() as renderer:
                 markdown_content = renderer.render(doc)
                 
-                # Apply comprehensive spacing fixes to restore paragraph breaks
-                fixed_content = self._fix_paragraph_spacing(markdown_content)
-                
-                logger.debug(f"Successfully rendered document to markdown ({len(fixed_content)} characters)")
-                return fixed_content
+                logger.debug(f"Successfully rendered document to markdown ({len(markdown_content)} characters)")
+                return markdown_content
         except Exception as e:
             logger.error(f"Failed to render document to markdown: {e}")
             return None
     
-    def _fix_paragraph_spacing(self, markdown_content: str) -> str:
-        """
-        [Class method intent]
-        Fixes paragraph spacing issues in mistletoe-rendered markdown by restoring proper paragraph breaks.
-        Addresses the critical issue where mistletoe's MarkdownRenderer compresses paragraph spacing,
-        causing content to flow together without proper breaks between paragraphs.
-
-        [Design principles]
-        Simple and predictable spacing restoration using elegant single rule approach.
-        Universal spacing fix handling both paragraph breaks and header spacing simultaneously.
-        HTML content awareness preventing unwanted spacing after HTML elements and comments.
-        Reliable and maintainable solution addressing the core compression issue.
-
-        [Implementation details]
-        Single rule: add blank line after any non-empty line when next line also has content.
-        This elegantly handles both paragraph spacing and header spacing issues.
-        HTML detection prevents spacing after HTML comments, tags, and block elements.
-        Works consistently across all content types while respecting HTML formatting.
-        """
-        try:
-            lines = markdown_content.split('\n')
-            fixed_lines = []
-            
-            for i, line in enumerate(lines):
-                fixed_lines.append(line)
-                
-                # Universal spacing rule with HTML transition awareness:
-                # 1. Add blank line after non-HTML content (normal rule)
-                # 2. Add blank line when HTML content is followed by non-HTML content
-                # 3. No blank line between HTML content lines (keeps HTML blocks compact)
-                if (line.strip() and  # Current line has content
-                    i + 1 < len(lines) and  # Not the last line
-                    lines[i + 1].strip()):  # Next line also has content
-                    
-                    # Add spacing in two cases:
-                    # Case 1: HTML line followed by non-HTML line (HTML → Content transition)
-                    # Case 2: Non-HTML line (normal spacing rule)
-                    if (self._is_html_content(line) and not self._is_html_content(lines[i + 1])) or \
-                       (not self._is_html_content(line)):
-                        fixed_lines.append('')  # Add blank line
-            
-            fixed_content = '\n'.join(fixed_lines)
-            logger.debug("Applied simple universal spacing fixes with HTML awareness")
-            return fixed_content
-            
-        except Exception as e:
-            logger.warning(f"Failed to fix paragraph spacing: {e}")
-            return markdown_content  # Return original if fixing fails
-
-    def _is_html_content(self, line: str) -> bool:
-        """
-        [Class method intent]
-        Detects if a line contains HTML content that shouldn't have spacing after it.
-        Prevents unwanted blank lines after HTML comments, tags, and block elements.
-
-        [Design principles]
-        HTML content detection supporting proper spacing control around HTML elements.
-        Pattern-based recognition avoiding complex parsing while handling common HTML cases.
-        Conservative approach preventing false positives while catching main HTML patterns.
-
-        [Implementation details]
-        Checks for HTML comments, opening/closing tags, and block-level HTML elements.
-        Uses string pattern matching for efficient detection without full HTML parsing.
-        Returns True for HTML content that should not have blank lines added after it.
-        """
-        stripped = line.strip()
-        if not stripped:
-            return False
-        
-        # HTML comments (like our warning headers)
-        if stripped.startswith('<!--') and stripped.endswith('-->'):
-            return True
-        
-        # HTML tags (opening, closing, or self-closing)
-        if stripped.startswith('<') and stripped.endswith('>'):
-            return True
-        
-        # Block-level HTML elements that often appear as standalone lines
-        block_elements = ['div', 'p', 'section', 'article', 'header', 'footer', 'nav', 'main', 'aside']
-        for element in block_elements:
-            if stripped.startswith(f'<{element}') or stripped.startswith(f'</{element}>'):
-                return True
-        
-        return False
-
-    def _is_abbreviation_ending(self, line: str) -> bool:
-        """
-        [Class method intent]
-        Determines if a line ending with a period is likely an abbreviation rather than sentence end.
-        Helps prevent incorrect paragraph breaks after abbreviations like "etc." or "e.g.".
-
-        [Design principles]
-        Heuristic approach to abbreviation detection preventing false paragraph breaks.
-        Common abbreviation pattern recognition supporting natural text flow preservation.
-
-        [Implementation details]
-        Checks for common abbreviation patterns that shouldn't trigger paragraph breaks.
-        Returns True if line likely ends with abbreviation, False for sentence endings.
-        """
-        line = line.strip().lower()
-        
-        # Common abbreviations that shouldn't trigger paragraph breaks
-        abbreviations = ['etc.', 'e.g.', 'i.e.', 'vs.', 'mr.', 'mrs.', 'dr.', 'prof.', 'inc.', 'ltd.', 'corp.']
-        
-        for abbr in abbreviations:
-            if line.endswith(abbr):
-                return True
-        
-        # Check for single letter abbreviations (A., B., etc.)
-        import re
-        if len(line) >= 2 and re.match(r'[a-z]\.$', line[-2:]):
-            return True
-            
-        return False
-
-    def _fix_markdown_spacing(self, markdown_content: str) -> str:
-        """
-        [Class method intent]
-        Fixes spacing issues in mistletoe-rendered markdown by adding proper blank lines.
-        Addresses the issue where mistletoe's MarkdownRenderer compresses spacing and removes
-        blank lines that are essential for proper markdown formatting.
-
-        [Design principles]
-        Post-processing approach to fix spacing without modifying mistletoe's core rendering.
-        Header-based spacing detection ensuring proper blank lines after markdown headers.
-        Content-aware spacing ensuring blank lines before and after key content sections.
-        Preservation of existing spacing while adding missing blank lines where needed.
-
-        [Implementation details]
-        Processes rendered markdown line-by-line to identify headers and content patterns.
-        Adds blank lines after headers when they're immediately followed by content.
-        Adds blank lines before bold text sections when they follow other content.
-        Maintains existing document structure while improving readability and formatting.
-        """
-        try:
-            lines = markdown_content.split('\n')
-            fixed_lines = []
-            
-            i = 0
-            while i < len(lines):
-                current_line = lines[i]
-                
-                # Check if we need a blank line before this line
-                if (i > 0 and 
-                    current_line.strip().startswith('**') and 
-                    fixed_lines and 
-                    fixed_lines[-1].strip() != '' and
-                    not fixed_lines[-1].strip().startswith('#') and
-                    not fixed_lines[-1].strip().startswith('**')):
-                    # Add blank line before bold text if previous line was content
-                    fixed_lines.append('')
-                
-                fixed_lines.append(current_line)
-                
-                # Check if this line is a header (starts with #)
-                if current_line.strip().startswith('#') and current_line.strip() != '#':
-                    # Look at the next line
-                    if i + 1 < len(lines):
-                        next_line = lines[i + 1]
-                        
-                        # If next line is not blank and not another header, add blank line
-                        if (next_line.strip() != '' and 
-                            not next_line.strip().startswith('#') and
-                            not next_line.strip().startswith('---')):  # Don't add before horizontal rules
-                            fixed_lines.append('')  # Add blank line
-                
-                # Check if we need spacing after bold content sections
-                elif (current_line.strip().startswith('**') and i + 1 < len(lines)):
-                    next_line = lines[i + 1]
-                    # Add blank line after bold text if next line is another bold text or different content
-                    if (next_line.strip() != '' and 
-                        next_line.strip().startswith('**') and
-                        i + 2 < len(lines)):  # Look ahead to see if we have multiple bold lines
-                        # Don't add spacing between consecutive bold lines, but add after the group
-                        pass
-                    elif (next_line.strip() != '' and 
-                          not next_line.strip().startswith('**') and
-                          not next_line.strip().startswith('#') and
-                          not next_line.strip().startswith('---')):
-                        # Add spacing after bold content when followed by different content
-                        fixed_lines.append('')
-                
-                i += 1
-            
-            fixed_content = '\n'.join(fixed_lines)
-            logger.debug("Applied enhanced markdown spacing fixes")
-            return fixed_content
-            
-        except Exception as e:
-            logger.warning(f"Failed to fix markdown spacing: {e}")
-            return markdown_content  # Return original if fixing fails
     
     def find_available_headers(self, doc: Document) -> List[Dict[str, Any]]:
         """
@@ -717,6 +558,194 @@ class MarkdownParser:
             return result
         
         return ''
+    
+    def analyze_spacing_patterns(self, doc: Document) -> Dict[int, int]:
+        """
+        [Class method intent]
+        Analyzes original spacing patterns in document using mistletoe line_number attributes.
+        Creates mapping of line number gaps to understand original formatting and blank line patterns.
+
+        [Design principles]
+        Line-number-aware spacing analysis leveraging mistletoe's built-in line tracking capabilities.
+        Pattern recognition identifying common spacing conventions for consistent formatting.
+        Gap-based analysis determining blank line positions from line number differences.
+
+        [Implementation details]
+        Traverses document tokens examining line_number attributes to identify spacing patterns.
+        Calculates line gaps between consecutive tokens to determine blank line positions.
+        Returns mapping of token positions to spacing information for rendering decisions.
+        """
+        spacing_map = {}
+        
+        if not doc or not hasattr(doc, 'children'):
+            return spacing_map
+        
+        try:
+            prev_line = None
+            
+            for i, token in enumerate(doc.children):
+                if hasattr(token, 'line_number') and token.line_number is not None:
+                    current_line = token.line_number
+                    
+                    if prev_line is not None:
+                        # Calculate gap between previous and current token
+                        line_gap = current_line - prev_line
+                        
+                        # Store spacing information
+                        spacing_map[i] = {
+                            'prev_line': prev_line,
+                            'current_line': current_line,
+                            'gap': line_gap,
+                            'blank_lines': max(0, line_gap - 1)  # -1 because one line is the token itself
+                        }
+                        
+                        logger.debug(f"Token {i}: gap={line_gap}, blank_lines={max(0, line_gap - 1)}")
+                    
+                    prev_line = current_line
+                else:
+                    # Token doesn't have line number, use default spacing
+                    spacing_map[i] = {
+                        'prev_line': prev_line,
+                        'current_line': None,
+                        'gap': 1,
+                        'blank_lines': 0
+                    }
+            
+            logger.debug(f"Analyzed spacing patterns for {len(spacing_map)} tokens")
+            return spacing_map
+            
+        except Exception as e:
+            logger.error(f"Failed to analyze spacing patterns: {e}")
+            return {}
+    
+    def _calculate_appropriate_spacing(self, prev_token: BlockToken, current_token: BlockToken, spacing_map: Dict[int, int]) -> int:
+        """
+        [Class method intent]
+        Calculates appropriate line spacing between tokens based on context and patterns.
+        Uses spacing analysis and token types to determine optimal blank line insertion.
+
+        [Design principles]
+        Context-aware spacing calculation considering token types and surrounding patterns.
+        Pattern-based spacing decisions respecting original document formatting conventions.
+        Intelligent fallback spacing for cases where patterns cannot be determined.
+
+        [Implementation details]
+        Analyzes token types (headers, paragraphs, etc.) to determine appropriate spacing.
+        Considers spacing patterns from original document for consistency.
+        Returns line number increment for proper spacing in modified document.
+        """
+        try:
+            # Default spacing based on token types
+            default_spacing = 2  # One blank line between sections
+            
+            # Analyze token types for context-aware spacing
+            if isinstance(prev_token, Heading) and isinstance(current_token, Paragraph):
+                # Header to paragraph: typically 1 blank line
+                return 2
+            elif isinstance(prev_token, Paragraph) and isinstance(current_token, Heading):
+                # Paragraph to header: typically 2 blank lines for section separation
+                return 3
+            elif isinstance(prev_token, Heading) and isinstance(current_token, Heading):
+                # Header to header: depends on levels
+                if hasattr(current_token, 'level') and hasattr(prev_token, 'level'):
+                    if current_token.level <= prev_token.level:
+                        # Same or higher level header: more spacing
+                        return 3
+                    else:
+                        # Lower level header: less spacing
+                        return 2
+                return 2
+            elif isinstance(prev_token, Paragraph) and isinstance(current_token, Paragraph):
+                # Paragraph to paragraph: minimal spacing
+                return 2
+            
+            # Look for patterns in spacing map if available
+            if spacing_map:
+                # Calculate average spacing for similar token transitions
+                gaps = [info['gap'] for info in spacing_map.values() if info['gap'] > 0]
+                if gaps:
+                    avg_gap = sum(gaps) // len(gaps)
+                    return max(2, avg_gap)  # At least 2 lines (1 blank line)
+            
+            logger.debug(f"Using default spacing: {default_spacing}")
+            return default_spacing
+            
+        except Exception as e:
+            logger.error(f"Failed to calculate appropriate spacing: {e}")
+            return 2  # Safe fallback
+    
+    def render_to_markdown_with_spacing(self, doc: Document) -> Optional[str]:
+        """
+        [Class method intent]
+        Renders mistletoe Document AST back to markdown with preserved line spacing.
+        Uses line_number attributes to calculate and preserve original blank line patterns.
+
+        [Design principles]
+        Spacing-aware rendering preserving original document formatting and blank line patterns.
+        Line-number-based spacing calculation maintaining visual document structure.
+        Token-by-token rendering with manual spacing insertion for precise control.
+
+        [Implementation details]
+        Calculates blank lines from line_number differences between consecutive tokens.
+        Renders each token individually to prevent spacing loss by default renderer.
+        Manually inserts calculated blank lines between tokens for spacing preservation.
+        """
+        try:
+            if not doc or not hasattr(doc, 'children') or not doc.children:
+                return ""
+            
+            # Calculate spacing information for each token
+            spacing_info = []
+            prev_line = None
+            
+            for i, token in enumerate(doc.children):
+                line_num = getattr(token, 'line_number', None)
+                
+                blank_lines = 0
+                if prev_line is not None and line_num is not None:
+                    gap = line_num - prev_line
+                    blank_lines = max(0, gap - 1)  # -1 because one line is the token itself
+                
+                spacing_info.append({
+                    'token': token,
+                    'blank_lines': blank_lines
+                })
+                
+                if line_num is not None:
+                    prev_line = line_num
+            
+            # Render tokens with spacing preservation
+            rendered_parts = []
+            
+            for i, info in enumerate(spacing_info):
+                token = info['token']
+                blank_lines = info['blank_lines']
+                
+                # Render individual token
+                temp_doc = type(doc)([])
+                temp_doc.children = [token]
+                
+                with MarkdownRenderer() as renderer:
+                    token_content = renderer.render(temp_doc).rstrip()
+                
+                if i == 0:
+                    # First token - no spacing prefix
+                    rendered_parts.append(token_content)
+                else:
+                    # Add blank lines before the token
+                    spacing_prefix = '\n' * (blank_lines + 1)  # +1 for normal newline between tokens
+                    rendered_parts.append(spacing_prefix + token_content)
+            
+            # Join all parts and add final newline
+            final_content = ''.join(rendered_parts) + '\n'
+            
+            logger.debug(f"Successfully rendered document with spacing preservation ({len(final_content)} characters)")
+            return final_content
+            
+        except Exception as e:
+            logger.error(f"Failed to render document with spacing: {e}")
+            # Fallback to standard rendering
+            return self.render_to_markdown(doc)
     
     def validate_document_structure(self, doc: Document) -> bool:
         """

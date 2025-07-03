@@ -66,6 +66,7 @@ class Claude4SonnetConfig:
     enable_extended_thinking: bool = True  # Enable Claude 4's extended thinking mode
     thinking_timeout_seconds: int = 480  # 8 minutes max for extended thinking
     enable_tool_use: bool = False  # Disable by default since we're not using MCP
+    suppress_reasoning_output: bool = True  # Suppress Claude 4's reasoning/thinking output from console
     
     def __post_init__(self):
         """Validate configuration after initialization."""
@@ -162,7 +163,8 @@ class Claude4SonnetConfig:
             "enable_extended_thinking": True,
             "thinking_timeout_seconds": 600,  # 10 minutes for complex analysis
             "max_tokens": 8192,  # Longer responses for detailed analysis
-            "memory_strategy": ConversationMemoryStrategy.SLIDING_WINDOW
+            "memory_strategy": ConversationMemoryStrategy.SLIDING_WINDOW,
+            "suppress_reasoning_output": False  # Show reasoning for analysis tasks
         }
         defaults.update(overrides)
         return cls(**defaults)

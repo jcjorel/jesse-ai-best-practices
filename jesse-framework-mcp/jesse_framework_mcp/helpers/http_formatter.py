@@ -63,6 +63,7 @@ import os
 import datetime
 from pathlib import Path
 from typing import Dict, Optional, Union, Any
+from .path_utils import resolve_portable_path
 
 
 class HttpStatus:
@@ -235,49 +236,6 @@ class ContentCriticality:
                 f"Invalid criticality '{criticality}'. Must be '{cls.CRITICAL}' or '{cls.INFORMATIONAL}'"
             )
         return criticality.upper()
-
-
-def resolve_portable_path(location: str) -> str:
-    """
-    [Function intent]
-    Resolve portable path variables to actual filesystem paths for cross-platform compatibility.
-    Transforms JESSE path variables into absolute paths for current environment.
-    
-    [Design principles]
-    Cross-platform path resolution supporting all standard JESSE path variables.
-    Immediate resolution without caching for current working directory accuracy.
-    
-    [Implementation details]
-    Replaces {PROJECT_ROOT}, {HOME}, {CLINE_RULES}, {CLINE_WORKFLOWS} variables
-    with actual resolved paths using pathlib for cross-platform compatibility.
-    
-    Args:
-        location: Path string with variable placeholders
-        
-    Returns:
-        Resolved absolute path with all variables substituted
-        
-    Raises:
-        OSError: When path resolution fails due to filesystem issues
-    """
-    try:
-        # Define path variable mappings
-        variables = {
-            '{PROJECT_ROOT}': str(Path.cwd()),
-            '{HOME}': str(Path.home()),
-            '{CLINE_RULES}': str(Path.home() / 'Cline' / 'Rules'),
-            '{CLINE_WORKFLOWS}': str(Path.home() / 'Cline' / 'Workflows')
-        }
-        
-        # Resolve all variables in the location
-        resolved = location
-        for variable, value in variables.items():
-            resolved = resolved.replace(variable, value)
-        
-        return resolved
-        
-    except Exception as e:
-        raise OSError(f"Failed to resolve portable path '{location}': {str(e)}")
 
 
 class HttpPath:

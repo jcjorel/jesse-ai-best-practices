@@ -42,7 +42,8 @@
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
+from .path_utils import resolve_portable_path, get_portable_path
 from .http_formatter import format_http_section, ContentCriticality
 
 

@@ -348,7 +348,7 @@ class StrandsClaude4Driver:
                     
                     elif "reasoning" in event and event.get("reasoning"):
                         # Claude 4's thinking/reasoning content
-                        if "reasoningText" in event:
+                        if "reasoningText" in event and not self.config.suppress_reasoning_output:
                             reasoning_text = event["reasoningText"]
                             yield StreamingResponse(
                                 content=reasoning_text,

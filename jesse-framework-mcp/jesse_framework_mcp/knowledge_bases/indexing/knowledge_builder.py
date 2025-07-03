@@ -40,14 +40,25 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-03T13:27:00Z : Aligned knowledge_builder.py with new get_global_summary_prompt method from enhanced_prompts.py by CodeAssistant
+# * Replaced direct template access with get_global_summary_prompt() method call for consistency
+# * Removed manual portable path conversion code since it's now handled internally by the getter method
+# * Enhanced error handling and logging through the standardized getter method approach
+# * Achieved complete alignment with file analysis and directory analysis prompt usage patterns
+# 2025-07-02T23:18:00Z : Simplified LLM output processing to eliminate parsing complexity by CodeAssistant
+# * Removed complex _parse_directory_response method - no longer needed with hierarchical prompts
+# * Simplified _generate_directory_analysis to use raw LLM output directly without section parsing
+# * Enhanced prompts generate structured hierarchical semantic trees that don't require parsing
+# * DirectorySummary now stores complete hierarchical content directly in main field
+# 2025-07-02T20:28:00Z : Major refactoring - broke down 218-line monster method into focused phase methods by CodeAssistant
+# * Replaced build_directory_summary_3_phase() (218 lines) with 6 focused methods for maintainability
+# * Added _initialize_and_assemble_content(), _generate_llm_insights(), _finalize_knowledge_file() phase methods
+# * Added _generate_global_summary(), _generate_directory_analysis() for focused LLM operations
+# * Simplified main build_directory_summary() method with clear 3-phase workflow delegation
 # 2025-07-01T18:56:00Z : Aligned summarization with individual file analysis factual directives by CodeAssistant
 # * Updated global summary prompt to use same factual directives as individual file analysis
 # * Added "Present FACTUAL TECHNICAL INFORMATION only - no quality judgments" requirement
 # * Enhanced prompt with same technical focus requirements for consistent analysis approach
-# 2025-07-01T17:15:00Z : Implemented 3-phase generation workflow by CodeAssistant
-# * Redesigned workflow: individual file analysis → programmatic insertion → global summary generation
-# * Updated directory processing to use incremental markdown building with template engine
-# * Implemented factual file analysis without judgmental language and token-efficient architecture
 ###############################################################################
 
 """
@@ -73,6 +84,7 @@ from ..models import (
     ProcessingStatus
 )
 from ...llm.strands_agent_driver import StrandsClaude4Driver, Claude4SonnetConfig
+from ...helpers.path_utils import get_portable_path
 from .markdown_template_engine import MarkdownTemplateEngine, FileAnalysis, DirectorySummary
 from .enhanced_prompts import EnhancedPrompts
 from .debug_handler import DebugHandler
@@ -216,11 +228,8 @@ class KnowledgeBuilder:
                     processing_end_time=datetime.now()
                 )
             
-            # Generate summary using Claude 4 Sonnet
-            if len(file_content) > self.config.chunk_size:
-                summary = await self._process_large_file(file_context.file_path, file_content, ctx)
-            else:
-                summary = await self._process_single_file(file_context.file_path, file_content, ctx)
+            # Generate summary using Claude 4 Sonnet (simplified - no chunking)
+            summary = await self._process_single_file(file_context.file_path, file_content, ctx)
             
             return FileContext(
                 file_path=file_context.file_path,
@@ -245,24 +254,23 @@ class KnowledgeBuilder:
                 processing_end_time=datetime.now()
             )
     
-    async def build_directory_summary_3_phase(self, directory_context: DirectoryContext, ctx: Context, source_root: Optional[Path] = None) -> DirectoryContext:
+    async def build_directory_summary(self, directory_context: DirectoryContext, ctx: Context, source_root: Optional[Path] = None) -> DirectoryContext:
         """
         [Class method intent]
         Implements 3-phase directory knowledge generation workflow for token efficiency and content quality.
-        Phase 1: Individual file analysis insertion, Phase 2: Subdirectory assembly, Phase 3: Global summary generation.
-        Uses incremental markdown building with programmatic content insertion and comprehensive LLM synthesis.
+        Phase 1: Initialize structure and insert file/subdirectory content, Phase 2: Generate LLM insights,
+        Phase 3: Finalize and write knowledge file.
 
         [Design principles]
         3-phase generation workflow optimizing token usage through selective LLM usage and programmatic assembly.
         Individual file analysis uses factual LLM processing without judgmental language or quality assessments.
         Programmatic content insertion for file analyses and subdirectory summaries maintaining structural consistency.
-        Global summary generation leverages complete assembled content for comprehensive synthesis and architectural insights.
+        Global summary generation leverages complete assembled content for comprehensive synthesis.
 
         [Implementation details]
-        Phase 1: Initialize base markdown structure and insert individual file analyses programmatically.
-        Phase 2: Insert subdirectory global summaries programmatically for hierarchical knowledge integration.
-        Phase 3: Generate global summary using LLM analysis of complete assembled content for comprehensive synthesis.
-        Uses template engine 3-phase methods for incremental building and standard markdown compatibility.
+        Breaks down complex workflow into focused phase methods for maintainability.
+        Each phase handles specific aspect of knowledge generation with clear separation of concerns.
+        Error handling ensures graceful degradation when individual phases encounter issues.
         """
         if not self.llm_driver:
             await self.initialize()
@@ -270,151 +278,20 @@ class KnowledgeBuilder:
         processing_start = datetime.now()
         
         try:
-            await ctx.info(f"Building 3-phase directory knowledge for: {directory_context.directory_path}")
+            await ctx.info(f"Building directory knowledge for: {directory_context.directory_path}")
             
-            # Phase 1: Initialize base markdown structure
-            await ctx.debug("Phase 1: Initializing base directory knowledge structure")
-            markdown_content = self.template_engine.initialize_directory_knowledge_base(directory_context.directory_path)
+            # Phase 1: Initialize and assemble content
+            markdown_content = await self._initialize_and_assemble_content(directory_context, ctx)
             
-            # Phase 1: Insert individual file contexts programmatically
-            file_contexts = self._collect_file_contexts(directory_context)
-            if file_contexts:
-                await ctx.debug(f"Phase 1: Inserting {len(file_contexts)} file contexts")
-                markdown_content = self.template_engine.insert_file_contexts(markdown_content, file_contexts)
+            # Phase 2: Generate LLM insights
+            global_summary, directory_summary = await self._generate_llm_insights(directory_context, markdown_content, ctx)
             
-            # Phase 2: Insert subdirectory summaries programmatically
-            subdirectory_summaries = self._collect_subdirectory_summaries(directory_context)
-            if subdirectory_summaries:
-                await ctx.debug(f"Phase 2: Inserting {len(subdirectory_summaries)} subdirectory summaries")
-                markdown_content = self.template_engine.insert_subdirectory_summaries(markdown_content, subdirectory_summaries)
-            
-            # Phase 3: Generate global summary using assembled content
-            await ctx.debug("Phase 3: Generating global summary from assembled content")
-            assembled_content = self.template_engine.extract_assembled_content(markdown_content)
-            
-            # Generate global summary prompt with same factual directives as individual file analysis
-            global_summary_prompt = f"""
-Analyze this complete directory content and generate a comprehensive global summary:
-
-**DIRECTORY**: {directory_context.directory_path}/
-
-**ASSEMBLED CONTENT**:
-{assembled_content}
-
-**CRITICAL REQUIREMENTS:**
-- Present FACTUAL TECHNICAL INFORMATION only - no quality judgments, no enhancement proposal
-- Identify specific design patterns, implementation strategies, and technical components
-- Document integration points, dependencies, and system relationships
-- Provide technical facts needed for code maintenance and understanding
-- Write in present tense only
-- Be concise and developer-focused
-- **DIRECTORY FORMATTING**: When mentioning directory names, ALWAYS add a trailing slash (e.g., "src/" not "src", "tests/" not "tests")
-- **DO NOT generate any headers or markdown formatting** - provide only the content text
-
-**ANALYSIS REQUIREMENTS**:
-- Provide comprehensive overview of the directory's role and purpose
-- Identify key architectural patterns and design decisions
-- Highlight important integration points and relationships
-- Focus on technical insights that enable system understanding
-- Be concise but comprehensive
-
-Generate a global summary that synthesizes all the individual file analyses and subdirectory content into a cohesive understanding of this directory's purpose and implementation.
-
-**IMPORTANT:** 
-- Provide factual technical information without subjective quality assessments
-- Focus on what the code does and how it works, not how well it works
-- Return ONLY the summary content without any headers, markdown formatting, or section titles
-- The content will be inserted programmatically into the correct section
-"""
-            
-            # Check for replay response for global summary
-            global_summary_replay = self.debug_handler.get_stage_replay_response(
-                stage="stage_5_global_summary",
-                directory_path=directory_context.directory_path
+            # Phase 3: Finalize knowledge file
+            knowledge_file_path = await self._finalize_knowledge_file(
+                directory_context, markdown_content, global_summary, directory_summary, source_root, ctx
             )
             
-            if global_summary_replay:
-                await ctx.info(f"🔄 REPLAY MODE: Reusing cached global summary for {directory_context.directory_path.name}/ (no LLM call made)")
-                global_summary = self._extract_content_from_llm_response(global_summary_replay.strip())
-            else:
-                # Generate global summary through Claude 4 Sonnet
-                conversation_id = f"global_summary_{directory_context.directory_path.name}_{datetime.now().isoformat()}"
-                await ctx.info(f"🤖 LLM CALL: Generating global directory summary for {directory_context.directory_path.name}/ using Claude 4 Sonnet")
-                response = await self.llm_driver.send_message(global_summary_prompt, conversation_id)
-                
-                # Capture using predictable stage-based debug
-                self.debug_handler.capture_stage_llm_output(
-                    stage="stage_5_global_summary",
-                    prompt=global_summary_prompt,
-                    response=response.content,
-                    directory_path=directory_context.directory_path
-                )
-                
-                # Parse the LLM response to extract only content, not headers
-                global_summary = self._extract_content_from_llm_response(response.content.strip())
-            
-            # Generate directory analysis for remaining sections
-            await ctx.debug("Phase 3: Generating directory architectural analysis")
-            child_content_summary = self._prepare_child_content_summary(directory_context)
-            directory_prompt = self.enhanced_prompts.get_directory_analysis_prompt(
-                directory_path=directory_context.directory_path,
-                file_count=len(directory_context.file_contexts),
-                subdirectory_count=len(directory_context.subdirectory_contexts),
-                child_content_summary=child_content_summary
-            )
-            
-            # Check for replay response for directory analysis
-            directory_analysis_replay = self.debug_handler.get_stage_replay_response(
-                stage="stage_4_directory_analysis",
-                directory_path=directory_context.directory_path
-            )
-            
-            if directory_analysis_replay:
-                await ctx.info(f"🔄 REPLAY MODE: Reusing cached architectural analysis for {directory_context.directory_path.name}/ (no LLM call made)")
-                directory_response_content = directory_analysis_replay
-            else:
-                await ctx.info(f"🤖 LLM CALL: Generating architectural analysis for {directory_context.directory_path.name}/ using Claude 4 Sonnet")
-                conversation_id = f"global_summary_{directory_context.directory_path.name}_{datetime.now().isoformat()}"
-                directory_response = await self.llm_driver.send_message(directory_prompt, conversation_id + "_architecture")
-                directory_response_content = directory_response.content
-                
-                # Capture using predictable stage-based debug
-                self.debug_handler.capture_stage_llm_output(
-                    stage="stage_4_directory_analysis",
-                    prompt=directory_prompt,
-                    response=directory_response_content,
-                    directory_path=directory_context.directory_path
-                )
-            parsed_sections = self.enhanced_prompts.parse_structured_response(directory_response_content)
-            
-            # Create DirectorySummary dataclass
-            directory_summary = DirectorySummary(
-                directory_path=directory_context.directory_path,
-                what_this_directory_contains=parsed_sections.get("what_this_directory_contains", "Analysis not available"),
-                how_its_organized=parsed_sections.get("how_its_organized", "Analysis not available"),
-                common_patterns=parsed_sections.get("common_patterns", "Analysis not available"),
-                how_it_connects=parsed_sections.get("how_it_connects", "Analysis not available")
-            )
-            
-            # Phase 3: Finalize with global summary and directory insights
-            await ctx.debug("Phase 3: Finalizing knowledge file with global summary")
-            markdown_content = self.template_engine.finalize_with_global_summary(
-                markdown_content=markdown_content,
-                global_summary=global_summary,
-                directory_summary=directory_summary,
-                file_count=len(file_contexts),
-                subdirectory_count=len(subdirectory_summaries)
-            )
-            
-            # Validate final markdown structure
-            if not self.template_engine.validate_markdown_structure(markdown_content):
-                logger.warning(f"Final markdown structure validation failed for: {directory_context.directory_path}")
-            
-            # Determine knowledge file path and write
-            knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path, source_root)
-            await self._write_knowledge_file(knowledge_file_path, markdown_content)
-            
-            await ctx.info(f"3-phase knowledge generation completed: {knowledge_file_path}")
+            await ctx.info(f"Directory knowledge generation completed: {knowledge_file_path}")
             
             return DirectoryContext(
                 directory_path=directory_context.directory_path,
@@ -428,7 +305,7 @@ Generate a global summary that synthesizes all the individual file analyses and 
             )
             
         except Exception as e:
-            logger.error(f"3-phase directory knowledge generation failed for {directory_context.directory_path}: {e}", exc_info=True)
+            logger.error(f"Directory knowledge generation failed for {directory_context.directory_path}: {e}", exc_info=True)
             
             return DirectoryContext(
                 directory_path=directory_context.directory_path,
@@ -439,26 +316,293 @@ Generate a global summary that synthesizes all the individual file analyses and 
                 processing_start_time=processing_start,
                 processing_end_time=datetime.now()
             )
-
-    async def build_directory_summary(self, directory_context: DirectoryContext, ctx: Context, source_root: Optional[Path] = None) -> DirectoryContext:
+    
+    async def _initialize_and_assemble_content(self, directory_context: DirectoryContext, ctx: Context) -> str:
         """
         [Class method intent]
-        Legacy directory summary generation method maintained for compatibility.
-        For new implementations, use build_directory_summary_3_phase for optimal token efficiency
-        and content quality through the 3-phase generation workflow.
+        Phase 1: Initializes base markdown structure and assembles file and subdirectory content.
+        Creates structured markdown template and programmatically inserts all content
+        for comprehensive directory knowledge foundation.
 
         [Design principles]
-        Maintains backward compatibility with existing hierarchical indexer implementations.
-        Provides fallback functionality when 3-phase generation is not required or available.
-        Delegates to 3-phase implementation for improved performance and quality.
+        Programmatic content assembly ensuring consistent structure across knowledge files.
+        Template-based approach providing standard markdown compatibility and parseability.
+        Error handling enabling graceful degradation when content assembly encounters issues.
 
         [Implementation details]
-        Calls build_directory_summary_3_phase to leverage improved token efficiency and content quality.
-        Maintains same interface and return type for seamless integration with existing code.
+        Initializes base directory knowledge structure using template engine.
+        Collects and inserts file contexts programmatically maintaining original formatting.
+        Assembles subdirectory summaries for hierarchical knowledge integration.
+        Returns complete markdown ready for LLM insight generation phase.
         """
-        # Delegate to 3-phase implementation for optimal results
-        return await self.build_directory_summary_3_phase(directory_context, ctx, source_root)
-    
+        await ctx.debug("Phase 1: Initializing base directory knowledge structure")
+        markdown_content = self.template_engine.initialize_directory_knowledge_base(directory_context.directory_path)
+        
+        # Insert individual file contexts programmatically
+        file_contexts = self._collect_file_contexts(directory_context)
+        if file_contexts:
+            await ctx.debug(f"Phase 1: Inserting {len(file_contexts)} file contexts")
+            markdown_content = self.template_engine.insert_file_contexts(markdown_content, file_contexts)
+        
+        # Insert subdirectory summaries programmatically
+        subdirectory_summaries = self._collect_subdirectory_summaries(directory_context)
+        if subdirectory_summaries:
+            await ctx.debug(f"Phase 1: Inserting {len(subdirectory_summaries)} subdirectory summaries")
+            markdown_content = self.template_engine.insert_subdirectory_summaries(markdown_content, subdirectory_summaries)
+        
+        return markdown_content
+
+    async def _generate_llm_insights(self, directory_context: DirectoryContext, markdown_content: str, ctx: Context) -> tuple[str, DirectorySummary]:
+        """
+        [Class method intent]
+        Phase 2: Generates LLM-powered insights including global summary and directory analysis.
+        Uses Claude 4 Sonnet to analyze assembled content and generate comprehensive
+        architectural insights and global summary for the directory.
+
+        [Design principles]
+        LLM insight generation leveraging complete assembled content for comprehensive analysis.
+        Dual analysis approach generating both global summary and structured directory insights.
+        Debug-aware processing supporting replay functionality for consistent results.
+        Error handling ensuring graceful degradation when LLM analysis encounters issues.
+
+        [Implementation details]
+        Extracts assembled content and generates global summary using factual analysis prompts.
+        Creates directory analysis using enhanced prompts for architectural insights.
+        Handles debug replay functionality for consistent testing and development.
+        Returns both global summary and structured DirectorySummary for final assembly.
+        """
+        await ctx.debug("Phase 2: Generating LLM insights from assembled content")
+        
+        # Extract assembled content for global summary generation
+        assembled_content = self.template_engine.extract_assembled_content(markdown_content)
+        
+        # Generate global summary
+        global_summary = await self._generate_global_summary(directory_context, assembled_content, ctx)
+        
+        # Generate directory architectural analysis
+        directory_summary = await self._generate_directory_analysis(directory_context, ctx)
+        
+        return global_summary, directory_summary
+
+    async def _finalize_knowledge_file(
+        self, 
+        directory_context: DirectoryContext, 
+        markdown_content: str, 
+        global_summary: str, 
+        directory_summary: DirectorySummary, 
+        source_root: Optional[Path], 
+        ctx: Context
+    ) -> Path:
+        """
+        [Class method intent]
+        Phase 3: Finalizes knowledge file by integrating LLM insights and writing to filesystem.
+        Combines global summary and directory insights with assembled content to create
+        complete knowledge file and writes to appropriate location.
+
+        [Design principles]
+        Final assembly combining all generated content into complete knowledge file.
+        File writing with intelligent path resolution and error handling.
+        Validation ensuring generated content meets structural requirements.
+        Comprehensive error handling for reliable knowledge file persistence.
+
+        [Implementation details]
+        Uses template engine to finalize markdown with global summary and directory insights.
+        Validates final markdown structure before writing to ensure quality.
+        Determines appropriate knowledge file path and writes content to filesystem.
+        Returns knowledge file path for calling context tracking and reporting.
+        """
+        await ctx.debug("Phase 3: Finalizing knowledge file with LLM insights")
+        
+        # Finalize markdown with global summary and directory insights
+        file_contexts = self._collect_file_contexts(directory_context)
+        subdirectory_summaries = self._collect_subdirectory_summaries(directory_context)
+        
+        final_markdown = self.template_engine.finalize_with_global_summary(
+            markdown_content=markdown_content,
+            global_summary=global_summary,
+            directory_summary=directory_summary,
+            file_count=len(file_contexts),
+            subdirectory_count=len(subdirectory_summaries)
+        )
+        
+        # Validate final markdown structure
+        if not self.template_engine.validate_markdown_structure(final_markdown):
+            logger.warning(f"Final markdown structure validation failed for: {directory_context.directory_path}")
+        
+        # Determine knowledge file path and write
+        knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path, source_root)
+        await self._write_knowledge_file(knowledge_file_path, final_markdown)
+        
+        return knowledge_file_path
+
+    async def _generate_global_summary(self, directory_context: DirectoryContext, assembled_content: str, ctx: Context) -> str:
+        """
+        [Class method intent]
+        Generates global summary using Claude 4 Sonnet analysis of complete assembled content.
+        Creates comprehensive directory overview synthesizing all file analyses and
+        subdirectory content into cohesive understanding of directory purpose.
+
+        [Design principles]
+        Global synthesis leveraging complete assembled content for comprehensive understanding.
+        Factual analysis without quality judgments maintaining consistency with file analysis.
+        Debug replay support enabling consistent results during development and testing.
+        LLM response processing ensuring clean content extraction for template integration.
+
+        [Implementation details]
+        Constructs factual analysis prompt using assembled content for comprehensive context.
+        Handles debug replay functionality for consistent testing and development workflows.
+        Processes LLM response to extract clean content without interfering headers.
+        Returns global summary ready for template engine integration and final assembly.
+        """
+        # Generate global summary prompt using enhanced prompts getter method
+        global_summary_prompt = self.enhanced_prompts.get_global_summary_prompt(
+            directory_path=directory_context.directory_path,
+            assembled_content=assembled_content
+        )
+        
+        # Check for main stage replay response (already reviewed content)
+        global_summary_replay = self.debug_handler.get_stage_replay_response(
+            stage="stage_5_global_summary",
+            directory_path=directory_context.directory_path
+        )
+        
+        if global_summary_replay:
+            await ctx.info(f"🔄 REPLAY MODE: Using cached reviewed global summary for {directory_context.directory_path.name}/ (no LLM or reviewer calls)")
+            # Return cached reviewed content directly - no need to review again
+            return self._extract_content_from_llm_response(global_summary_replay.strip())
+        
+        # Make fresh LLM call and review it
+        conversation_id = f"global_summary_{directory_context.directory_path.name}_{datetime.now().isoformat()}"
+        await ctx.info(f"🤖 LLM CALL: Generating global directory summary for {directory_context.directory_path.name}/ using Claude 4 Sonnet")
+        response = await self.llm_driver.send_message(global_summary_prompt, conversation_id)
+        
+        # Capture original interaction
+        self.debug_handler.capture_stage_llm_output(
+            stage="stage_5_global_summary_original",
+            prompt=global_summary_prompt,
+            response=response.content,
+            directory_path=directory_context.directory_path
+        )
+        
+        # Parse the LLM response to extract only content, not headers
+        original_global_summary = self._extract_content_from_llm_response(response.content.strip())
+        
+        # QUALITY ASSURANCE: Bounded loop reviewer for robust compliance checking
+        final_global_summary, iterations_used, was_compliant = await self._review_content_until_compliant(
+            content_to_review=original_global_summary,
+            reviewer_prompt_func=self.enhanced_prompts.get_global_summary_reviewer_prompt,
+            base_conversation_id=conversation_id,
+            stage_name="stage_5_global_summary",
+            directory_path=directory_context.directory_path,
+            ctx=ctx
+        )
+        
+        # Log final compliance status
+        if was_compliant:
+            await ctx.debug(f"✅ Global summary achieved compliance: {directory_context.directory_path.name}/ (after {iterations_used} iteration(s))")
+        else:
+            await ctx.info(f"🔧 Global summary using best attempt: {directory_context.directory_path.name}/ (after {iterations_used} iteration(s))")
+        
+        # Capture the final reviewed version for future replay
+        self.debug_handler.capture_stage_llm_output(
+            stage="stage_5_global_summary",
+            prompt=global_summary_prompt,
+            response=final_global_summary,
+            directory_path=directory_context.directory_path
+        )
+        
+        return final_global_summary
+
+    async def _generate_directory_analysis(self, directory_context: DirectoryContext, ctx: Context) -> DirectorySummary:
+        """
+        [Class method intent]
+        Generates directory analysis using enhanced prompts with raw hierarchical output.
+        Creates DirectorySummary with the complete hierarchical semantic tree content
+        for direct template integration without parsing complexity.
+
+        [Design principles]
+        Simplified approach using raw LLM output directly without parsing or section extraction.
+        Hierarchical semantic tree content preserved as generated by enhanced prompts.
+        Debug replay support for consistent results during development and testing workflows.
+        Error handling ensuring graceful degradation when directory analysis encounters issues.
+
+        [Implementation details]
+        Generates hierarchical directory analysis using enhanced prompts.
+        Uses raw LLM response content directly for DirectorySummary creation.
+        Eliminates parsing complexity by leveraging structured prompts that generate proper format.
+        Returns DirectorySummary with complete hierarchical content ready for template integration.
+        """
+        await ctx.debug("Generating directory architectural analysis")
+        
+        # Prepare child content summary for enhanced prompts
+        child_content_summary = self._prepare_child_content_summary(directory_context)
+        directory_prompt = self.enhanced_prompts.get_directory_analysis_prompt(
+            directory_path=directory_context.directory_path,
+            file_count=len(directory_context.file_contexts),
+            subdirectory_count=len(directory_context.subdirectory_contexts),
+            child_content_summary=child_content_summary
+        )
+        
+        # Check for main stage replay response (already reviewed content)
+        directory_analysis_replay = self.debug_handler.get_stage_replay_response(
+            stage="stage_4_directory_analysis",
+            directory_path=directory_context.directory_path
+        )
+        
+        if directory_analysis_replay:
+            await ctx.info(f"🔄 REPLAY MODE: Using cached reviewed architectural analysis for {directory_context.directory_path.name}/ (no LLM or reviewer calls)")
+            # Return cached reviewed content directly - no need to review again
+            final_directory_response_content = directory_analysis_replay
+        else:
+            # Make fresh LLM call and review it
+            await ctx.info(f"🤖 LLM CALL: Generating architectural analysis for {directory_context.directory_path.name}/ using Claude 4 Sonnet")
+            conversation_id = f"directory_analysis_{directory_context.directory_path.name}_{datetime.now().isoformat()}"
+            directory_response = await self.llm_driver.send_message(directory_prompt, conversation_id)
+            original_directory_response_content = directory_response.content
+            
+            # Capture original interaction
+            self.debug_handler.capture_stage_llm_output(
+                stage="stage_4_directory_analysis_original",
+                prompt=directory_prompt,
+                response=original_directory_response_content,
+                directory_path=directory_context.directory_path
+            )
+            
+            # QUALITY ASSURANCE: Bounded loop reviewer for robust compliance checking
+            final_directory_response_content, iterations_used, was_compliant = await self._review_content_until_compliant(
+                content_to_review=original_directory_response_content,
+                reviewer_prompt_func=self.enhanced_prompts.get_directory_analysis_reviewer_prompt,
+                base_conversation_id=conversation_id,
+                stage_name="stage_4_directory_analysis",
+                directory_path=directory_context.directory_path,
+                ctx=ctx
+            )
+            
+            # Log final compliance status
+            if was_compliant:
+                await ctx.debug(f"✅ Directory analysis achieved compliance: {directory_context.directory_path.name}/ (after {iterations_used} iteration(s))")
+            else:
+                await ctx.info(f"🔧 Directory analysis using best attempt: {directory_context.directory_path.name}/ (after {iterations_used} iteration(s))")
+            
+            # Capture the final reviewed version for future replay
+            self.debug_handler.capture_stage_llm_output(
+                stage="stage_4_directory_analysis",
+                prompt=directory_prompt,
+                response=final_directory_response_content,
+                directory_path=directory_context.directory_path
+            )
+        
+        # Use raw hierarchical content directly - no parsing needed
+        directory_summary = DirectorySummary(
+            directory_path=directory_context.directory_path,
+            what_this_directory_contains=final_directory_response_content.strip(),
+            how_its_organized="",  # Content is in what_this_directory_contains
+            common_patterns="",    # Content is in what_this_directory_contains  
+            how_it_connects=""     # Content is in what_this_directory_contains
+        )
+        
+        return directory_summary
+
     async def _read_file_content(self, file_path: Path) -> str:
         """
         [Class method intent]
@@ -516,205 +660,75 @@ Generate a global summary that synthesizes all the individual file analyses and 
         Returns raw LLM response ready for direct insertion into knowledge files.
         """
         try:
-            # Detect content type for specialized analysis
-            content_type = self.enhanced_prompts.detect_content_type(file_path, content)
-            
             # Generate simplified analysis prompt
             prompt = self.enhanced_prompts.get_file_analysis_prompt(
                 file_path=file_path,
                 file_content=content,
-                file_size=len(content),
-                content_type=content_type
+                file_size=len(content)
             )
             
             # Process through Claude 4 Sonnet with debug support
             normalized_path = self.debug_handler._normalize_path_for_filename(file_path)
             conversation_id = f"file_analysis_{normalized_path}"
             
-            # Check for replay response using predictable stage-based debug
+            # Check for main stage replay response (already reviewed content)
             replay_response = self.debug_handler.get_stage_replay_response(
                 stage="stage_1_file_analysis",
                 file_path=file_path
             )
             
             if replay_response:
-                await ctx.info(f"🔄 REPLAY MODE: Reusing cached LLM response for {file_path.name} (no LLM call made)")
-                await ctx.debug(f"Using replay response for file analysis: {file_path}")
-                response_content = replay_response
-            else:
-                await ctx.info(f"🤖 LLM CALL: Generating new analysis for {file_path.name} using Claude 4 Sonnet")
-                await ctx.debug(f"Making fresh LLM call for file analysis: {file_path}")
-                response = await self.llm_driver.send_message(prompt, conversation_id)
-                response_content = response.content
-                
-                # Capture interaction using predictable stage-based debug
-                self.debug_handler.capture_stage_llm_output(
-                    stage="stage_1_file_analysis",
-                    prompt=prompt,
-                    response=response_content,
-                    file_path=file_path
-                )
+                await ctx.info(f"🔄 REPLAY MODE: Using cached reviewed content for {file_path.name} (no LLM or reviewer calls)")
+                await ctx.debug(f"Using final reviewed response from replay: {file_path}")
+                # Return cached reviewed content directly - no need to review again
+                return replay_response.strip()
             
-            # Return raw LLM response without parsing or transformation
-            return response_content.strip()
+            # Make fresh LLM call and review it
+            await ctx.info(f"🤖 LLM CALL: Generating new analysis for {file_path.name} using Claude 4 Sonnet")
+            await ctx.debug(f"Making fresh LLM call for file analysis: {file_path}")
+            response = await self.llm_driver.send_message(prompt, conversation_id)
+            original_response_content = response.content
+            
+            # Capture original interaction
+            self.debug_handler.capture_stage_llm_output(
+                stage="stage_1_file_analysis_original",
+                prompt=prompt,
+                response=original_response_content,
+                file_path=file_path
+            )
+            
+            # QUALITY ASSURANCE: Bounded loop reviewer for robust compliance checking
+            final_response_content, iterations_used, was_compliant = await self._review_content_until_compliant(
+                content_to_review=original_response_content,
+                reviewer_prompt_func=self.enhanced_prompts.get_file_analysis_reviewer_prompt,
+                base_conversation_id=conversation_id,
+                stage_name="stage_1_file_analysis",
+                file_path=file_path,
+                ctx=ctx
+            )
+            
+            # Log final compliance status
+            if was_compliant:
+                await ctx.debug(f"✅ File analysis achieved compliance: {file_path.name} (after {iterations_used} iteration(s))")
+            else:
+                await ctx.info(f"🔧 File analysis using best attempt: {file_path.name} (after {iterations_used} iteration(s))")
+            
+            # Capture the final reviewed version for future replay
+            self.debug_handler.capture_stage_llm_output(
+                stage="stage_1_file_analysis",
+                prompt=prompt,
+                response=final_response_content,
+                file_path=file_path
+            )
+            
+            # Return final reviewed response
+            return final_response_content.strip()
             
         except Exception as e:
             logger.error(f"Simplified file processing failed for {file_path}: {e}")
             raise
     
-    async def _process_large_file(self, file_path: Path, content: str, ctx: Context) -> str:
-        """
-        [Class method intent]
-        Processes large files through content chunking and multi-pass Claude 4 Sonnet analysis.
-        Splits content into manageable chunks and aggregates analysis results
-        into comprehensive file summary with raw markdown output.
-
-        [Design principles]
-        Content chunking enabling processing of files exceeding LLM context constraints.
-        Multi-pass analysis with aggregation for comprehensive large file understanding.
-        Chunk overlap preservation maintaining context continuity across boundaries.
-        Summary aggregation combining chunk analyses into unified file understanding.
-
-        [Implementation details]
-        Splits content into chunks based on configuration size limits with overlap.
-        Processes each chunk through Claude 4 Sonnet with chunk-specific prompts.
-        Aggregates chunk analyses into final comprehensive file summary.
-        Returns raw LLM response ready for direct insertion into knowledge files.
-        """
-        await ctx.info(f"Processing large file with chunking: {file_path}")
-        
-        # Split content into chunks
-        chunks = self._split_content_into_chunks(content)
-        chunk_summaries = []
-        
-        # Process each chunk
-        for i, chunk in enumerate(chunks):
-            try:
-                # Use enhanced prompts for chunk analysis
-                content_type = self.enhanced_prompts.detect_content_type(file_path, chunk)
-                prompt = self.enhanced_prompts.get_file_analysis_prompt(
-                    file_path=file_path,
-                    file_content=chunk,
-                    file_size=len(chunk),
-                    content_type=content_type
-                )
-                
-                conversation_id = f"chunk_analysis_{file_path.stem}_chunk_{i}_{datetime.now().isoformat()}"
-                response = await self.llm_driver.send_message(prompt, conversation_id)
-                chunk_summaries.append(response.content.strip())
-                
-            except Exception as e:
-                logger.warning(f"Chunk {i+1} processing failed for {file_path}: {e}")
-                chunk_summaries.append(f"[Chunk {i+1} processing failed: {e}]")
-        
-        # Aggregate chunk summaries into final summary
-        aggregation_prompt = f"""
-Combine these chunk analyses into a comprehensive file summary:
-
-FILE: {file_path}
-
-CHUNK ANALYSES:
-{chr(10).join(f'Chunk {i+1}: {summary}' for i, summary in enumerate(chunk_summaries))}
-
-Create a unified summary that:
-- Uses present tense only
-- Explains the file's overall purpose and functionality
-- Integrates insights from all chunks
-- Respond in clear, well-formatted markdown
-"""
-        
-        conversation_id = f"file_aggregation_{file_path.stem}_{datetime.now().isoformat()}"
-        response = await self.llm_driver.send_message(aggregation_prompt, conversation_id)
-        
-        return response.content.strip()
     
-    def _split_content_into_chunks(self, content: str) -> List[str]:
-        """
-        [Class method intent]
-        Splits file content into manageable chunks with configurable overlap.
-        Ensures chunks respect LLM context window constraints while maintaining
-        context continuity through overlap preservation at chunk boundaries.
-
-        [Design principles]
-        Content chunking respecting LLM context window size constraints.
-        Overlap preservation maintaining context continuity across chunk boundaries.
-        Efficient chunking algorithm minimizing processing overhead while maximizing coverage.
-
-        [Implementation details]
-        Uses configuration chunk size and overlap parameters for consistent behavior.
-        Implements sliding window approach with configurable overlap percentage.
-        Returns list of content chunks ready for individual LLM processing.
-        """
-        chunk_size = self.config.chunk_size
-        overlap = self.config.chunk_overlap
-        chunks = []
-        
-        start = 0
-        while start < len(content):
-            end = min(start + chunk_size, len(content))
-            chunk = content[start:end]
-            chunks.append(chunk)
-            
-            if end >= len(content):
-                break
-            
-            start = end - overlap
-        
-        return chunks
-    
-    def _collect_file_summaries(self, directory_context: DirectoryContext) -> str:
-        """
-        [Class method intent]
-        Collects and formats all child file summaries for directory knowledge generation.
-        Aggregates completed file summaries into formatted text suitable for
-        hierarchical directory summary generation through LLM processing.
-
-        [Design principles]
-        Bottom-up assembly collecting child file summaries for parent directory processing.
-        Structured formatting enabling clear organization of child content in directory summaries.
-        Error handling ensuring graceful degradation when some file summaries are missing.
-
-        [Implementation details]
-        Iterates through file contexts collecting completed summaries only.
-        Formats summaries with file names and paths for clear organization.
-        Returns formatted text ready for inclusion in directory summary prompts.
-        """
-        summaries = []
-        
-        for file_context in directory_context.file_contexts:
-            if file_context.is_completed and file_context.knowledge_content:
-                summaries.append(f"## {file_context.file_path.name}\n{file_context.knowledge_content}")
-            elif file_context.processing_status == ProcessingStatus.FAILED:
-                summaries.append(f"## {file_context.file_path.name}\n[File processing failed: {file_context.error_message}]")
-        
-        return "\n\n".join(summaries) if summaries else "[No file summaries available]"
-    
-    def _collect_directory_summaries(self, directory_context: DirectoryContext) -> str:
-        """
-        [Class method intent]
-        Collects and formats all child directory summaries for hierarchical knowledge generation.
-        Aggregates completed subdirectory knowledge content into formatted text suitable
-        for parent directory summary generation through LLM processing.
-
-        [Design principles]
-        Hierarchical assembly collecting child directory summaries for parent processing.
-        Structured formatting maintaining clear organization of subdirectory content.
-        Error handling ensuring graceful degradation when some directory summaries are missing.
-
-        [Implementation details]
-        Iterates through subdirectory contexts collecting completed summaries only.
-        Formats summaries with directory names and paths for clear organization.
-        Returns formatted text ready for inclusion in parent directory summary prompts.
-        """
-        summaries = []
-        
-        for subdir_context in directory_context.subdirectory_contexts:
-            if subdir_context.processing_status == ProcessingStatus.COMPLETED and subdir_context.directory_summary:
-                summaries.append(f"## {subdir_context.directory_path.name}\n{subdir_context.directory_summary}")
-            elif subdir_context.processing_status == ProcessingStatus.FAILED:
-                summaries.append(f"## {subdir_context.directory_path.name}\n[Directory processing failed: {subdir_context.error_message}]")
-        
-        return "\n\n".join(summaries) if summaries else "[No subdirectory summaries available]"
     
     def _prepare_child_content_summary(self, directory_context: DirectoryContext) -> str:
         """
@@ -883,37 +897,23 @@ Create a unified summary that:
     async def _write_knowledge_file(self, file_path: Path, content: str) -> None:
         """
         [Class method intent]
-        Writes generated knowledge file content using intelligent strategy detection.
-        Uses header-based editing for existing files and template generation for new files.
+        Writes generated knowledge file content using complete file replacement strategy.
         Provides safe content writing with proper formatting and error handling.
 
         [Design principles]
-        Intelligent writing strategy based on file existence and content structure.
-        Header-based editing for existing files preserving document structure and preventing corruption.
-        Template generation for new files ensuring consistent knowledge file format.
-        Robust error handling with fallback strategies for reliable knowledge file persistence.
+        Simplified file writing strategy using complete file replacement for all knowledge files.
+        Reliable file writing ensuring consistent knowledge file format and content.
+        Robust error handling for reliable knowledge file persistence.
 
         [Implementation details]
-        Detects existing files and uses mistletoe-based header editing when possible.
-        Falls back to complete file replacement for new files or when header editing fails.
         Creates complete parent directory structure and handles filesystem errors gracefully.
-        Validates file structure before and after operations ensuring content integrity.
+        Uses complete file replacement for all knowledge file writing operations.
         """
         try:
             # Ensure complete parent directory structure exists
             file_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Check if file exists and can be safely edited
-            if file_path.exists() and await self._should_use_header_based_editing(file_path):
-                logger.debug(f"Using header-based editing for existing file: {file_path}")
-                success = await self._update_existing_knowledge_file(file_path, content)
-                if success:
-                    logger.debug(f"Knowledge file updated using header-based editing: {file_path}")
-                    return
-                else:
-                    logger.warning(f"Header-based editing failed, falling back to complete replacement: {file_path}")
-            
-            # Default: write new file or complete replacement
+            # Write knowledge file using complete replacement
             with open(file_path, 'w', encoding='utf-8') as f:
                 f.write(content)
                 
@@ -923,124 +923,6 @@ Create a unified summary that:
             logger.error(f"Failed to write knowledge file {file_path}: {e}")
             raise
     
-    async def _should_use_header_based_editing(self, file_path: Path) -> bool:
-        """
-        [Class method intent]
-        Determines whether existing knowledge file should use header-based editing.
-        Validates file structure and content compatibility with mistletoe-based editing operations.
-
-        [Design principles]
-        Safe editing detection preventing corruption of incompatible or malformed files.
-        Structure validation ensuring header-based editing operations will succeed.
-        Conservative approach favoring complete replacement over risky editing operations.
-
-        [Implementation details]
-        Validates existing file structure using template engine validation methods.
-        Checks for required headers and markdown structure compatibility.
-        Returns boolean indicating safe header-based editing capability.
-        """
-        try:
-            # Validate that the existing file has proper structure for header-based editing  
-            if not self.template_engine.validate_existing_file_structure(file_path):
-                logger.debug(f"File structure validation failed for header-based editing: {file_path}")
-                return False
-            
-            # Check if file has recognizable headers that we can work with
-            headers = self.template_engine.find_available_headers(file_path)
-            if not headers:
-                logger.debug(f"No headers found for header-based editing: {file_path}")
-                return False
-            
-            # Look for standard knowledge file headers that indicate compatibility
-            standard_headers = {"Global Summary", "Architecture and Design", "Key Patterns", 
-                             "Integration Points", "File Knowledge Integration", "Subdirectory Knowledge Integration"}
-            
-            existing_headers = {header['text'] for header in headers}
-            has_standard_structure = bool(standard_headers.intersection(existing_headers))
-            
-            if not has_standard_structure:
-                logger.debug(f"File lacks standard knowledge base headers for editing: {file_path}")
-                return False
-            
-            logger.debug(f"File suitable for header-based editing with {len(headers)} headers: {file_path}")
-            return True
-            
-        except Exception as e:
-            logger.warning(f"Failed to determine header-based editing compatibility for {file_path}: {e}")
-            return False
-    
-    async def _update_existing_knowledge_file(self, file_path: Path, new_content: str) -> bool:
-        """
-        [Class method intent]
-        Updates existing knowledge file using header-based editing to preserve structure.
-        Selectively updates sections while maintaining document integrity and existing formatting.
-
-        [Design principles]
-        Selective content updates preserving document structure and existing formatting.
-        Header-based section identification enabling precise content replacement without corruption.
-        Error handling with graceful fallback ensuring reliable knowledge file updates.
-
-        [Implementation details]
-        Parses new content to extract section updates for header-based editing.
-        Uses mistletoe-based editing to selectively update specific sections.
-        Validates results and provides success feedback for calling methods.
-        Handles editing failures gracefully returning false for fallback processing.
-        """
-        try:
-            # Parse the new content to identify sections to update
-            new_doc = self.template_engine.markdown_parser.parse_content(new_content)
-            if not new_doc:
-                logger.error(f"Failed to parse new content for header-based editing: {file_path}")
-                return False
-            
-            # Extract sections from new content
-            new_headers = self.template_engine.markdown_parser.find_available_headers(new_doc)
-            
-            # Update each section that exists in the new content
-            updated_sections = 0
-            for header_info in new_headers:
-                header_text = header_info['text']
-                
-                # Skip metadata sections that shouldn't be updated
-                if header_text.startswith('End of ') or 'Generated:' in header_text:
-                    continue
-                
-                # Get section content from new document
-                header_token = header_info['token']
-                section_content = self.template_engine.markdown_parser.get_section_content(new_doc, header_token)
-                
-                if section_content:
-                    # Render section content to markdown
-                    section_markdown = ""
-                    for token in section_content:
-                        # Create temporary document for rendering individual tokens
-                        temp_doc = type(new_doc)([])
-                        temp_doc.children = [token]
-                        token_markdown = self.template_engine.markdown_parser.render_to_markdown(temp_doc)
-                        if token_markdown:
-                            section_markdown += token_markdown + "\n"
-                    
-                    # Update the section in the existing file
-                    if section_markdown.strip():
-                        success = self.template_engine.update_section_by_header(
-                            file_path, header_text, section_markdown.strip()
-                        )
-                        if success:
-                            updated_sections += 1
-                            logger.debug(f"Updated section '{header_text}' in {file_path}")
-                        else:
-                            logger.warning(f"Failed to update section '{header_text}' in {file_path}")
-            
-            # Update metadata timestamp
-            timestamp_content = f"*Generated: {datetime.now().isoformat()}*"
-            self.template_engine.update_section_by_header(file_path, "Generated:", timestamp_content)
-            
-            logger.debug(f"Successfully updated {updated_sections} sections using header-based editing: {file_path}")
-            return updated_sections > 0
-            
-        except Exception as e:
-            logger.error(f"Header-based editing failed for {file_path}: {e}")
-            return False
     
     def _extract_content_from_llm_response(self, llm_response: str) -> str:
         """
@@ -1124,6 +1006,7 @@ Create a unified summary that:
             # Fallback: return original response
             return llm_response.strip()
     
+    
     def _has_legitimate_section_structure(self, content: str) -> bool:
         """
         [Class method intent]
@@ -1173,6 +1056,135 @@ Create a unified summary that:
             logger.warning(f"Failed to check section structure: {e}")
             return False  # Default to header filtering if detection fails
     
+    async def _review_content_until_compliant(
+        self,
+        content_to_review: str,
+        reviewer_prompt_func: callable,
+        base_conversation_id: str,
+        stage_name: str,
+        file_path: Optional[Path] = None,
+        directory_path: Optional[Path] = None,
+        ctx: Context = None,
+        max_iterations: int = 5
+    ) -> tuple[str, int, bool]:
+        """
+        [Class method intent]
+        Executes bounded loop reviewer workflow iterating until compliance is achieved or max iterations reached.
+        Provides robust quality assurance by repeatedly applying reviewer prompts to content until
+        hierarchical semantic tree compliance is verified or iteration limit is exceeded.
+
+        [Design principles]
+        Bounded iteration approach preventing infinite loops while maximizing compliance success rates.
+        Progressive improvement strategy applying reviewer corrections iteratively for complex compliance issues.
+        Comprehensive debug capture enabling replay and analysis of entire review process.
+        Graceful degradation returning best attempt when perfect compliance cannot be achieved within bounds.
+
+        [Implementation details]
+        Iterates through reviewer prompts with content updates until "COMPLIANT" response or max iterations.
+        Captures each iteration separately in debug system with structured stage naming and iteration tracking.
+        Returns final content, iteration count, and compliance status for comprehensive result analysis.
+        Handles errors gracefully with fallback to previous iteration's content when reviewer calls fail.
+
+        Args:
+            content_to_review: Original content to be reviewed for compliance
+            reviewer_prompt_func: Function that generates reviewer prompts (takes content string, returns prompt string)
+            base_conversation_id: Base conversation ID for LLM calls with iteration suffixes
+            stage_name: Stage name for debug capture with iteration tracking
+            file_path: Optional file path for debug capture (file-based reviews)
+            directory_path: Optional directory path for debug capture (directory-based reviews)  
+            ctx: FastMCP context for progress reporting and logging
+            max_iterations: Maximum number of review iterations before giving up (default: 3)
+
+        Returns:
+            tuple[str, int, bool]: (final_content, iterations_used, was_compliant)
+                - final_content: The final reviewed content (compliant or best attempt)
+                - iterations_used: Number of review iterations performed
+                - was_compliant: True if final content achieved compliance, False if max iterations reached
+        """
+        current_content = content_to_review
+        iteration = 0
+        was_compliant = False
+        
+        if ctx:
+            await ctx.debug(f"🔍 BOUNDED REVIEWER: Starting review process for {stage_name} (max {max_iterations} iterations)")
+        
+        while iteration < max_iterations:
+            iteration += 1
+            
+            try:
+                # Generate reviewer prompt for current content
+                reviewer_prompt = reviewer_prompt_func(current_content)
+                reviewer_conversation_id = f"{base_conversation_id}_review_iter_{iteration}"
+                
+                if ctx:
+                    await ctx.debug(f"🔍 REVIEWER ITERATION {iteration}/{max_iterations}: Checking compliance for {stage_name}")
+                
+                # Make reviewer LLM call
+                reviewer_response = await self.llm_driver.send_message(reviewer_prompt, reviewer_conversation_id)
+                reviewer_response_content = reviewer_response.content.strip()
+                
+                # Capture iteration in debug system
+                iteration_stage_name = f"{stage_name}_review_iter_{iteration}"
+                if file_path:
+                    self.debug_handler.capture_stage_llm_output(
+                        stage=iteration_stage_name,
+                        prompt=reviewer_prompt,
+                        response=reviewer_response_content,
+                        file_path=file_path
+                    )
+                elif directory_path:
+                    self.debug_handler.capture_stage_llm_output(
+                        stage=iteration_stage_name,
+                        prompt=reviewer_prompt,
+                        response=reviewer_response_content,
+                        directory_path=directory_path
+                    )
+                
+                # Check if compliance achieved
+                if reviewer_response_content == "COMPLIANT":
+                    was_compliant = True
+                    if ctx:
+                        await ctx.info(f"✅ COMPLIANCE ACHIEVED: {stage_name} compliant after {iteration} iteration(s)")
+                    break
+                else:
+                    # Update content with reviewer corrections
+                    current_content = reviewer_response_content
+                    if ctx:
+                        await ctx.debug(f"🔧 REVIEWER ITERATION {iteration}: Applied corrections for {stage_name}")
+            
+            except Exception as e:
+                logger.error(f"Reviewer iteration {iteration} failed for {stage_name}: {e}")
+                if ctx:
+                    await ctx.warning(f"⚠️ REVIEWER ITERATION {iteration} FAILED: {stage_name} - {e}")
+                # Continue with current content on error
+                break
+        
+        if not was_compliant and ctx:
+            if iteration >= max_iterations:
+                await ctx.warning(f"⚠️ MAX ITERATIONS REACHED: {stage_name} using best attempt after {iteration} iterations")
+            else:
+                await ctx.warning(f"⚠️ REVIEWER ERROR: {stage_name} using last valid content after {iteration} iterations")
+        
+        # Capture final reviewed content for replay
+        final_stage_name = f"{stage_name}_review_final"
+        if file_path:
+            self.debug_handler.capture_stage_llm_output(
+                stage=final_stage_name,
+                prompt="Final reviewed content",
+                response=current_content,
+                file_path=file_path
+            )
+        elif directory_path:
+            self.debug_handler.capture_stage_llm_output(
+                stage=final_stage_name,
+                prompt="Final reviewed content",
+                response=current_content,
+                directory_path=directory_path
+            )
+        
+        logger.debug(f"Bounded reviewer completed for {stage_name}: {iteration} iterations, compliant={was_compliant}")
+        return current_content, iteration, was_compliant
+
     async def cleanup(self) -> None:
         """
         [Class method intent]

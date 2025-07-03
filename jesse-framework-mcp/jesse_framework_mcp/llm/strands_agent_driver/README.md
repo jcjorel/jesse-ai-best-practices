@@ -8,7 +8,7 @@ Pure asyncio implementation for Amazon Bedrock Claude 4 Sonnet integration using
 - **Streaming Conversations**: Real-time response streaming capabilities
 - **Prompt Caching**: Intelligent caching system for performance optimization
 - **Memory Management**: Multiple conversation memory strategies (summarizing, sliding window, null)
-- **Claude 4 Sonnet Optimization**: Leverages extended thinking mode and 200K token context
+- **Claude 4 Sonnet Optimization**: Leverages extended thinking mode, reasoning output control, and 200K token context
 - **Retry Logic**: Automatic retry with exponential backoff for reliability
 - **Complete Independence**: No dependencies on JESSE MCP Server components
 
@@ -259,6 +259,7 @@ The `examples/` directory contains working examples:
 - `basic_conversation.py` - Simple conversation example
 - `streaming_conversation.py` - Streaming response example  
 - `caching_example.py` - Prompt caching demonstration
+- `reasoning_suppression_demo.py` - Reasoning output control demonstration
 
 Run examples from the project root:
 
@@ -303,6 +304,41 @@ When streaming responses, you'll receive different event types in the metadata:
 - `stream_event: "reasoning"` - Claude 4's thinking/reasoning content
 - `stream_event: "tool_use"` - Tool usage information
 - `stream_event: "complete"` - Final completion event
+
+### Reasoning Output Control
+
+The driver provides control over Claude 4's reasoning/thinking output through the `suppress_reasoning_output` configuration parameter:
+
+```python
+# Suppress reasoning output (default for conversations)
+config = Claude4SonnetConfig(
+    suppress_reasoning_output=True
+)
+
+# Enable reasoning output (default for analysis)
+config = Claude4SonnetConfig(
+    suppress_reasoning_output=False
+)
+```
+
+**Default Behavior:**
+- **Conversations**: Reasoning suppressed (`suppress_reasoning_output=True`)
+- **Analysis**: Reasoning enabled (`suppress_reasoning_output=False`)
+- **Performance**: Reasoning suppressed (`suppress_reasoning_output=True`)
+
+**When to Enable Reasoning:**
+- Debugging complex queries
+- Understanding Claude's thought process
+- Educational or analytical purposes
+- When transparency is important
+
+**When to Suppress Reasoning:**
+- Cleaner console output
+- Production environments
+- Performance optimization
+- User-facing applications
+
+See `examples/reasoning_suppression_demo.py` for a complete demonstration.
 
 ## Performance Optimization
 

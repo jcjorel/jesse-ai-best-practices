@@ -37,23 +37,21 @@
 # <system>: typing - Type hints for template parameters and content structures
 ###############################################################################
 # [GenAI tool change history]
-# 2025-07-01T18:49:00Z : Completed programmatic template generation with warning headers by CodeAssistant
-# * Eliminated all hardcoded template strings in favor of programmatic generation
-# * Added warning headers to all knowledge files preventing manual editing
-# * Enhanced placeholder validation to exclude warning header HTML comments
-# * Implemented flexible template generation supporting dynamic content structure
-# 2025-07-01T18:41:00Z : Completed migration to mistletoe-only markdown editing by CodeAssistant
-# * Replaced all string-based replacement methods with mistletoe AST manipulation
-# * Updated insert_file_analyses, insert_subdirectory_summaries, finalize_with_global_summary to use AST parsing
-# * Enhanced error handling with fallback to original content on parsing failures
-# * Eliminated fragile string replacement operations in favor of robust header-based editing
-# 2025-07-01T17:35:00Z : Integrated mistletoe for header-based markdown editing by CodeAssistant
-# * Added MarkdownParser integration for AST-based markdown manipulation
-# * Implemented header-based editing methods for existing file updates
-# * Added intelligent file editing strategy with structure validation
-# * Migrated from placeholder-based to header-based section editing
-# 2025-07-01T16:21:00Z : Initial markdown template engine creation by CodeAssistant
-# * Created parseable markdown template system with programmatic content insertion
+# 2025-07-03T11:35:00Z : Updated file and directory headers to use get_portable_path() for cross-platform compatibility by CodeAssistant
+# * Modified _assemble_file_content() to use get_portable_path() for file path headers instead of just filename
+# * Modified _assemble_subdirectory_content() to use get_portable_path() for directory path headers with trailing slash preservation
+# * Added error handling for portable path conversion with fallback to original paths when conversion fails
+# * Ensured all markdown knowledge file headers use portable path variables for cross-platform compatibility
+# 2025-07-03T09:40:00Z : Integrated mistletoe parser and MarkdownPreservingRenderer for enhanced spacing by CodeAssistant
+# * Replaced SimpleMarkdownDocument with MarkdownParser for robust AST-based parsing and section manipulation
+# * Integrated MarkdownPreservingRenderer in all phases for consistent blank line handling in final output
+# * Updated all content insertion methods to use AST manipulation with enhanced spacing preservation
+# * Applied preserve_llm_spacing() to all LLM-generated content for consistent formatting enhancement
+# 2025-07-03T00:21:00Z : Fixed inconsistent spacing preservation across entire content pipeline by CodeAssistant
+# * Applied preserve_llm_spacing() to subdirectory hierarchical content in _assemble_subdirectory_content()
+# * Applied preserve_llm_spacing() to global summary hierarchical content in finalize_with_global_summary()
+# * Ensured consistent blank_lines_before approach across individual files, subdirectory summaries, and global summaries
+# * Resolved issue where LLM-generated hierarchical semantic trees lost spacing during template assembly
 ###############################################################################
 
 """
@@ -72,10 +70,9 @@ from dataclasses import dataclass
 
 from .markdown_parser import MarkdownParser
 from ...helpers.project_root import get_project_root
+from ...helpers.path_utils import get_portable_path
+from ...helpers.mistletoe_spacing import MarkdownPreservingRenderer, render_with_spacing_preservation, preserve_llm_spacing
 from ..models.knowledge_context import FileContext
-from mistletoe import Document
-from mistletoe.block_token import Paragraph
-from mistletoe.span_token import RawText
 
 logger = logging.getLogger(__name__)
 
@@ -156,25 +153,22 @@ class MarkdownTemplateEngine:
     def __init__(self):
         """
         [Class method intent]
-        Initializes markdown template engine with programmatic template generation.
-        Sets up template generation methods for file analysis and directory summary generation
-        with consistent structure and dynamic content insertion points.
+        Initializes markdown template engine with mistletoe-based markdown parsing and spacing preservation.
+        Sets up MarkdownParser integration and MarkdownPreservingRenderer for enhanced blank line handling
+        in final knowledge file output with consistent structure and dynamic content insertion points.
 
         [Design principles]
-        Programmatic template generation providing flexible structure definitions for all knowledge types.
-        Dynamic template creation ensuring adaptable structure across generated knowledge files.
-        Clean template generation supporting maintainable template management and updates.
+        Mistletoe-based parsing providing robust AST manipulation capabilities for template operations.
+        MarkdownPreservingRenderer integration ensuring consistent blank line handling in final output.
+        Clean template generation supporting maintainable template management with enhanced formatting.
 
         [Implementation details]
-        Uses programmatic methods to generate templates with architectural focus and technical detail sections.
-        Creates dynamic template generation supporting hierarchical content organization and summary assembly.
-        Sets up common template elements through methods for consistent metadata and formatting.
+        Initializes MarkdownParser instance for robust document parsing and section manipulation.
+        Sets up integration with MarkdownPreservingRenderer for enhanced final output formatting.
+        Maintains programmatic template generation with improved parsing and rendering capabilities.
         """
-        
-        # Initialize mistletoe-based parser for header-based editing
         self.markdown_parser = MarkdownParser()
-        
-        logger.info("MarkdownTemplateEngine initialized with programmatic template generation and mistletoe parser")
+        logger.info("MarkdownTemplateEngine initialized with mistletoe parser and spacing-aware renderer")
     
     def _generate_warning_header(self) -> str:
         """
@@ -199,53 +193,6 @@ class MarkdownTemplateEngine:
                 "<!-- Manual edits will be overwritten during the next generation cycle. -->\n"
                 "<!-- To modify content, update the source files and regenerate the knowledge base. -->\n")
     
-    def _generate_file_template_sections(self) -> List[str]:
-        """
-        [Class method intent]
-        Programmatically generates file knowledge template sections.
-        Creates standardized section structure for individual file analysis with navigation focus.
-
-        [Design principles]
-        Programmatic section generation enabling flexible template modification.
-        Standardized section structure ensuring consistency across file knowledge.
-        Navigation focus supporting developer understanding and code exploration.
-
-        [Implementation details]
-        Returns list of section headers and content placeholders for file templates.
-        Uses consistent naming and structure for all file analysis sections.
-        """
-        return [
-            "What You'll Find",
-            "Main Components", 
-            "How It's Organized",
-            "Connections",
-            "Context You Need",
-            "Implementation Notes"
-        ]
-    
-    def _generate_directory_template_sections(self) -> List[str]:
-        """
-        [Class method intent]
-        Programmatically generates directory knowledge template sections.
-        Creates standardized section structure for directory-level analysis.
-
-        [Design principles]
-        Programmatic section generation enabling flexible template modification.
-        Hierarchical section structure supporting directory knowledge organization.
-        Comprehensive analysis sections supporting architectural understanding.
-
-        [Implementation details]
-        Returns list of section headers for directory templates including analysis and integration sections.
-        Uses consistent naming and structure for all directory knowledge sections.
-        """
-        return [
-            "Global Summary",
-            "Architecture and Design",
-            "Key Patterns",
-            "Integration Points", 
-            "Subdirectory Knowledge Integration",
-            "File Knowledge Integration"
-        ]
     
     def _generate_jesse_timestamp(self) -> str:
         """
@@ -268,16 +215,18 @@ class MarkdownTemplateEngine:
     def _generate_metadata_footer(self, **kwargs) -> str:
         """
         [Class method intent]
-        Programmatically generates metadata footer for knowledge files.
-        Creates consistent metadata section with generation information and statistics.
+        Programmatically generates metadata footer for knowledge files with portable path support.
+        Creates consistent metadata section with generation information and statistics
+        using portable paths for cross-platform compatibility.
 
         [Design principles]
         Programmatic metadata generation enabling flexible footer customization.
-        Consistent metadata structure across all knowledge files.
+        Consistent metadata structure across all knowledge files with portable paths.
         Comprehensive generation information supporting knowledge file tracking.
 
         [Implementation details]
         Accepts keyword arguments for metadata values and formats them consistently.
+        Converts file and directory paths to portable format for cross-platform compatibility.
         Returns formatted metadata footer ready for insertion into knowledge files.
         """
         footer_lines = ["---"]
@@ -286,9 +235,19 @@ class MarkdownTemplateEngine:
             footer_lines.append(f"*Generated: {kwargs['timestamp']}*")
         
         if 'file_path' in kwargs:
-            footer_lines.append(f"*Source: {kwargs['file_path']}*")
+            try:
+                portable_file_path = get_portable_path(kwargs['file_path'])
+                footer_lines.append(f"*Source: {portable_file_path}*")
+            except Exception as e:
+                logger.warning(f"Failed to get portable path for file {kwargs['file_path']}: {e}")
+                footer_lines.append(f"*Source: {kwargs['file_path']}*")
         elif 'directory_path' in kwargs:
-            footer_lines.append(f"*Source Directory: {kwargs['directory_path']}*")
+            try:
+                portable_dir_path = get_portable_path(kwargs['directory_path'])
+                footer_lines.append(f"*Source Directory: {portable_dir_path}*")
+            except Exception as e:
+                logger.warning(f"Failed to get portable path for directory {kwargs['directory_path']}: {e}")
+                footer_lines.append(f"*Source Directory: {kwargs['directory_path']}*")
         
         if 'file_count' in kwargs:
             footer_lines.append(f"*Total Files: {kwargs['file_count']}*")
@@ -301,136 +260,27 @@ class MarkdownTemplateEngine:
         
         return "\n".join(footer_lines)
     
-    def generate_file_knowledge(self, file_analysis: FileAnalysis) -> str:
-        """
-        [Class method intent]
-        Generates complete file knowledge markdown using programmatic template structure and LLM analysis content.
-        Combines architectural analysis content with consistent markdown formatting
-        for standard markdown library compatibility and structured knowledge organization.
-
-        [Design principles]
-        Programmatic template generation ensuring consistent file knowledge structure across all files.
-        Content insertion maintaining separation between analysis content and markdown formatting.
-        Timestamp integration providing knowledge file generation metadata for tracking and updates.
-
-        [Implementation details]
-        Uses programmatic template generation with structured content insertion for comprehensive file knowledge.
-        Incorporates all FileAnalysis content categories into standardized markdown sections.
-        Adds generation metadata including timestamp and source file information for traceability.
-        """
-        try:
-            # Generate content programmatically
-            content_parts = []
-            
-            # Add warning header (spacing handled by HTML transition logic in parser)
-            warning_header = self._generate_warning_header()
-            content_parts.append(warning_header.strip())
-
-            # Add main title
-            content_parts.append(f"# {file_analysis.file_path.stem} Knowledge\n")
-            
-            # Generate sections programmatically
-            sections = self._generate_file_template_sections()
-            analysis_values = [
-                file_analysis.what_you_ll_find,
-                file_analysis.main_components,
-                file_analysis.how_its_organized,
-                file_analysis.connections,
-                file_analysis.context_you_need,
-                file_analysis.implementation_notes
-            ]
-            
-            for section, value in zip(sections, analysis_values):
-                content_parts.append(f"## {section}")
-                content_parts.append("")  # Add blank line between header and content
-                content_parts.append(value)
-            
-            # Add metadata footer
-            metadata = self._generate_metadata_footer(
-                timestamp=datetime.now().isoformat(),
-                file_path=str(file_analysis.file_path)
-            )
-            content_parts.append(metadata)
-            
-            rendered_content = "\n".join(content_parts)
-            
-            logger.debug(f"Generated file knowledge markdown programmatically for: {file_analysis.file_path}")
-            return rendered_content
-            
-        except Exception as e:
-            logger.error(f"File knowledge generation failed for {file_analysis.file_path}: {e}")
-            raise RuntimeError(f"Programmatic template generation failed: {e}") from e
     
-    def generate_directory_knowledge(
-        self, 
-        directory_summary: DirectorySummary,
-        file_analyses: List[FileAnalysis],
-        subdirectory_summaries: List[DirectorySummary]
-    ) -> str:
-        """
-        [Class method intent]
-        Generates complete directory knowledge markdown by assembling directory summary
-        with programmatically inserted file analyses and subdirectory content.
-        Implements hierarchical knowledge assembly with consistent template structure.
-
-        [Design principles]
-        Hierarchical content assembly combining directory-level insights with file-level analysis.
-        Programmatic content insertion enabling efficient knowledge file generation without full LLM markdown.
-        Template consistency ensuring standard markdown structure across all directory knowledge files.
-        Comprehensive content integration supporting complete directory understanding and navigation.
-
-        [Implementation details]
-        Assembles subdirectory content through recursive summary integration and formatting.
-        Incorporates all file analyses into structured file knowledge sections with consistent formatting.
-        Uses directory template with complete content substitution for hierarchical knowledge organization.
-        Adds comprehensive metadata including file counts and generation timestamps for knowledge tracking.
-        """
-        try:
-            # Assemble subdirectory content
-            subdirectory_content = self._assemble_subdirectory_content(subdirectory_summaries)
-            
-            # Assemble file content
-            file_content = self._assemble_file_content(file_analyses)
-            
-            # Generate complete directory knowledge
-            rendered_content = self.directory_template.format(
-                directory_name=directory_summary.directory_path.name,
-                directory_overview=directory_summary.directory_overview,
-                architecture_and_design=directory_summary.architecture_and_design,
-                key_patterns=directory_summary.key_patterns,
-                integration_points=directory_summary.integration_points,
-                subdirectory_content=subdirectory_content,
-                file_content=file_content,
-                timestamp=datetime.now().isoformat(),
-                directory_path=str(directory_summary.directory_path),
-                file_count=len(file_analyses),
-                subdirectory_count=len(subdirectory_summaries)
-            )
-            
-            logger.debug(f"Generated directory knowledge markdown for: {directory_summary.directory_path}")
-            return rendered_content
-            
-        except Exception as e:
-            logger.error(f"Directory knowledge generation failed for {directory_summary.directory_path}: {e}")
-            raise RuntimeError(f"Template rendering failed: {e}") from e
     
     def _assemble_subdirectory_content(self, subdirectory_summaries: List[DirectorySummary]) -> str:
         """
         [Class method intent]
-        Assembles subdirectory summary content into formatted markdown sections for directory integration.
-        Provides structured organization of child directory information within parent directory knowledge.
-        Includes last updated timestamps for each individual subdirectory summary.
+        Assembles subdirectory summary content using hierarchical semantic tree format.
+        Renders complete hierarchical content directly from what_this_directory_contains field
+        which now contains the full hierarchical semantic tree from enhanced prompts.
 
         [Design principles]
-        Hierarchical content organization supporting clear subdirectory relationship representation.
-        Consistent formatting ensuring readable and navigable directory knowledge structure.
+        Hierarchical content preservation using raw LLM output without section parsing or transformation.
+        Direct rendering of complete semantic trees maintaining original LLM formatting and structure.
         Graceful handling of empty subdirectory lists maintaining template rendering stability.
         Timestamp integration providing content freshness tracking for individual subdirectory summaries.
+        Portable path usage ensuring cross-platform compatibility in markdown headers.
 
         [Implementation details]
-        Iterates through subdirectory summaries creating formatted sections for each child directory.
-        Uses consistent section formatting with directory names and summary content integration.
-        Prepends JESSE framework standard timestamp to each subdirectory summary section.
+        Iterates through subdirectory summaries rendering complete hierarchical content directly.
+        Uses what_this_directory_contains field which contains full hierarchical semantic tree.
+        Uses get_portable_path() for cross-platform compatible directory path headers.
+        Only renders sections with actual content to avoid empty section headers.
         Returns formatted markdown ready for insertion into parent directory knowledge template.
         """
         if not subdirectory_summaries:
@@ -441,15 +291,38 @@ class MarkdownTemplateEngine:
             # Generate timestamp for this specific subdirectory summary
             timestamp = self._generate_jesse_timestamp()
             
-            section = f"""
-### {subdir_summary.directory_path.name}/
-*Last Updated: {timestamp}*
-
-**What This Directory Contains**: {subdir_summary.what_this_directory_contains}
-
-**How It's Organized**: {subdir_summary.how_its_organized}
-
-**Common Patterns**: {subdir_summary.common_patterns}"""
+            # Convert directory path to portable format for cross-platform compatibility
+            try:
+                portable_dir_path = get_portable_path(subdir_summary.directory_path)
+                # Ensure trailing slash is preserved for directory formatting
+                if not portable_dir_path.endswith('/') and not portable_dir_path.endswith('\\'):
+                    # Add appropriate trailing slash based on path type
+                    if len(portable_dir_path) >= 3 and portable_dir_path[1:3] == ':\\':
+                        # Windows path - use backslash
+                        portable_dir_path += "\\"
+                    else:
+                        # Unix/relative path - use forward slash
+                        portable_dir_path += "/"
+            except Exception as e:
+                logger.warning(f"Failed to get portable path for {subdir_summary.directory_path}, using original: {e}")
+                portable_dir_path = f"{subdir_summary.directory_path.name}/"
+            
+            # Only render content that exists - skip empty fields
+            section_parts = [f"### {portable_dir_path} directory", f"*Last Updated: {timestamp}*"]
+            
+            # Use hierarchical content directly from what_this_directory_contains as-is
+            if subdir_summary.what_this_directory_contains and subdir_summary.what_this_directory_contains.strip():
+                # Insert LLM content as-is without any parsing or transformation
+                section_parts.append(subdir_summary.what_this_directory_contains.strip())
+            
+            # Only add other fields if they contain actual content (not empty strings)
+            if subdir_summary.how_its_organized and subdir_summary.how_its_organized.strip():
+                section_parts.append(f"**How It's Organized**: {subdir_summary.how_its_organized}")
+            
+            if subdir_summary.common_patterns and subdir_summary.common_patterns.strip():
+                section_parts.append(f"**Common Patterns**: {subdir_summary.common_patterns}")
+            
+            section = "\n\n".join(section_parts)
             sections.append(section)
         
         return "\n\n".join(sections)
@@ -457,21 +330,21 @@ class MarkdownTemplateEngine:
     def _assemble_file_content(self, file_contexts: List[FileContext]) -> str:
         """
         [Class method intent]
-        Assembles raw file content into formatted markdown sections using exact LLM responses.
-        Creates ultra-simplified file sections with only filename headers, timestamps, 
-        and completely untransformed LLM content for directory integration.
+        Assembles file content into formatted markdown sections using raw LLM outputs.
+        Creates simple sections with headers and timestamps, inserting LLM content as-is
+        without any parsing or transformation to preserve original formatting.
 
         [Design principles]
-        Zero content transformation preserving exact LLM responses with original whitespace.
-        Minimal structure with only essential headers and timestamp for file identification.
-        Direct FileContext usage eliminating intermediate data structure transformations.
-        Raw content preservation maintaining complete LLM response integrity.
+        Raw content insertion maintaining complete LLM response integrity without transformation.
+        Section-based organization with headers and timestamps for navigation.
+        Simple assembly process avoiding complex parsing or spacing manipulation.
+        Portable path usage ensuring cross-platform compatibility in markdown headers.
 
         [Implementation details]
-        Iterates through FileContext objects using knowledge_content field directly.
-        Creates sections with filename header, timestamp, and exact LLM response.
-        No content processing, formatting, or transformation applied to LLM responses.
-        Returns formatted markdown ready for insertion into directory knowledge files.
+        Iterates through FileContext objects using knowledge_content as-is.
+        Creates sections with portable path header, timestamp, and raw LLM content.
+        Uses get_portable_path() for cross-platform compatible file path headers.
+        Returns formatted markdown ready for insertion without any modifications.
         """
         if not file_contexts:
             return "*No files analyzed in this directory*"
@@ -482,13 +355,18 @@ class MarkdownTemplateEngine:
                 # Generate timestamp for this specific file analysis
                 timestamp = self._generate_jesse_timestamp()
                 
-                # Use exact LLM response with no transformation
-                section = f"""### {file_context.file_path.name}
-*Last Updated: {timestamp}*
-
-{file_context.knowledge_content}"""
+                # Convert file path to portable format for cross-platform compatibility
+                try:
+                    portable_file_path = get_portable_path(file_context.file_path)
+                except Exception as e:
+                    logger.warning(f"Failed to get portable path for {file_context.file_path}, using original: {e}")
+                    portable_file_path = str(file_context.file_path)
+                
+                # Use LLM content as-is without any parsing or transformation
+                section = f"### {portable_file_path} file\n*Last Updated: {timestamp}*\n\n{file_context.knowledge_content}"
                 sections.append(section)
         
+        # Use double newlines between sections for proper separation
         return "\n\n".join(sections)
     
     def initialize_directory_knowledge_base(self, directory_path: Path) -> str:
@@ -516,29 +394,44 @@ class MarkdownTemplateEngine:
             warning_header = self._generate_warning_header()
             content_parts.append(warning_header.strip())
 
-            # Add main title with relative path from project root
-            project_root = get_project_root()
-            if project_root:
-                try:
-                    # Calculate relative path from project root
-                    relative_path = directory_path.relative_to(project_root)
-                    title_path = str(relative_path) + "/"
-                except ValueError:
-                    # Directory is not under project root, use full filesystem path
-                    title_path = str(directory_path) + "/"
-            else:
-                # Fallback to full path if project root not found
-                title_path = str(directory_path) + "/"
+            # Add main title with portable path using new path utilities
+            try:
+                portable_path = get_portable_path(directory_path)
+                # Ensure directory path has trailing separator for proper formatting
+                # Use appropriate separator based on path type (backslash for Windows, forward slash for others)
+                if len(portable_path) >= 3 and portable_path[1:3] == ':\\':
+                    # Windows path - use backslash
+                    if not portable_path.endswith('\\'):
+                        title_path = portable_path + "\\"
+                    else:
+                        title_path = portable_path
+                else:
+                    # Unix/relative path - use forward slash
+                    if not portable_path.endswith('/'):
+                        title_path = portable_path + "/"
+                    else:
+                        title_path = portable_path
+            except Exception as e:
+                logger.warning(f"Failed to get portable path for {directory_path}, using fallback: {e}")
+                # Fallback to full path if portable path conversion fails
+                dir_str = str(directory_path)
+                if len(dir_str) >= 3 and dir_str[1:3] == ':\\':
+                    # Windows path fallback - use backslash
+                    title_path = dir_str + "\\"
+                else:
+                    # Unix path fallback - use forward slash
+                    title_path = dir_str + "/"
             
             content_parts.append(f"# Directory Knowledge Base {title_path}'\n")
             
             # Generate sections programmatically with placeholder content
-            sections = self._generate_directory_template_sections()
+            sections = [
+                "Global Summary",
+                "Subdirectory Knowledge Integration",
+                "File Knowledge Integration"
+            ]
             placeholder_values = [
                 "*To be generated using complete assembled content*",
-                "*Analysis to be provided*",
-                "*Patterns to be identified*", 
-                "*Integration analysis to be completed*",
                 "*No subdirectories processed*",
                 "*No files processed*"
             ]
@@ -570,42 +463,46 @@ class MarkdownTemplateEngine:
     def insert_file_analyses(self, markdown_content: str, file_contexts: List[FileContext]) -> str:
         """
         [Class method intent]
-        Phase 2: Programmatically inserts individual file contexts into markdown structure using mistletoe AST manipulation.
-        Uses header-based section identification with AST parsing for reliable content updates
-        with exact LLM response preservation without any transformation.
+        Phase 2: Programmatically inserts individual file contexts into markdown structure using mistletoe parser.
+        Uses AST-based section identification with robust parsing for reliable content updates
+        while preserving all LLM response spacing and formatting through MarkdownPreservingRenderer.
 
         [Design principles]
-        AST-based content identification enabling safe file content integration without placeholder dependencies.
-        Mistletoe parsing preserving markdown formatting and structure during content updates.
+        AST-based content identification enabling robust file content integration with mistletoe parsing.
+        Spacing preservation through MarkdownPreservingRenderer maintaining all original formatting.
         Raw content insertion maintaining complete LLM response integrity without transformation.
         Robust error handling ensuring reliable content insertion with fallback to original content.
 
         [Implementation details]
-        Parses markdown content using mistletoe for AST manipulation.
-        Assembles file content directly from FileContext objects and uses header-based section replacement.
-        Returns updated markdown ready for Phase 3 subdirectory and global summary integration.
+        Parses markdown content using mistletoe MarkdownParser for header-based section replacement.
+        Assembles file content directly from FileContext objects and uses AST-based section replacement.
+        Returns updated markdown with enhanced spacing through MarkdownPreservingRenderer integration.
         """
         try:
-            # Parse existing markdown content
+            # Parse existing markdown content using mistletoe parser
             doc = self.markdown_parser.parse_content(markdown_content)
             if not doc:
-                logger.error("Failed to parse markdown content for file context insertion")
+                logger.warning("Failed to parse markdown content, returning original")
                 return markdown_content
             
             # Assemble file content using existing method with FileContext objects
             file_content = self._assemble_file_content(file_contexts)
             
-            # Use mistletoe-based section replacement
-            updated_doc = self.markdown_parser.replace_section_content(
-                doc, "File Knowledge Integration", file_content
-            )
+            # Use mistletoe section replacement with AST manipulation
+            updated_doc = self.markdown_parser.replace_section_content(doc, "File Knowledge Integration", file_content)
             
             if updated_doc:
-                # Render back to markdown
-                updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
+                # Render back to markdown with enhanced spacing preservation
+                updated_markdown = render_with_spacing_preservation(updated_doc)
                 if updated_markdown:
-                    logger.debug(f"Inserted {len(file_contexts)} file contexts using mistletoe AST manipulation")
+                    logger.debug(f"Inserted {len(file_contexts)} file contexts using mistletoe parser with enhanced spacing")
                     return updated_markdown
+                else:
+                    # Fallback to standard rendering
+                    updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
+                    if updated_markdown:
+                        logger.debug(f"Inserted {len(file_contexts)} file contexts using mistletoe parser with standard rendering")
+                        return updated_markdown
             
             # Fallback: return original content
             logger.warning("File context insertion failed, returning original content")
@@ -636,41 +533,48 @@ class MarkdownTemplateEngine:
     def insert_subdirectory_summaries(self, markdown_content: str, subdirectory_summaries: List[DirectorySummary]) -> str:
         """
         [Class method intent]
-        Phase 2b: Programmatically inserts subdirectory summaries into markdown structure using mistletoe AST manipulation.
-        Uses header-based section identification with AST parsing for reliable content updates
-        for hierarchical knowledge integration and structured directory organization.
+        Phase 2b: Programmatically inserts subdirectory summaries into markdown structure using mistletoe parser.
+        Uses AST-based section identification with robust parsing for reliable content updates
+        while preserving all LLM response spacing and formatting through MarkdownPreservingRenderer.
 
         [Design principles]
-        AST-based content identification enabling safe subdirectory integration without placeholder dependencies.
-        Mistletoe parsing preserving markdown formatting and structure during content updates.
+        AST-based content identification enabling robust subdirectory integration with mistletoe parsing.
+        Spacing preservation through MarkdownPreservingRenderer maintaining all original formatting.
         Hierarchical content integration supporting bottom-up knowledge assembly patterns.
 
         [Implementation details]
-        Parses markdown content using mistletoe for AST manipulation.
-        Assembles subdirectory content and uses header-based section replacement.
+        Parses markdown content using mistletoe MarkdownParser for header-based section replacement.
+        Assembles subdirectory content and uses AST-based section replacement with enhanced spacing.
         Returns updated markdown ready for Phase 3 global summary generation using assembled content.
         """
         try:
-            # Parse existing markdown content
+            # Parse existing markdown content using mistletoe parser
             doc = self.markdown_parser.parse_content(markdown_content)
             if not doc:
-                logger.error("Failed to parse markdown content for subdirectory summary insertion")
+                logger.warning("Failed to parse markdown content, returning original")
                 return markdown_content
             
             # Assemble subdirectory content using existing method
             subdirectory_content = self._assemble_subdirectory_content(subdirectory_summaries)
             
-            # Use mistletoe-based section replacement
-            updated_doc = self.markdown_parser.replace_section_content(
-                doc, "Subdirectory Knowledge Integration", subdirectory_content
-            )
+            # Apply spacing preservation to hierarchical content
+            subdirectory_content = preserve_llm_spacing(subdirectory_content)
+            
+            # Use mistletoe section replacement with AST manipulation
+            updated_doc = self.markdown_parser.replace_section_content(doc, "Subdirectory Knowledge Integration", subdirectory_content)
             
             if updated_doc:
-                # Render back to markdown
-                updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
+                # Render back to markdown with enhanced spacing preservation
+                updated_markdown = render_with_spacing_preservation(updated_doc)
                 if updated_markdown:
-                    logger.debug(f"Inserted {len(subdirectory_summaries)} subdirectory summaries using mistletoe AST manipulation")
+                    logger.debug(f"Inserted {len(subdirectory_summaries)} subdirectory summaries using mistletoe parser with enhanced spacing")
                     return updated_markdown
+                else:
+                    # Fallback to standard rendering
+                    updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
+                    if updated_markdown:
+                        logger.debug(f"Inserted {len(subdirectory_summaries)} subdirectory summaries using mistletoe parser with standard rendering")
+                        return updated_markdown
             
             # Fallback: return original content
             logger.warning("Subdirectory summary insertion failed, returning original content")
@@ -690,56 +594,49 @@ class MarkdownTemplateEngine:
     ) -> str:
         """
         [Class method intent]
-        Phase 3: Finalizes directory knowledge with LLM-generated global summary and directory insights using mistletoe AST manipulation.
-        Uses header-based section identification with AST parsing for reliable content updates
-        to complete the 3-phase generation workflow with comprehensive knowledge integration.
+        Phase 3: Finalizes directory knowledge with LLM-generated global summary using mistletoe parser.
+        Uses AST-based section identification with robust parsing for reliable content updates
+        while preserving all LLM response spacing through MarkdownPreservingRenderer to complete workflow.
 
         [Design principles]
-        AST-based content identification enabling safe finalization without placeholder dependencies.
-        Mistletoe parsing preserving markdown formatting and structure during content updates.
+        AST-based content identification enabling robust global summary integration with mistletoe parsing.
+        Spacing preservation through MarkdownPreservingRenderer maintaining all original formatting.
         Global summary integration leveraging complete assembled content for comprehensive synthesis.
         Metadata finalization providing complete directory statistics and generation information.
 
         [Implementation details]
-        Parses markdown content using mistletoe for AST manipulation.
-        Updates multiple sections using batch section replacement for efficiency.
-        Updates metadata sections with actual file and subdirectory counts for accurate statistics.
-        Returns final markdown ready for standard markdown library parsing and knowledge base integration.
+        Parses markdown content using mistletoe MarkdownParser for header-based section replacement.
+        Updates global summary section with enhanced spacing preservation and updates metadata counts.
+        Returns final markdown with enhanced spacing through MarkdownPreservingRenderer integration.
         """
         try:
-            # Parse existing markdown content
+            # Parse existing markdown content using mistletoe parser
             doc = self.markdown_parser.parse_content(markdown_content)
             if not doc:
-                logger.error("Failed to parse markdown content for global summary finalization")
+                logger.warning("Failed to parse markdown content, returning original")
                 return markdown_content
             
-            # Define sections to update - Global Summary gets clean content without duplicate headers
-            section_updates = {
-                "Global Summary": global_summary.strip(),
-                "Architecture and Design": directory_summary.how_its_organized,
-                "Key Patterns": directory_summary.common_patterns,
-                "Integration Points": directory_summary.how_it_connects
-            }
+            # Use global summary content with spacing preservation
+            content_to_use = preserve_llm_spacing(global_summary.strip())
             
-            # Use mistletoe-based batch section replacement
-            updated_doc = self.markdown_parser.replace_multiple_sections(doc, section_updates)
-            
-            # Now update the Global Summary header to include directory name
-            if updated_doc:
-                # Find and update the Global Summary header to include directory name
-                updated_doc = self._update_global_summary_header_text(updated_doc, directory_summary.directory_path.name)
+            # Use mistletoe section replacement with AST manipulation
+            updated_doc = self.markdown_parser.replace_section_content(doc, "Global Summary", content_to_use)
             
             if updated_doc:
-                # Render back to markdown
-                updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
+                # Render back to markdown with enhanced spacing preservation
+                updated_markdown = render_with_spacing_preservation(updated_doc)
+                if not updated_markdown:
+                    # Fallback to standard rendering
+                    updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
+                
                 if updated_markdown:
                     # Update metadata using simple string replacement (safe for metadata)
                     updated_markdown = updated_markdown.replace("*Total Files: 0*", f"*Total Files: {file_count}*")
                     updated_markdown = updated_markdown.replace("*Total Subdirectories: 0*", f"*Total Subdirectories: {subdirectory_count}*")
                     
-                    # Ensure metadata footer is present (mistletoe may strip it during AST operations)
+                    # Ensure metadata footer is present
                     if "---" not in updated_markdown or "*Generated:" not in updated_markdown:
-                        # Re-add metadata footer if it was stripped during AST manipulation
+                        # Re-add metadata footer if it was stripped
                         directory_name = directory_summary.directory_path.name
                         metadata_footer = self._generate_metadata_footer(
                             timestamp=datetime.now().isoformat(),
@@ -755,7 +652,7 @@ class MarkdownTemplateEngine:
                         
                         updated_markdown = updated_markdown.rstrip() + "\n\n" + metadata_footer
                     
-                    logger.debug("Finalized directory knowledge using mistletoe AST manipulation")
+                    logger.debug("Finalized directory knowledge using mistletoe parser with enhanced spacing preservation")
                     return updated_markdown
             
             # Fallback: return original content
@@ -886,350 +783,3 @@ class MarkdownTemplateEngine:
         except Exception as e:
             logger.error(f"Markdown validation failed: {e}")
             return False
-    
-    # New mistletoe-based header editing methods
-    
-    def parse_existing_markdown(self, file_path: Path) -> Optional[Any]:
-        """
-        [Class method intent]
-        Parses existing markdown file using mistletoe for header-based editing operations.
-        Enables safe manipulation of existing knowledge files without relying on placeholders.
-
-        [Design principles]
-        AST-based parsing supporting reliable structure identification in existing markdown files.
-        Error handling preventing parsing failures from disrupting knowledge file editing workflows.
-        Integration with existing template engine maintaining consistent processing patterns.
-
-        [Implementation details]
-        Uses MarkdownParser to create mistletoe Document AST from existing file.
-        Returns parsed document ready for header-based content manipulation and editing.
-        Handles file access and parsing errors with graceful fallback strategies.
-        """
-        try:
-            doc = self.markdown_parser.parse_file(file_path)
-            if doc:
-                logger.debug(f"Successfully parsed existing markdown file for editing: {file_path}")
-            return doc
-        except Exception as e:
-            logger.error(f"Failed to parse existing markdown file {file_path}: {e}")
-            return None
-    
-    def update_section_by_header(self, file_path: Path, header_text: str, new_content: str) -> bool:
-        """
-        [Class method intent]
-        Updates section content following specified header in existing markdown file.
-        Provides safe content replacement without disrupting file structure or other sections.
-
-        [Design principles]
-        Header-based section identification enabling precise content updates without placeholders.
-        File integrity preservation ensuring document structure remains intact during modifications.
-        Error handling preventing content corruption and providing clear feedback on operation status.
-
-        [Implementation details]
-        Parses existing file, identifies target section by header text, replaces content.
-        Uses mistletoe AST manipulation for safe content replacement preserving document structure.
-        Writes updated content back to file with proper error handling and validation.
-        """
-        try:
-            # Parse existing file
-            doc = self.parse_existing_markdown(file_path)
-            if not doc:
-                logger.error(f"Cannot update section: failed to parse file {file_path}")
-                return False
-            
-            # Replace section content
-            updated_doc = self.markdown_parser.replace_section_content(doc, header_text, new_content)
-            if not updated_doc:
-                logger.error(f"Failed to replace section content for header: {header_text}")
-                return False
-            
-            # Render back to markdown
-            updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
-            if not updated_markdown:
-                logger.error("Failed to render updated document to markdown")
-                return False
-            
-            # Write back to file
-            with open(file_path, 'w', encoding='utf-8') as file:
-                file.write(updated_markdown)
-            
-            logger.debug(f"Successfully updated section '{header_text}' in file: {file_path}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to update section in file {file_path}: {e}")
-            return False
-    
-    def insert_after_header(self, file_path: Path, header_text: str, content: str) -> bool:
-        """
-        [Class method intent]
-        Inserts new content immediately after specified header in existing markdown file.
-        Enables safe content addition without disrupting existing document structure.
-
-        [Design principles]
-        Header-based content insertion supporting precise placement without placeholder dependencies.
-        Document structure preservation ensuring new content integrates seamlessly with existing content.
-        Comprehensive error handling preventing document corruption during insertion operations.
-
-        [Implementation details]
-        Parses existing file, locates target header, inserts content at precise location.
-        Uses mistletoe AST manipulation for safe content insertion preserving formatting.
-        Validates results and writes updated content back with proper error recovery.
-        """
-        try:
-            # Parse existing file
-            doc = self.parse_existing_markdown(file_path)
-            if not doc:
-                logger.error(f"Cannot insert content: failed to parse file {file_path}")
-                return False
-            
-            # Insert content after header
-            updated_doc = self.markdown_parser.insert_content_after_header(doc, header_text, content)
-            if not updated_doc:
-                logger.error(f"Failed to insert content after header: {header_text}")
-                return False
-            
-            # Render back to markdown
-            updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
-            if not updated_markdown:
-                logger.error("Failed to render updated document to markdown")
-                return False
-            
-            # Write back to file
-            with open(file_path, 'w', encoding='utf-8') as file:
-                file.write(updated_markdown)
-            
-            logger.debug(f"Successfully inserted content after header '{header_text}' in file: {file_path}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Failed to insert content in file {file_path}: {e}")
-            return False
-    
-    def find_available_headers(self, file_path: Path) -> List[Dict[str, Any]]:
-        """
-        [Class method intent]
-        Extracts all available headers from existing markdown file for navigation and editing guidance.
-        Provides comprehensive header inventory supporting user interfaces and content management.
-
-        [Design principles]
-        Complete header enumeration enabling informed content editing and section management.
-        Structured header metadata supporting user guidance and automated content operations.
-        Error handling ensuring reliable header extraction even with complex document structures.
-
-        [Implementation details]
-        Parses existing file and extracts all headers with level, text, and position information.
-        Returns structured header data ready for user interfaces and programmatic processing.
-        Handles parsing errors gracefully returning empty list for consistent behavior.
-        """
-        try:
-            # Parse existing file
-            doc = self.parse_existing_markdown(file_path)
-            if not doc:
-                logger.error(f"Cannot find headers: failed to parse file {file_path}")
-                return []
-            
-            # Extract available headers
-            headers = self.markdown_parser.find_available_headers(doc)
-            logger.debug(f"Found {len(headers)} headers in file: {file_path}")
-            return headers
-            
-        except Exception as e:
-            logger.error(f"Failed to extract headers from file {file_path}: {e}")
-            return []
-    
-    def validate_existing_file_structure(self, file_path: Path) -> bool:
-        """
-        [Class method intent]
-        Validates existing markdown file structure for safe editing operations.
-        Ensures file can be safely modified without risk of corruption or data loss.
-
-        [Design principles]
-        Comprehensive structure validation preventing unsafe editing operations on corrupted files.
-        Pre-editing validation ensuring document integrity before attempting modifications.
-        Clear validation feedback supporting informed decision making about editing operations.
-
-        [Implementation details]
-        Parses file and validates AST structure, header organization, and content integrity.
-        Returns boolean indicating whether file is safe for header-based editing operations.
-        Provides detailed logging for debugging structure issues and validation failures.
-        """
-        try:
-            # Parse existing file
-            doc = self.parse_existing_markdown(file_path)
-            if not doc:
-                logger.error(f"File structure validation failed: cannot parse {file_path}")
-                return False
-            
-            # Validate document structure
-            is_valid = self.markdown_parser.validate_document_structure(doc)
-            
-            if is_valid:
-                logger.debug(f"File structure validation passed for: {file_path}")
-            else:
-                logger.warning(f"File structure validation failed for: {file_path}")
-            
-            return is_valid
-            
-        except Exception as e:
-            logger.error(f"Failed to validate file structure for {file_path}: {e}")
-            return False
-    
-    def get_section_preview(self, file_path: Path, header_text: str, max_length: int = 200) -> Optional[str]:
-        """
-        [Class method intent]
-        Extracts preview of section content following specified header for user guidance.
-        Provides content summary supporting informed editing decisions and section identification.
-
-        [Design principles]
-        Section content preview enabling user verification of target sections before editing.
-        Length-limited preview preventing overwhelming output while providing sufficient context.
-        Header-based section identification supporting precise content targeting and verification.
-
-        [Implementation details]
-        Parses file, locates target header, extracts section content with length limitation.
-        Returns truncated section content ready for user display and editing confirmation.
-        Handles missing headers and extraction errors with appropriate feedback and fallbacks.
-        """
-        try:
-            # Parse existing file
-            doc = self.parse_existing_markdown(file_path)
-            if not doc:
-                logger.error(f"Cannot get section preview: failed to parse file {file_path}")
-                return None
-            
-            # Find target header
-            header = self.markdown_parser.find_header_by_text(doc, header_text)
-            if not header:
-                logger.error(f"Cannot get section preview: header not found '{header_text}'")
-                return None
-            
-            # Get section content
-            section_tokens = self.markdown_parser.get_section_content(doc, header)
-            if not section_tokens:
-                return "*Section is empty*"
-            
-            # Render section content to markdown for preview
-            section_content = ""
-            for token in section_tokens:
-                # Create temporary document with just this token for rendering
-                temp_doc = type(doc)([])
-                temp_doc.children = [token]
-                token_markdown = self.markdown_parser.render_to_markdown(temp_doc)
-                if token_markdown:
-                    section_content += token_markdown + "\n"
-            
-            # Truncate to max length
-            if len(section_content) > max_length:
-                section_content = section_content[:max_length] + "..."
-            
-            logger.debug(f"Generated section preview for header '{header_text}' in file: {file_path}")
-            return section_content.strip()
-            
-        except Exception as e:
-            logger.error(f"Failed to get section preview from file {file_path}: {e}")
-            return None
-    
-    def _ensure_string_content(self, content: Any) -> str:
-        """
-        [Class method intent]
-        Ensures content is converted to string format for safe markdown template insertion.
-        Handles cases where mistletoe parsing might have created RawText objects instead of strings.
-        Provides robust content conversion preventing type errors during template assembly.
-
-        [Design principles]
-        Safe content conversion handling various input types without breaking template rendering.
-        RawText object detection and extraction for mistletoe compatibility.
-        Fallback handling ensuring reliable string conversion for template insertion.
-
-        [Implementation details]
-        Checks for RawText objects and extracts content attribute to convert to string.
-        Handles None and empty content gracefully with appropriate fallback values.
-        Returns clean string content ready for markdown template insertion operations.
-        """
-        try:
-            if content is None:
-                return "Content not available"
-            
-            # Handle RawText objects from mistletoe parsing
-            if hasattr(content, 'content'):
-                # This is likely a RawText object, extract the content
-                extracted_content = content.content
-                if isinstance(extracted_content, str):
-                    return extracted_content.strip()
-                else:
-                    return str(extracted_content).strip()
-            
-            # Handle string content directly
-            if isinstance(content, str):
-                return content.strip()
-            
-            # Handle other types by converting to string
-            return str(content).strip()
-            
-        except Exception as e:
-            logger.warning(f"Failed to ensure string content: {e}")
-            return "Content conversion failed"
-    
-    def _update_global_summary_header_text(self, doc, directory_name: str):
-        """
-        [Class method intent]
-        Updates the Global Summary header text to include directory name.
-        Finds existing "Global Summary" header and programmatically updates it
-        to include the directory name in the header text for cleaner structure.
-
-        [Design principles]
-        Header text modification using AST manipulation for clean header updates.
-        Directory name integration providing context without content duplication.
-        Safe AST manipulation with fallback handling for robust operation.
-
-        [Implementation details]
-        Searches for "Global Summary" header using AST traversal.
-        Updates header text to include directory name in standardized format.
-        Returns updated document or original document if operation fails.
-        """
-        try:
-            # Find the Global Summary header
-            headers = self.markdown_parser.find_available_headers(doc)
-            global_summary_header = None
-            
-            for header_info in headers:
-                header_text = header_info['text']
-                if header_text == 'Global Summary':
-                    global_summary_header = header_info
-                    logger.debug(f"Found Global Summary header: '{header_text}'")
-                    break
-            
-            if not global_summary_header:
-                logger.warning("No Global Summary header found for directory name update")
-                return doc  # Return original document
-            
-            # Update the header text to include directory name
-            new_header_text = f"Global Summary: {directory_name}/"
-            
-            # Get the header token from the document
-            header_token = global_summary_header['token']
-            
-            # Update the header text directly in the AST
-            if hasattr(header_token, 'children') and header_token.children:
-                # Update the text content of the header
-                for child in header_token.children:
-                    if hasattr(child, 'content'):
-                        child.content = new_header_text
-                        logger.debug(f"Successfully updated Global Summary header to: '{new_header_text}'")
-                        break
-                    elif hasattr(child, 'children'):
-                        # Some mistletoe tokens have nested children structure
-                        for grandchild in child.children:
-                            if hasattr(grandchild, 'content'):
-                                grandchild.content = new_header_text
-                                logger.debug(f"Successfully updated Global Summary header to: '{new_header_text}'")
-                                break
-            else:
-                logger.warning("Could not update header text in AST")
-            
-            return doc
-                
-        except Exception as e:
-            logger.error(f"Failed to update Global Summary header text: {e}")
-            return doc  # Return original document on error
