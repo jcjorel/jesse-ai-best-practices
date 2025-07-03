@@ -36,6 +36,11 @@
 # <system>: typing - Type annotations and validation
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-03T15:38:00Z : Set default knowledge_output_directory to {PROJECT_ROOT}/.knowledge/ by CodeAssistant
+# * Added get_project_root import for project root detection integration
+# * Modified __post_init__ to set knowledge_output_directory default to project_root/.knowledge when None
+# * Updated documentation to reflect new default behavior following JESSE Framework conventions
+# * Maintained backward compatibility with graceful fallback when project root cannot be detected
 # 2025-07-01T12:04:00Z : Initial configuration model creation by CodeAssistant
 # * Created IndexingConfig with Claude 4 Sonnet integration
 # * Set up comprehensive parameter validation
@@ -58,6 +63,7 @@ import sys
 import os
 
 from jesse_framework_mcp.llm.strands_agent_driver.models import Claude4SonnetModel
+from jesse_framework_mcp.helpers.path_utils import get_project_root
 
 
 class IndexingMode(str, Enum):
@@ -144,7 +150,7 @@ class IndexingConfig:
     continue_on_file_errors: bool = True  # Continue processing when individual files fail
     
     # Knowledge File Output Configuration
-    knowledge_output_directory: Optional[Path] = None  # Directory for generated knowledge files (if None, uses parent of source)
+    knowledge_output_directory: Optional[Path] = None  # Directory for generated knowledge files (if None, defaults to {PROJECT_ROOT}/.knowledge/)
     
     # Debug Configuration
     debug_mode: bool = False  # Enable debug mode for LLM output persistence and replay
@@ -156,17 +162,32 @@ class IndexingConfig:
         [Class method intent]
         Validates all configuration parameters after initialization to ensure
         consistent and safe operation throughout the indexing process.
+        Sets default knowledge_output_directory to {PROJECT_ROOT}/.knowledge/ when not specified.
 
         [Design principles]
         Fail-fast validation preventing runtime errors from invalid configuration.
         Comprehensive parameter checking with descriptive error messages.
+        Default knowledge directory setting following JESSE Framework conventions.
         Validation occurs once at initialization for performance optimization.
 
         [Implementation details]
+        Sets knowledge_output_directory to project_root/.knowledge when None.
         Validates file sizes, batch parameters, concurrency limits, and LLM settings.
         Checks that file processing parameters are within reasonable bounds.
         Ensures LLM configuration is compatible with Claude 4 Sonnet constraints.
         """
+        # Set default knowledge output directory to {PROJECT_ROOT}/.knowledge/
+        if self.knowledge_output_directory is None:
+            try:
+                project_root = get_project_root()
+                if project_root:
+                    # Use object.__setattr__ to modify frozen dataclass
+                    object.__setattr__(self, 'knowledge_output_directory', project_root / '.knowledge')
+                # If project_root is None, keep knowledge_output_directory as None (fallback to old behavior)
+            except Exception:
+                # If project root detection fails, keep knowledge_output_directory as None
+                pass
+        
         # Validate file processing parameters
         if self.max_file_size <= 0:
             raise ValueError(f"max_file_size must be positive, got {self.max_file_size}")

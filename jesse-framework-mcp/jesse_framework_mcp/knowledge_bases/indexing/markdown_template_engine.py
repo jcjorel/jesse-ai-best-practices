@@ -69,7 +69,7 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 
 from .markdown_parser import MarkdownParser
-from ...helpers.project_root import get_project_root
+from ...helpers.path_utils import get_project_root
 from ...helpers.path_utils import get_portable_path
 from ...helpers.mistletoe_spacing import MarkdownPreservingRenderer, render_with_spacing_preservation, preserve_llm_spacing
 from ..models.knowledge_context import FileContext

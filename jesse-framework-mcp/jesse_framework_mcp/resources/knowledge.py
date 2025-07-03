@@ -59,7 +59,7 @@ from fastmcp import Context
 
 # Import dependencies at module level for function availability
 from ..helpers.http_formatter import format_http_section, ContentCriticality, HttpPath
-from ..helpers.project_root import get_project_root
+from ..helpers.path_utils import get_project_root
 
 async def get_git_clones_readme(ctx: Context) -> str:
         """

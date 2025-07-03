@@ -59,7 +59,8 @@ from ..helpers.http_formatter import (
     ContentCriticality,
     HttpPath
 )
-from ..helpers.project_root import get_project_root, get_project_setup_guidance
+from ..helpers.path_utils import get_project_root
+from ..helpers.project_setup import get_project_setup_guidance
 import os
 
 

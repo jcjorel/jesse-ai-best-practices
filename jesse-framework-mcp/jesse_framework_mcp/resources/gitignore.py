@@ -31,7 +31,7 @@ from enum import Enum
 from fastmcp import Context
 from ..main import server
 from ..helpers.http_formatter import format_http_section, format_multi_section_response, ContentCriticality, HttpPath
-from ..helpers.project_root import get_project_root, ensure_project_root, get_project_relative_path
+from ..helpers.path_utils import get_project_root, ensure_project_root, get_project_relative_path
 
 
 class ComplianceIssueType(Enum):

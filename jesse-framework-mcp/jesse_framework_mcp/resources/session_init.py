@@ -62,13 +62,14 @@ from ..helpers.http_formatter import (
     HttpPath,
     extract_http_sections_from_multi_response
 )
-from ..helpers.project_root import get_project_root, get_project_setup_guidance
+from ..helpers.path_utils import get_project_root
+from ..helpers.project_setup import get_project_setup_guidance
 from .framework_rules import get_rule_by_name, get_available_rule_names
 from .project_resources import get_project_context_summary, get_project_knowledge
 from .gitignore import get_project_gitignore_files, get_gitignore_compliance_status
-from .wip_tasks import get_wip_tasks_inventory
 from .knowledge import get_git_clones_readme, get_pdf_knowledge_readme
 from .workflows import get_embedded_workflow_files, get_workflow_description, get_workflow_category
+from .wip_tasks import get_wip_tasks_inventory
 
 # Import the FastMCP function unwrapper utility
 import sys

@@ -12,11 +12,13 @@ from pathlib import Path
 # Add the package to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from jesse_framework_mcp.helpers.project_root import (
-    get_project_root, 
-    get_project_setup_guidance,
+from jesse_framework_mcp.helpers.path_utils import (
+    get_project_root,
+    ensure_project_root,
+    get_project_relative_path,
     validate_project_setup
 )
+from jesse_framework_mcp.helpers.project_setup import get_project_setup_guidance
 
 
 async def test_project_root_detection():

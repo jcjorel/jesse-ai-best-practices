@@ -293,7 +293,7 @@ class MarkdownPreservingRenderer(BaseRenderer):
         Adds trailing blank line for proper visual separation from following content.
         Maintains list type and numbering through inner content rendering.
         """
-        return f"{self.render_inner(token)}\n"
+        return f"{self.render_inner(token)}"
     
     def render_list_item(self, token: ListItem) -> str:
         """
@@ -311,7 +311,7 @@ class MarkdownPreservingRenderer(BaseRenderer):
         Uses standard markdown list item formatting for broad compatibility.
         No additional spacing since list items are handled by parent list.
         """
-        return f"- {self.render_inner(token)}\n"
+        return f"- {self.render_inner(token)}"
     
     def render_table(self, token: Table) -> str:
         """

@@ -40,6 +40,21 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-03T16:16:00Z : Integrated FileAnalysisCache for high-performance file analysis caching by CodeAssistant
+# * Added FileAnalysisCache integration with cache-first processing in _process_single_file()
+# * Implemented 4-phase cache workflow: cache check, debug replay, fresh analysis, cache storage
+# * Enhanced build_file_knowledge() to pass source_root parameter for cache path calculation
+# * Added cache initialization in constructor for comprehensive caching support
+# 2025-07-03T16:00:00Z : Removed backward compatibility and enforced mandatory project-base/ subdirectory by CodeAssistant
+# * Modified _get_knowledge_file_path() to always use project-base/ subdirectory regardless of configuration
+# * Removed conditional logic for enable_project_base_indexing flag - now always enforced
+# * Simplified implementation by removing backward compatibility with direct structure mirroring
+# * Updated documentation to reflect mandatory project-base indexing segregation business rule
+# 2025-07-03T15:56:00Z : Implemented project-base indexing business rule with project-base/ subdirectory by CodeAssistant
+# * Modified _get_knowledge_file_path() to use project-base/ subdirectory when enable_project_base_indexing=True
+# * Added logic to distinguish between project-base and regular indexing modes
+# * Implemented directory structure mirroring within project-base/ subdirectory
+# * Updated documentation to reflect project-base indexing segregation business rule implementation
 # 2025-07-03T13:27:00Z : Aligned knowledge_builder.py with new get_global_summary_prompt method from enhanced_prompts.py by CodeAssistant
 # * Replaced direct template access with get_global_summary_prompt() method call for consistency
 # * Removed manual portable path conversion code since it's now handled internally by the getter method
@@ -55,10 +70,6 @@
 # * Added _initialize_and_assemble_content(), _generate_llm_insights(), _finalize_knowledge_file() phase methods
 # * Added _generate_global_summary(), _generate_directory_analysis() for focused LLM operations
 # * Simplified main build_directory_summary() method with clear 3-phase workflow delegation
-# 2025-07-01T18:56:00Z : Aligned summarization with individual file analysis factual directives by CodeAssistant
-# * Updated global summary prompt to use same factual directives as individual file analysis
-# * Added "Present FACTUAL TECHNICAL INFORMATION only - no quality judgments" requirement
-# * Enhanced prompt with same technical focus requirements for consistent analysis approach
 ###############################################################################
 
 """
@@ -88,6 +99,7 @@ from ...helpers.path_utils import get_portable_path
 from .markdown_template_engine import MarkdownTemplateEngine, FileAnalysis, DirectorySummary
 from .enhanced_prompts import EnhancedPrompts
 from .debug_handler import DebugHandler
+from .file_analysis_cache import FileAnalysisCache
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +159,9 @@ class KnowledgeBuilder:
         self.enhanced_prompts = EnhancedPrompts()
         self.template_engine = MarkdownTemplateEngine()
         
+        # Initialize file analysis cache for performance optimization
+        self.analysis_cache = FileAnalysisCache(config)
+        
         # Initialize debug handler
         self.debug_handler = DebugHandler(
             debug_enabled=config.debug_mode,
@@ -186,14 +201,15 @@ class KnowledgeBuilder:
                 logger.error(f"Failed to initialize Claude 4 Sonnet driver: {e}", exc_info=True)
                 raise RuntimeError(f"Knowledge builder initialization failed: {e}") from e
     
-    async def build_file_knowledge(self, file_context: FileContext, ctx: Context) -> FileContext:
+    async def build_file_knowledge(self, file_context: FileContext, ctx: Context, source_root: Optional[Path] = None) -> FileContext:
         """
         [Class method intent]
-        Generates comprehensive file knowledge using Claude 4 Sonnet analysis.
-        Processes file content through LLM to create fully integrated knowledge content
-        following established format patterns and intemporal writing standards.
+        Generates comprehensive file knowledge using cache-first Claude 4 Sonnet analysis.
+        Implements high-performance caching to avoid recomputation of file analyses when source files
+        haven't changed, with fallback to LLM analysis for cache misses.
 
         [Design principles]
+        Cache-first processing strategy maximizing performance by avoiding unnecessary LLM calls.
         Single file analysis through Claude 4 Sonnet with comprehensive content understanding.
         Content chunking for large files exceeding LLM context window constraints.
         Full knowledge content generation following established knowledge base format patterns.
@@ -201,6 +217,7 @@ class KnowledgeBuilder:
 
         [Implementation details]
         Reads file content and determines if chunking is required based on size limits.
+        Uses cache-first approach with FileAnalysisCache for performance optimization.
         Uses appropriate prompt template for file analysis with context-aware instructions.
         Processes content through Claude 4 Sonnet with retry logic for robustness.
         Returns updated FileContext with generated knowledge content and processing status.
@@ -228,8 +245,8 @@ class KnowledgeBuilder:
                     processing_end_time=datetime.now()
                 )
             
-            # Generate summary using Claude 4 Sonnet (simplified - no chunking)
-            summary = await self._process_single_file(file_context.file_path, file_content, ctx)
+            # Generate summary using cache-first Claude 4 Sonnet processing
+            summary = await self._process_single_file(file_context.file_path, file_content, ctx, source_root)
             
             return FileContext(
                 file_path=file_context.file_path,
@@ -641,37 +658,38 @@ class KnowledgeBuilder:
             logger.warning(f"File read error {file_path}: {e}")
             return ""
     
-    async def _process_single_file(self, file_path: Path, content: str, ctx: Context) -> str:
+    async def _process_single_file(self, file_path: Path, content: str, ctx: Context, source_root: Optional[Path] = None) -> str:
         """
         [Class method intent]
-        Processes single file content through simplified LLM analysis generating raw markdown output.
-        Uses enhanced prompts for architectural focus with natural markdown response
-        stored directly without parsing or transformation.
+        Processes single file content through cache-first LLM analysis generating raw markdown output.
+        Implements high-performance caching to avoid recomputation of file analyses when source files
+        haven't changed, with fallback to LLM analysis when cache miss occurs.
 
         [Design principles]
+        Cache-first processing strategy maximizing performance by avoiding unnecessary LLM calls.
+        Clean content extraction ensuring no metadata artifacts contaminate knowledge files.
         Simplified LLM processing eliminating complex parsing and structured response handling.
         Raw content storage enabling direct insertion into directory knowledge files.
         Natural markdown generation leveraging LLM's native markdown capabilities.
         Token efficiency through direct content usage without additional processing overhead.
 
         [Implementation details]
+        Checks analysis cache first for existing clean content before LLM processing.
         Uses enhanced prompts with content-type detection for specialized analysis approaches.
         Processes LLM response as raw markdown content without parsing or transformation.
-        Returns raw LLM response ready for direct insertion into knowledge files.
+        Caches analysis results with metadata for future retrieval and debugging.
+        Returns raw analysis content ready for direct insertion into knowledge files.
         """
         try:
-            # Generate simplified analysis prompt
-            prompt = self.enhanced_prompts.get_file_analysis_prompt(
-                file_path=file_path,
-                file_content=content,
-                file_size=len(content)
-            )
+            # PHASE 1: Check cache first for performance optimization
+            if source_root:
+                cached_analysis = await self.analysis_cache.get_cached_analysis(file_path, source_root)
+                if cached_analysis:
+                    cache_path = self.analysis_cache.get_cache_path(file_path, source_root)
+                    await ctx.info(f"📄 CACHE HIT: Using cached analysis for {file_path.name} from {cache_path}")
+                    return cached_analysis
             
-            # Process through Claude 4 Sonnet with debug support
-            normalized_path = self.debug_handler._normalize_path_for_filename(file_path)
-            conversation_id = f"file_analysis_{normalized_path}"
-            
-            # Check for main stage replay response (already reviewed content)
+            # PHASE 2: Cache miss - check debug replay (existing debug system)
             replay_response = self.debug_handler.get_stage_replay_response(
                 stage="stage_1_file_analysis",
                 file_path=file_path
@@ -680,12 +698,25 @@ class KnowledgeBuilder:
             if replay_response:
                 await ctx.info(f"🔄 REPLAY MODE: Using cached reviewed content for {file_path.name} (no LLM or reviewer calls)")
                 await ctx.debug(f"Using final reviewed response from replay: {file_path}")
-                # Return cached reviewed content directly - no need to review again
+                # Cache the replay response for future use
+                if source_root:
+                    await self.analysis_cache.cache_analysis(file_path, replay_response.strip(), source_root)
                 return replay_response.strip()
             
-            # Make fresh LLM call and review it
-            await ctx.info(f"🤖 LLM CALL: Generating new analysis for {file_path.name} using Claude 4 Sonnet")
+            # PHASE 3: No cache/replay - generate fresh analysis
+            await ctx.info(f"🤖 CACHE MISS: Generating new analysis for {file_path.name} using Claude 4 Sonnet")
             await ctx.debug(f"Making fresh LLM call for file analysis: {file_path}")
+            
+            # Generate analysis prompt
+            prompt = self.enhanced_prompts.get_file_analysis_prompt(
+                file_path=file_path,
+                file_content=content,
+                file_size=len(content)
+            )
+            
+            # Make LLM call
+            normalized_path = self.debug_handler._normalize_path_for_filename(file_path)
+            conversation_id = f"file_analysis_{normalized_path}"
             response = await self.llm_driver.send_message(prompt, conversation_id)
             original_response_content = response.content
             
@@ -721,11 +752,16 @@ class KnowledgeBuilder:
                 file_path=file_path
             )
             
-            # Return final reviewed response
+            # PHASE 4: Cache the analysis result for future use
+            if source_root:
+                await self.analysis_cache.cache_analysis(file_path, final_response_content.strip(), source_root)
+                await ctx.debug(f"💾 CACHED: Analysis cached for {file_path.name}")
+            
+            # Return final analysis content
             return final_response_content.strip()
             
         except Exception as e:
-            logger.error(f"Simplified file processing failed for {file_path}: {e}")
+            logger.error(f"Cache-first file processing failed for {file_path}: {e}")
             raise
     
     
@@ -861,15 +897,18 @@ class KnowledgeBuilder:
         Determines appropriate knowledge file path for directory following naming conventions.
         Implements hierarchical semantic context pattern with standardized knowledge file
         naming and location conventions for consistent knowledge base organization.
+        Enforces project-base indexing business rule using mandatory project-base/ subdirectory.
 
         [Design principles]
         Standardized knowledge file naming following hierarchical semantic context patterns.
         Configurable file placement enabling separation between source and knowledge files.
         Hierarchical structure preservation in knowledge output directory mirroring source structure.
+        Mandatory project-base indexing segregation using dedicated project-base/ subdirectory.
 
         [Implementation details]
         Generates knowledge file name using directory name with '_kb.md' suffix.
         Uses knowledge_output_directory from config if specified, preserving relative structure.
+        Always uses project-base/ subdirectory with structure mirroring for project-base indexing.
         Calculates relative path from source root and recreates structure in knowledge directory.
         Returns Path object ready for knowledge file writing operations.
         """
@@ -880,19 +919,21 @@ class KnowledgeBuilder:
             try:
                 # Calculate relative path from source root to current directory
                 relative_path = directory_path.relative_to(source_root)
-                # Create corresponding path in knowledge output directory
-                knowledge_dir = self.config.knowledge_output_directory / relative_path
+                
+                # Apply project-base indexing business rule - always use project-base/ subdirectory
+                knowledge_dir = self.config.knowledge_output_directory / "project-base" / relative_path
+                
                 return knowledge_dir / knowledge_filename
             except ValueError:
                 # Fallback if relative path calculation fails
-                return self.config.knowledge_output_directory / knowledge_filename
+                return self.config.knowledge_output_directory / "project-base" / knowledge_filename
         elif self.config.knowledge_output_directory:
             # Use separate knowledge output directory, flat structure
-            return self.config.knowledge_output_directory / knowledge_filename
+            return self.config.knowledge_output_directory / "project-base" / knowledge_filename
         else:
-            # Default behavior: place in parent directory
+            # Default behavior: place in parent directory with project-base/ subdirectory
             parent_dir = directory_path.parent
-            return parent_dir / knowledge_filename
+            return parent_dir / "project-base" / knowledge_filename
     
     async def _write_knowledge_file(self, file_path: Path, content: str) -> None:
         """

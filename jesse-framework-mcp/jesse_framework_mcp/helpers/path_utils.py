@@ -37,8 +37,170 @@
 # * Maintains all existing functionality while resolving import issues
 ###############################################################################
 
+import os
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
+
+
+def get_project_root() -> Optional[Path]:
+    """
+    [Function intent]
+    Detect the JESSE Framework project root directory using priority-based discovery.
+    
+    [Design principles]
+    Environment variable takes precedence over automatic Git repository detection.
+    Upward directory traversal ensures discovery regardless of current working directory.
+    Returns None rather than raising exceptions for graceful error handling.
+    
+    [Implementation details]
+    Priority 1: JESSE_PROJECT_ROOT environment variable (if set and valid)
+    Priority 2: Search upward from current directory for .git/ directory
+    Stops at filesystem root to prevent infinite traversal.
+    
+    Returns:
+        Path object pointing to project root, or None if not found
+        
+    Raises:
+        No exceptions raised - returns None for missing/invalid project roots
+    """
+    # Priority 1: Check JESSE_PROJECT_ROOT environment variable
+    env_root = os.getenv('JESSE_PROJECT_ROOT')
+    if env_root:
+        project_path = Path(env_root).resolve()
+        if project_path.exists() and project_path.is_dir():
+            return project_path
+        # Invalid JESSE_PROJECT_ROOT set - continue with Git detection
+    
+    # Priority 2: Search upward for .git/ directory
+    current = Path.cwd().resolve()
+    while current != current.parent:  # Stop at filesystem root
+        git_dir = current / '.git'
+        if git_dir.exists():
+            return current
+        current = current.parent
+    
+    # No project root found
+    return None
+
+
+def ensure_project_root() -> Path:
+    """
+    [Function intent]
+    Get project root or raise clear exception if not found.
+    
+    [Design principles]
+    Wrapper around get_project_root() that converts None to descriptive exception.
+    Provides clear guidance in exception message for troubleshooting.
+    
+    [Implementation details]
+    Calls get_project_root() and raises ValueError with guidance if None returned.
+    Exception message includes both setup options for user convenience.
+    
+    Returns:
+        Path object pointing to valid project root
+        
+    Raises:
+        ValueError: When project root cannot be detected with setup guidance
+    """
+    project_root = get_project_root()
+    if project_root is None:
+        raise ValueError(
+            "JESSE Framework project root not found. "
+            "Either work in a Git repository or set JESSE_PROJECT_ROOT environment variable."
+        )
+    
+    return project_root
+
+
+def get_project_relative_path(relative_path: str) -> Path:
+    """
+    [Function intent]
+    Get absolute path relative to detected project root.
+    
+    [Design principles]
+    Centralized path resolution based on detected project root.
+    Raises clear exceptions if project root cannot be determined.
+    
+    [Implementation details]
+    Uses ensure_project_root() to get valid project root, then resolves relative path.
+    Returns absolute Path object for reliable file operations.
+    
+    Args:
+        relative_path: Path relative to project root (e.g., '.knowledge/work-in-progress')
+        
+    Returns:
+        Absolute Path object relative to project root
+        
+    Raises:
+        ValueError: When project root cannot be detected
+    """
+    project_root = ensure_project_root()
+    return project_root / relative_path
+
+
+def validate_project_setup() -> dict:
+    """
+    [Function intent]
+    Validate current project setup and return diagnostic information.
+    
+    [Design principles]
+    Comprehensive project validation for debugging and status reporting.
+    Structured return data for easy processing by calling code.
+    
+    [Implementation details]
+    Checks project root detection, validates key directories and files,
+    returns structured diagnostic information for troubleshooting.
+    
+    Returns:
+        Dictionary with project setup validation results and diagnostics
+    """
+    validation = {
+        "project_root_found": False,
+        "project_root_path": None,
+        "project_root_method": None,
+        "jesse_directories": {},
+        "validation_timestamp": Path.cwd().resolve().as_posix(),
+        "current_working_directory": Path.cwd().resolve().as_posix()
+    }
+    
+    # Check project root detection
+    try:
+        project_root = get_project_root()
+        if project_root:
+            validation["project_root_found"] = True
+            validation["project_root_path"] = project_root.as_posix()
+            
+            # Determine detection method
+            env_root = os.getenv('JESSE_PROJECT_ROOT')
+            if env_root and Path(env_root).resolve() == project_root:
+                validation["project_root_method"] = "environment_variable"
+            elif (project_root / '.git').exists():
+                validation["project_root_method"] = "git_repository"
+            else:
+                validation["project_root_method"] = "unknown"
+            
+            # Check JESSE directories
+            jesse_dirs = [
+                '.knowledge',
+                '.knowledge/work-in-progress',
+                '.knowledge/git-clones', 
+                '.knowledge/pdf-knowledge',
+                '.knowledge/persistent-knowledge',
+                '.clinerules'
+            ]
+            
+            for dir_path in jesse_dirs:
+                full_path = project_root / dir_path
+                validation["jesse_directories"][dir_path] = {
+                    "exists": full_path.exists(),
+                    "is_directory": full_path.is_dir() if full_path.exists() else False,
+                    "absolute_path": full_path.as_posix()
+                }
+        
+    except Exception as e:
+        validation["error"] = str(e)
+    
+    return validation
 
 
 def resolve_portable_path(location: str) -> str:
@@ -138,11 +300,17 @@ def get_portable_path(full_path: Union[str, Path]) -> str:
             # Resolution failed, use original path
             pass
         
+        # Get actual project root instead of current working directory
+        project_root = get_project_root()
+        if project_root is None:
+            # Fallback to current working directory if project root cannot be detected
+            project_root = Path.cwd()
+        
         # Define variable paths in priority order (most specific first)
         variable_paths = [
             ('{CLINE_WORKFLOWS}', Path.home() / 'Cline' / 'Workflows'),
             ('{CLINE_RULES}', Path.home() / 'Cline' / 'Rules'),
-            ('{PROJECT_ROOT}', Path.cwd()),
+            ('{PROJECT_ROOT}', project_root),
             ('{HOME}', Path.home())
         ]
         

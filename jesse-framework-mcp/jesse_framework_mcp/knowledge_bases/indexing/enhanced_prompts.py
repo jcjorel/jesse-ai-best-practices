@@ -35,6 +35,40 @@
 # <system>: typing - Type hints for prompt template parameters and response structures
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-03T21:26:00Z : Added backquote highlighting requirement for technical entity names by CodeAssistant
+# * Enhanced SEMANTIC_ENTITY_USAGE_SPEC to require backquotes (`) around all technical entity names for highlighting
+# * Updated fundamental principle to mandate backquote formatting for improved visual distinction
+# * Modified all examples to demonstrate proper backquote usage around technical entities
+# * Applied to all hierarchical preference levels ensuring consistent technical entity highlighting
+# 2025-07-03T21:08:00Z : Created reusable SEMANTIC_ENTITY_USAGE_SPEC following DRY principle by CodeAssistant
+# * Created comprehensive reusable specification covering fundamental principles, hierarchy, examples, and level-specific emphasis
+# * Integrated specification across all three prompts (file analysis, directory analysis, global summary) via f-string interpolation
+# * Applied to all levels (4-11) with strongest emphasis on Level 4 for project-wide search optimization
+# * Eliminated redundant inline text in content-type guidelines, referencing single source of truth specification
+# 2025-07-03T21:01:00Z : Added technical entity name preference rule for Level 4 semantic entities by CodeAssistant
+# * Added explicit requirement to "always use technical entity names when known" in Level 4 content-type guidelines
+# * Specified preference for "specific technical terms over generic vague wording" to improve semantic precision
+# * Enhanced both Code Files and Non-Code Files guidelines with technical entity name preference
+# 2025-07-03T20:51:00Z : Refined Level 4 to include semantic entities for project-wide search optimization by CodeAssistant
+# * Enhanced Level 4 definition to "Functional features, usage value, and related semantic entities" for improved search capability
+# * Updated all three prompts to include "key terms/concepts for project-wide search" in Level 4 descriptions
+# * Modified content-type guidelines to include "related semantic entities/terms for project-wide search" requirement
+# 2025-07-03T18:22:00Z : Updated Level 4 to focus on functional features and usage value by CodeAssistant
+# * Changed Level 4 definition from "Core purpose and existence rationale" to "Functional features and usage value"
+# * Updated main specification to emphasize functional capabilities and consumer usage benefits rather than technical existence rationale
+# * Modified all three prompts (file analysis, directory analysis, global summary) to use new Level 4 header "Functional Features"
+# * Updated content-type guidelines to focus on what functional value files/directories provide and why consumers should use them
+# 2025-07-03T15:27:00Z : Completed DRY refactoring to externalize Level 9 External Dependencies formatting specification by CodeAssistant
+# * Created LEVEL_9_FORMATTING_SPEC class variable containing complete Level 9 formatting specification to ensure single source of truth
+# * Updated all three generator prompts (file analysis, directory analysis, global summary) to integrate externalized specification using f-string interpolation
+# * Removed duplicate Level 9 specification from main docstring, replaced with reference to externalized variable for DRY compliance
+# * All prompts now consistently reference the same externalized Level 9 rules ensuring maintainability and preventing specification drift
+# 2025-07-03T15:18:00Z : Updated Level 9 definition to focus on external dependencies and integration points by CodeAssistant
+# * Changed Level 9 from "Advanced patterns and optimization strategies" to "External dependencies and integration points (both inbound and outbound)"
+# * Updated specification rule 2 to reflect new Level 9 definition focused on external dependencies
+# * Updated all three prompts (file analysis, directory analysis, global summary) to use new Level 9 definition
+# * Updated content-type guidelines to specify location-aware identifiers for dependency tracking
+# * Consistent external dependency focus across all prompts providing actionable integration information
 # 2025-07-03T13:41:00Z : Added code quote and comment formatting specification to prevent markdown header confusion by CodeAssistant
 # * Added HIERARCHY DESIGN PRINCIPLE 13 addressing special care for quotes and code snippets containing '#' characters
 # * Specification requires all quotes and code snippets to be properly enclosed in markdown code blocks
@@ -45,16 +79,6 @@
 # * Method includes comprehensive documentation with class method intent, design principles, and implementation details
 # * Supports portable path conversion for cross-platform compatibility in generated global summary knowledge
 # * Complete method implementation with proper error handling and logging for system-wide architectural synthesis
-# 2025-07-03T13:20:00Z : Fixed level number inconsistencies across all prompts to align with specification by CodeAssistant
-# * Corrected all "Level 3-10" references to "Level 4-11" in content-type guidelines sections
-# * Updated response validation text from "8 header levels (3-10)" to "8 header levels (4-11)"
-# * Fixed content-type guidelines level descriptions to match specification (Level 4: core purpose, Level 5: components, etc.)
-# * Ensured complete alignment between prompt explanatory text and hierarchical semantic tree specification requirements
-# 2025-07-03T13:08:00Z : Updated all three reviewer prompts with structural-only validation approach alignment by CodeAssistant
-# * Applied REVIEWER SCOPE LIMITATIONS section to all three reviewer prompts (file, directory, global summary)
-# * All reviewer prompts now clearly state they operate at STRUCTURAL LEVEL ONLY with explicit scope boundaries
-# * Consistent structural validation approach across all reviewer prompts ensuring uniform behavior
-# * Complete alignment with specification requirement that reviewers only validate formatting, not semantic content
 # 2025-07-03T12:01:00Z : Added blank line requirement for proper markdown formatting to all prompts by CodeAssistant
 # * Updated specification Rule 12 to require blank line after each header level for proper markdown formatting
 # * Added BLANK LINE REQUIREMENT to all three prompts (file analysis, directory analysis, global summary)
@@ -91,12 +115,12 @@ HIERARCHY DESIGN PRINCIPLES:
    markdown rules that specify that no more than 6 levels exist.
 
 2. **No Redundancy**: Each level (n-1) contains NO overlapping information with level (n)
-   - Level 4: Core purpose and existence rationale
+   - Level 4: Functional intent (WHY), features (WHAT), usage value, and key semantic entities
    - Level 5: Main components and responsibilities  
    - Level 6: Architecture and design patterns
    - Level 7: Implementation approach, usage patterns and key algorithms
    - Level 8: Code snippets and usage examples (for code files)
-   - Level 9: Advanced patterns and optimization strategies
+   - Level 9: External dependencies and integration points (both inbound and outbound)
    - Level 10: Edge cases, error handling, and debugging
    - Level 11: Internal implementation details and maintenance notes
 
@@ -115,7 +139,7 @@ HIERARCHY DESIGN PRINCIPLES:
 
 7. Global Summary prompt must follow the same hierarchical structure and rules 
 
-8. **Never state the obvious!**: Avoid stating information and best practices known by any modern AI LLM in headers or content. Focus on
+8. **Never state the obvious!**: Avoid stating information and best practices known by any modern AI LLM. Focus on
    providing unique, valuable insights at each level without redundancy.
 
 9. Do not judge or propose enhancement about the current implementation. Focus on providing
@@ -139,6 +163,69 @@ HIERARCHY DESIGN PRINCIPLES:
     generating outputs and associated reviewer prompts must ensure that these quotes or generated code snippets 
     are **ALWAYS** properly enclosed in markdown code blocks to prevent structural parsing conflicts with 
     hierarchical semantic tree headers.
+
+14. **Level 9 External Dependencies Formatting Specification**: Level 9 must follow a standardized format
+    for external dependencies and integration points. This specification ensures consistent, actionable
+    dependency information across all generated knowledge bases.
+
+**LEVEL 9 REQUIRED FORMAT STRUCTURE:**
+
+**For Code Files:**
+```
+**→ Inbound:** [what this file depends on]
+- `identifier` - description of dependency and usage
+- `path/to/file.py:function` - specific function dependency
+- `external_library` (external library) - library usage pattern
+
+**← Outbound:** [what depends on this file]
+- `dependent/file.py:Class` - class that uses this file's exports
+- `external_system` - system that consumes this file's output
+- `generated/artifact.ext` - output consumed elsewhere
+
+**⚡ Integration:** [how connections work]
+- Protocol: REST/GraphQL/gRPC/Event-driven/Direct-import
+- Interface: Class.method(), API endpoint, data format
+- Coupling: tight/loose, sync/async, required/optional
+```
+
+**For Non-Code Files:**
+```
+**→ References:** [what this content relies on]
+- `external/doc.md` - referenced documentation
+- `data/source.json` - required data input
+- `https://external-api.com/spec` - external specification
+
+**← Referenced By:** [what uses this content]
+- `consumer/system.py` - system that processes this content
+- `build/generated.html` - generated output from this content
+- `workflow/process.yml` - workflow that depends on this content
+
+**⚡ Integration:** [relationship mechanisms]
+- Format: JSON/XML/Markdown/YAML/Binary
+- Access: File/API/Database/Manual/Automated
+- Sync: Real-time/Batch/Manual/Event-driven
+```
+
+**LOCATION IDENTIFIER FORMATTING RULES:**
+- **Internal Files**: `relative/path/to/file.ext:symbol` (with file extension and optional symbol)
+- **External Libraries**: `library_name` (external library) (with explicit external marker)
+- **Configuration**: `config/file.ext:KEY_NAME` (with specific key when applicable)
+- **APIs**: `domain.com/endpoint` or `https://full-url.com/path`
+- **Generated Files**: `generated/output.ext` or `build/artifact.ext`
+- **Directories**: `path/to/directory/` (with trailing slash)
+
+**VISUAL SYMBOLS MEANINGS:**
+- `→` indicates inbound dependencies (what this file/content depends on)
+- `←` indicates outbound dependencies (what depends on this file/content)
+- `⚡` indicates integration mechanisms (how dependencies connect)
+
+**MANDATORY REQUIREMENTS:**
+- Each subsection (Inbound, Outbound, Integration) must be present even if empty
+- All identifiers must include location information when available
+- Descriptions must be concise but actionable (focus on "what" and "how")
+- Integration section must specify protocol, interface, and coupling characteristics
+- Use consistent formatting with backticks for all identifiers
+- Follow the exact visual symbol format (→, ←, ⚡) for immediate recognition
 
 REVIEWER PROMPT SCOPE AND LIMITATIONS:
 --------------------------------------
@@ -205,6 +292,114 @@ class EnhancedPrompts:
     Uses structured response format compatible with FileAnalysis and DirectorySummary dataclasses.
     """
     
+    # Semantic Entity Usage specification (DRY principle - applies to all levels)
+    SEMANTIC_ENTITY_USAGE_SPEC = """
+**SEMANTIC ENTITY USAGE SPECIFICATION:**
+
+**FUNDAMENTAL PRINCIPLE:**
+When refering to semantic entities, **ALWAYS** prefer technical entity names when known. Use specific, unambiguous 
+technical terminology rather than generic vague wording. This principle enhances semantic precision, improves 
+project-wide search capability, and eliminates ambiguity.**ALWAYS surround semantic entity names with backquotes to 
+allow clear identification**. 
+
+**TECHNICAL ENTITY PREFERENCE HIERARCHY:**
+1. **Exact Technical Names**: Use precise class names, function names, method names, API endpoints (with backquotes)
+2. **Domain-Specific Terms**: Use established technical terminology from the relevant domain (with backquotes)
+3. **Specific Identifiers**: Include actual module names, configuration keys, protocol names (with backquotes)
+4. **Avoid Generic Terms**: Replace vague descriptions with concrete technical references or well-knwon jargon
+
+**EXAMPLES OF PREFERRED USAGE:**
+- ✅ **Good**: "`FileAnalysisCache` class provides timestamp-based staleness detection"
+- ❌ **Avoid**: "Caching system provides performance optimization"
+- ✅ **Good**: "REST API endpoints using `FastAPI` framework with `Pydantic` models"
+- ❌ **Avoid**: "Web service interface with data validation"
+- ✅ **Good**: "`HierarchicalIndexer` implements leaf-first processing strategy"
+- ❌ **Avoid**: "Component handles directory processing workflow"
+
+**LEVEL-SPECIFIC EMPHASIS:**
+- **Level 4**: 🚨 **STRONGEST REQUIREMENT** - Technical entitiy names are critical for project-wide search optimization
+- **Levels 5-11**: Technical entities strongly preferred with appropriate context for each level's focus
+
+**SEMANTIC SEARCH OPTIMIZATION:**
+- Include relevant technical terminology that developers would search for
+- Use established patterns and naming conventions from the technology stack
+- Reference specific APIs, libraries, frameworks, and tools by their exact names
+- Provide semantic context that enables cross-project component discovery
+
+**MAINTAINING FUNCTIONAL FOCUS:**
+- Technical entity names enhance rather than replace functional descriptions
+- Combine precise technical terms with clear explanations of capabilities and value
+- Ensure technical precision serves the communication goal of each level
+
+**LEVEL 4 SEMANTIC ENTITY EXTRACTION:**
+- **MANDATORY**: Level 4 must actively identify and list specific semantic entities found in analyzed content
+- **CONCRETE NAMES**: Use actual technical names, not generic categories
+- **COMPREHENSIVE SCOPE**: Include entities from imports, references, configuration, domain concepts, and architectural patterns
+- **VISUAL FORMATTING**: Surround all entities with backquotes for clear identification
+"""
+
+    # Level 9 External Dependencies formatting specification (DRY principle)
+    LEVEL_9_FORMATTING_SPEC = """
+**LEVEL 9 EXTERNAL DEPENDENCIES FORMATTING SPECIFICATION:**
+
+**For Code Files:**
+```
+**→ Inbound:** [what this file depends on]
+- `identifier` - description of dependency and usage
+- `path/to/file.py:function` - specific function dependency
+- `external_library` (external library) - library usage pattern
+
+**← Outbound:** [what depends on this file]
+- `dependent/file.py:Class` - class that uses this file's exports
+- `external_system` - system that consumes this file's output
+- `generated/artifact.ext` - output consumed elsewhere
+
+**⚡ Integration:** [how connections work]
+- Protocol: REST/GraphQL/gRPC/Event-driven/Direct-import
+- Interface: Class.method(), API endpoint, data format
+- Coupling: tight/loose, sync/async, required/optional
+```
+
+**For Non-Code Files:**
+```
+**→ References:** [what this content relies on]
+- `external/doc.md` - referenced documentation
+- `data/source.json` - required data input
+- `https://external-api.com/spec` - external specification
+
+**← Referenced By:** [what uses this content]
+- `consumer/system.py` - system that processes this content
+- `build/generated.html` - generated output from this content
+- `workflow/process.yml` - workflow that depends on this content
+
+**⚡ Integration:** [relationship mechanisms]
+- Format: JSON/XML/Markdown/YAML/Binary
+- Access: File/API/Database/Manual/Automated
+- Sync: Real-time/Batch/Manual/Event-driven
+```
+
+**LOCATION IDENTIFIER FORMATTING RULES:**
+- **Internal Files**: `relative/path/to/file.ext:symbol` (with file extension and optional symbol)
+- **External Libraries**: `library_name` (external library) (with explicit external marker)
+- **Configuration**: `config/file.ext:KEY_NAME` (with specific key when applicable)
+- **APIs**: `domain.com/endpoint` or `https://full-url.com/path`
+- **Generated Files**: `generated/output.ext` or `build/artifact.ext`
+- **Directories**: `path/to/directory/` (with trailing slash)
+
+**VISUAL SYMBOLS MEANINGS:**
+- `→` indicates inbound dependencies (what this file/content depends on)
+- `←` indicates outbound dependencies (what depends on this file/content)
+- `⚡` indicates integration mechanisms (how dependencies connect)
+
+**MANDATORY REQUIREMENTS:**
+- Each subsection (Inbound, Outbound, Integration) must be present even if empty
+- All identifiers must include location information when available
+- Descriptions must be concise but actionable (focus on "what" and "how")
+- Integration section must specify protocol, interface, and coupling characteristics
+- Use consistent formatting with backticks for all identifiers
+- Follow the exact visual symbol format (→, ←, ⚡) for immediate recognition
+"""
+    
     def __init__(self):
         """
         [Class method intent]
@@ -224,16 +419,16 @@ class EnhancedPrompts:
         """
         
         # Hierarchical semantic tree file analysis prompt
-        self.file_analysis_prompt = """
+        self.file_analysis_prompt = f"""
 Analyze this file and generate a hierarchical semantic tree using the specified structure.
 
 **FILE INFORMATION:**
-Path: {file_path}
-Size: {file_size} bytes
-Content Type: {content_type}
+Path: {{file_path}}
+Size: {{file_size}} bytes
+Content Type: {{content_type}}
 
 **FILE CONTENT:**
-{file_content}
+{{file_content}}
 
 **CRITICAL REQUIREMENTS:**
 🚨 **HIERARCHICAL STRUCTURE MANDATE**: You MUST structure your response using markdown headers levels 4-11 (####-###########) according to the semantic hierarchy specification below.
@@ -247,8 +442,8 @@ Content Type: {content_type}
 
 Use this EXACT structure with these EXACT header levels and do not generate any other headers, preambule, postambule or additional text:
 
-#### File Purpose
-*Core purpose and existence rationale - why this file exists in the system*
+#### Functional Intent & Features
+*Functional intent (why this exists), features (what it provides), usage value (why consumers should use it), and key semantic entities enabling rapid codebase orientation and navigation*
 
 ##### Main Components  
 *Primary components, classes, functions, or sections without implementation details*
@@ -263,8 +458,8 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 *Essential code snippets and usage patterns for this file's main features*
 *Note: For non-code files, use this level for practical usage or integration examples*
 
-######### Advanced Patterns
-*Optimization strategies, performance considerations, and advanced usage patterns*
+######### External Dependencies & Integration Points
+*External dependencies (inbound and outbound) and integration mechanisms*
 
 ########## Edge Cases & Error Handling
 *Error conditions, edge cases, debugging approaches, and failure scenarios*
@@ -275,25 +470,29 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 **CONTENT-TYPE SPECIFIC GUIDELINES:**
 
 **For Code Files:**
-- Level 4: Why this file exists (business/technical purpose)
+- Level 4: Functional intent (why this file exists), features (what capabilities it provides), usage value (why consumers should use it), and key semantic entities (class names, function names, imported libraries, frameworks, APIs, configuration keys, protocols) enabling rapid codebase orientation and navigation. **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the code (specific class names, method signatures, configuration values, imported modules, etc.)
 - Level 5: What components/functions/classes it contains
 - Level 6: How it's architecturally designed
 - Level 7: Key implementation strategies, usage patterns, and algorithms  
 - Level 8: Essential code snippets developers need
-- Level 9: Advanced usage and optimization patterns
+- Level 9: External dependencies (inbound/outbound) and integration points with location-aware identifiers
 - Level 10: Error handling and debugging guidance
 - Level 11: Internal maintenance and implementation specifics
 
 **For Non-Code Files:**
 - Structure based on logical information depth and contextual relevance
-- Level 4: Core purpose and why it exists
+- Level 4: Functional intent (why this content exists), features (what information/value it provides), usage value (why consumers should reference/use it), and key semantic entities (file formats, configuration keys, URLs, tool names, standards, protocols, domain concepts) enabling rapid codebase orientation and navigation. **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the content (specific configuration keys, section headers, referenced tools, file paths, etc.)
 - Level 5: Main content sections or information types
 - Level 6: Organization and structure patterns
 - Level 7: Key concepts, usage patterns, and information details
 - Level 8: Practical usage and application examples
-- Level 9: Advanced topics and specialized information
+- Level 9: External dependencies (references/referenced by) and integration points with location-aware identifiers
 - Level 10: Edge cases, limitations, and troubleshooting
 - Level 11: Detailed specifications and technical minutiae
+
+{self.SEMANTIC_ENTITY_USAGE_SPEC}
+
+{self.LEVEL_9_FORMATTING_SPEC}
 
 **FORMATTING REQUIREMENTS:**
 - Write in present tense for intemporal knowledge representation
@@ -304,7 +503,7 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 - Make content developer-focused and practical
 - Ensure each level stands alone while building upon previous levels
 - Use clear, professional technical writing
-- **NEVER STATE THE OBVIOUS**: Avoid stating information known by any modern AI LLM. Focus on unique, valuable insights at each level
+- **NEVER STATE THE OBVIOUS**: Avoid stating information or best practices known by any modern AI LLM. Focus on unique, valuable insights at each level
 - **NO SUBJECTIVE JUDGMENTS**: Do not judge or propose enhancements. Focus on structured, detailed analysis without opinions or suggestions
 
 **RESPONSE VALIDATION:**
@@ -319,16 +518,16 @@ Generate the hierarchical semantic tree analysis now.
 """
 
         # Hierarchical semantic tree directory analysis prompt
-        self.directory_analysis_prompt = """
+        self.directory_analysis_prompt = f"""
 Analyze this directory and generate a hierarchical semantic tree using the specified structure.
 
 **DIRECTORY INFORMATION:**
-Path: {directory_path}/
-Total Files: {file_count}
-Total Subdirectories: {subdirectory_count}
+Path: {{directory_path}}/
+Total Files: {{file_count}}
+Total Subdirectories: {{subdirectory_count}}
 
 **CHILD CONTENT SUMMARY:**
-{child_content_summary}
+{{child_content_summary}}
 
 **CRITICAL REQUIREMENTS:**
 🚨 **HIERARCHICAL STRUCTURE MANDATE**: You MUST structure your response using markdown headers levels 4-11 (####-###########) according to the semantic hierarchy specification below.
@@ -342,8 +541,8 @@ Total Subdirectories: {subdirectory_count}
 
 Use this EXACT structure with these EXACT header levels:
 
-#### Directory Purpose
-*Core purpose and existence rationale - why this directory exists in the system*
+#### Functional Intent & Features
+*Functional intent (why this exists), features (what it provides), usage value (why developers should work with it), and key semantic entities enabling rapid codebase orientation and navigation*
 
 ##### Directory Contents
 *Primary subdirectories, file types, and main components without implementation details*
@@ -357,8 +556,8 @@ Use this EXACT structure with these EXACT header levels:
 ######## Usage Examples
 *Practical examples of how to work with this directory, common workflows, and integration patterns*
 
-######### Advanced Integration
-*Complex integration patterns, optimization strategies, and advanced usage scenarios*
+######### External Dependencies & Integration Points
+*External dependencies (inbound and outbound) and integration mechanisms*
 
 ########## Edge Cases & Dependencies
 *Error conditions, edge cases, external dependencies, and troubleshooting guidance*
@@ -369,14 +568,18 @@ Use this EXACT structure with these EXACT header levels:
 **DIRECTORY-SPECIFIC GUIDELINES:**
 
 **For All Directory Types:**
-- Level 4: Why this directory exists (functional/architectural purpose)
+- Level 4: Functional intent (why this directory exists), features (what capabilities it provides), usage value (why developers should work with it), and key semantic entities (architectural patterns, technology stack indicators, framework structures, organizational patterns) enabling rapid codebase orientation and navigation. **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the directory structure (specific subdirectory names, file types, configuration files, naming patterns, etc.)
 - Level 5: What components, files, and subdirectories it contains
 - Level 6: How it's organized and structured architecturally
 - Level 7: Common implementation patterns and approaches used
 - Level 8: Practical usage examples and workflow guidance
-- Level 9: Advanced integration patterns and optimization strategies
+- Level 9: External dependencies (inbound/outbound) and integration points with location-aware identifiers
 - Level 10: Dependencies, edge cases, and troubleshooting
 - Level 11: Internal organization details and maintenance specifics
+
+{self.SEMANTIC_ENTITY_USAGE_SPEC}
+
+{self.LEVEL_9_FORMATTING_SPEC}
 
 **FORMATTING REQUIREMENTS:**
 - Write in present tense for intemporal knowledge representation
@@ -405,13 +608,13 @@ Generate the hierarchical semantic tree analysis now.
 
         
         # Global summary prompt following hierarchical semantic tree structure
-        self.global_summary_prompt = """
+        self.global_summary_prompt = f"""
 Analyze this complete directory content and generate a hierarchical semantic tree global summary.
 
-**DIRECTORY**: {directory_path}/
+**DIRECTORY**: {{directory_path}}/
 
 **ASSEMBLED CONTENT**:
-{assembled_content}
+{{assembled_content}}
 
 **CRITICAL REQUIREMENTS:**
 🚨 **HIERARCHICAL STRUCTURE MANDATE**: You MUST structure your response using markdown headers levels 4-11 (####-###########) according to the semantic hierarchy specification below.
@@ -425,8 +628,8 @@ Analyze this complete directory content and generate a hierarchical semantic tre
 
 Use this EXACT structure with these EXACT header levels:
 
-#### Directory Purpose
-*Core purpose and existence rationale - why this directory exists in the system*
+#### Functional Intent & Features
+*Functional intent (why this exists), features (what it provides), usage value (why developers should work with it), and key semantic entities enabling rapid codebase orientation and navigation*
 
 ##### Main Components
 *Primary subdirectories, file types, and main components without implementation details*
@@ -440,14 +643,18 @@ Use this EXACT structure with these EXACT header levels:
 ######## Usage Examples
 *Essential usage patterns and workflow examples for working with this directory*
 
-######### Advanced Patterns
-*Optimization strategies, performance considerations, and advanced integration patterns*
+######### External Dependencies & Integration Points
+*External dependencies (inbound and outbound) and integration mechanisms*
 
 ########## Edge Cases & Error Handling
 *Error conditions, edge cases, debugging approaches, and failure scenarios*
 
 ########### Internal Implementation Details
 *Low-level implementation specifics, maintenance notes, and internal mechanisms*
+
+{self.SEMANTIC_ENTITY_USAGE_SPEC}
+
+{self.LEVEL_9_FORMATTING_SPEC}
 
 **FORMATTING REQUIREMENTS:**
 - Present FACTUAL TECHNICAL INFORMATION only - no quality judgments, no enhancement proposals

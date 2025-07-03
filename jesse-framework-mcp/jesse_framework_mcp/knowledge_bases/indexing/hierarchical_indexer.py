@@ -41,6 +41,11 @@
 # <system>: logging - Structured logging and error reporting
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-03T17:57:00Z : Fixed systematic knowledge file rebuilding by integrating comprehensive change detection by CodeAssistant
+# * Replaced old _detect_changes() with comprehensive change detection using check_comprehensive_directory_change()
+# * Added _apply_comprehensive_change_detection() method for recursive directory evaluation with proper constituent dependency checking
+# * Updated directory processing to skip knowledge file generation when processing_status is SKIPPED (up-to-date directories)
+# * Integrated enhanced FileAnalysisCache logic eliminating systematic rebuilds when only source files change without cached analysis updates
 # 2025-07-01T13:25:00Z : Fixed semaphore deadlock issue by CodeAssistant
 # * Moved semaphore usage from directory processing to file processing level
 # * Prevented recursive deadlocks in leaf-first directory processing
@@ -48,7 +53,6 @@
 # 2025-07-01T12:08:00Z : Initial hierarchical indexer creation by CodeAssistant
 # * Created core hierarchical indexing orchestrator with leaf-first processing
 # * Implemented bottom-up assembly pattern for knowledge file generation
-# * Set up async architecture with progress reporting and error handling
 ###############################################################################
 
 """
@@ -175,11 +179,17 @@ class HierarchicalIndexer:
             root_context = await self._discover_directory_structure(root_path, ctx)
             self._current_status.root_directory_context = root_context
             
+            # Phase 1.5: Cache Structure Preparation
+            await ctx.info("Phase 1.5: Preparing cache directory structure")
+            self._current_status.current_operation = "Preparing cache structure"
+            await self.knowledge_builder.analysis_cache.prepare_cache_structure(root_context, root_path, ctx)
+            
             # Phase 2: Change Detection (for incremental mode)
             if self.config.indexing_mode.value == "incremental":
                 await ctx.info("Phase 2: Detecting changes for incremental processing")
                 self._current_status.current_operation = "Detecting changes"
-                await self._detect_changes(root_context, ctx)
+                root_context = await self._detect_changes(root_context, ctx)
+                self._current_status.root_directory_context = root_context
             
             # Phase 3: Leaf-First Processing
             await ctx.info("Phase 3: Processing files and directories (leaf-first)")
@@ -302,35 +312,115 @@ class HierarchicalIndexer:
             subdirectory_contexts=subdirectory_contexts
         )
     
-    async def _detect_changes(self, root_context: DirectoryContext, ctx: Context) -> None:
+    async def _detect_changes(self, root_context: DirectoryContext, ctx: Context) -> DirectoryContext:
         """
         [Class method intent]
-        Detects changes in the directory hierarchy for incremental processing mode.
-        Uses ChangeDetector to identify files and directories requiring update
-        based on timestamp comparison and knowledge file staleness.
+        Detects changes in the directory hierarchy using comprehensive change detection.
+        Updates DirectoryContext objects to mark which directories need processing
+        based on comprehensive constituent dependency checking.
 
         [Design principles]
-        Incremental processing optimization reducing unnecessary work on unchanged content.
-        Change detection delegation to specialized ChangeDetector component.
-        Processing status updates enabling targeted processing of only changed items.
+        Comprehensive change detection using enhanced FileAnalysisCache integration.
+        DirectoryContext status updates enabling targeted processing of only changed directories.
+        Recursive change detection ensuring all directories are evaluated for staleness.
 
         [Implementation details]
-        Delegates change detection to ChangeDetector component for specialized logic.
-        Updates FileContext and DirectoryContext processing status based on change detection.
-        Provides progress reporting through FastMCP Context for user feedback.
+        Uses enhanced check_comprehensive_directory_change() for each directory.
+        Updates DirectoryContext processing_status to PENDING only for directories requiring rebuild.
+        Returns updated DirectoryContext hierarchy with proper change detection status.
         """
-        await ctx.info("Detecting changes for incremental processing")
+        await ctx.info("Detecting changes using comprehensive change detection")
         
-        # Delegate to change detector
-        changes = await self.change_detector.detect_changes(root_context, ctx)
+        # Apply comprehensive change detection recursively
+        updated_root_context = await self._apply_comprehensive_change_detection(root_context, ctx)
         
-        if changes:
-            await ctx.info(f"Detected {len(changes)} changes requiring processing")
-            # Note: Change-based context updates will be implemented when ChangeDetector is complete
-        else:
-            await ctx.info("No changes detected - all knowledge files are up to date")
+        # Count directories that need processing
+        all_directories = self._get_all_directories(updated_root_context)
+        directories_needing_processing = [d for d in all_directories if d.processing_status == ProcessingStatus.PENDING]
+        
+        await ctx.info(f"Comprehensive change detection complete: {len(directories_needing_processing)}/{len(all_directories)} directories need processing")
+        
+        return updated_root_context
     
-    
+    async def _apply_comprehensive_change_detection(self, directory_context: DirectoryContext, ctx: Context) -> DirectoryContext:
+        """
+        [Class method intent]
+        Recursively applies comprehensive change detection to directory hierarchy.
+        Updates DirectoryContext processing_status to PENDING only for directories requiring rebuild.
+        
+        [Design principles]
+        Recursive change detection ensuring all directories are evaluated for staleness.
+        Status updates enabling targeted processing of only changed directories.
+        Bottom-up evaluation ensuring child changes propagate to parent directories.
+        
+        [Implementation details]
+        Uses ChangeDetector.check_comprehensive_directory_change() for each directory.
+        Recursively processes subdirectories first, then evaluates current directory.
+        Updates processing_status to PENDING only for directories that need rebuilding.
+        """
+        try:
+            # Step 1: Recursively process subdirectories first
+            updated_subdirectory_contexts = []
+            for subdir_context in directory_context.subdirectory_contexts:
+                updated_subdir_context = await self._apply_comprehensive_change_detection(subdir_context, ctx)
+                updated_subdirectory_contexts.append(updated_subdir_context)
+            
+            # Step 2: Create updated context with processed subdirectories
+            directory_context_with_updated_children = DirectoryContext(
+                directory_path=directory_context.directory_path,
+                file_contexts=directory_context.file_contexts,
+                subdirectory_contexts=updated_subdirectory_contexts,
+                processing_status=directory_context.processing_status,
+                knowledge_file_path=directory_context.knowledge_file_path,
+                directory_summary=directory_context.directory_summary,
+                error_message=directory_context.error_message,
+                processing_start_time=directory_context.processing_start_time,
+                processing_end_time=directory_context.processing_end_time
+            )
+            
+            # Step 3: Apply comprehensive change detection to current directory
+            change_info = await self.change_detector.check_comprehensive_directory_change(
+                directory_context_with_updated_children, self._source_root, ctx
+            )
+            
+            # Step 4: Update processing status based on change detection result
+            if change_info is not None:
+                # Changes detected - mark for processing
+                await ctx.debug(f"Directory needs processing: {directory_context.directory_path.name} - {change_info.change_type.value}")
+                processing_status = ProcessingStatus.PENDING
+            else:
+                # No changes detected - skip processing
+                await ctx.debug(f"Directory up to date: {directory_context.directory_path.name}")
+                processing_status = ProcessingStatus.SKIPPED
+            
+            # Step 5: Return updated context with change detection status
+            return DirectoryContext(
+                directory_path=directory_context_with_updated_children.directory_path,
+                file_contexts=directory_context_with_updated_children.file_contexts,
+                subdirectory_contexts=directory_context_with_updated_children.subdirectory_contexts,
+                processing_status=processing_status,
+                knowledge_file_path=directory_context_with_updated_children.knowledge_file_path,
+                directory_summary=directory_context_with_updated_children.directory_summary,
+                error_message=directory_context_with_updated_children.error_message,
+                processing_start_time=directory_context_with_updated_children.processing_start_time,
+                processing_end_time=directory_context_with_updated_children.processing_end_time
+            )
+            
+        except Exception as e:
+            logger.error(f"Comprehensive change detection failed for {directory_context.directory_path}: {e}")
+            # Conservative fallback: mark for processing if change detection fails
+            await ctx.warning(f"Change detection failed for {directory_context.directory_path.name}, marking for processing")
+            return DirectoryContext(
+                directory_path=directory_context.directory_path,
+                file_contexts=directory_context.file_contexts,
+                subdirectory_contexts=directory_context.subdirectory_contexts,
+                processing_status=ProcessingStatus.PENDING,  # Process when detection fails
+                knowledge_file_path=directory_context.knowledge_file_path,
+                directory_summary=directory_context.directory_summary,
+                error_message=directory_context.error_message,
+                processing_start_time=directory_context.processing_start_time,
+                processing_end_time=directory_context.processing_end_time
+            )
     
     async def _process_directory_hierarchy(self, root_context: DirectoryContext, ctx: Context) -> None:
         """
@@ -412,8 +502,27 @@ class HierarchicalIndexer:
                 processing_end_time=None
             )
             
-            # Step 4: Generate directory knowledge file from child summaries
-            if complete_directory_context.is_ready_for_summary:
+            # Step 4: Generate directory knowledge file from child summaries (only if needed)
+            if complete_directory_context.processing_status == ProcessingStatus.SKIPPED:
+                # Directory is up to date - skip knowledge file generation
+                await ctx.info(f"Directory up to date, skipping knowledge file generation: {directory_context.directory_path}")
+                
+                # Update statistics
+                self._current_status.processing_stats.directories_completed += 1
+                
+                return DirectoryContext(
+                    directory_path=complete_directory_context.directory_path,
+                    file_contexts=complete_directory_context.file_contexts,
+                    subdirectory_contexts=complete_directory_context.subdirectory_contexts,
+                    processing_status=ProcessingStatus.COMPLETED,  # Mark as completed (skipped but successful)
+                    knowledge_file_path=complete_directory_context.knowledge_file_path,
+                    directory_summary=complete_directory_context.directory_summary,
+                    error_message=complete_directory_context.error_message,
+                    processing_start_time=complete_directory_context.processing_start_time,
+                    processing_end_time=datetime.now()
+                )
+            elif complete_directory_context.is_ready_for_summary:
+                # Directory needs processing - generate knowledge file
                 await ctx.info(f"Generating knowledge file for: {directory_context.directory_path}")
                 final_directory_context = await self._generate_directory_knowledge_file(complete_directory_context, ctx)
                 
@@ -519,12 +628,13 @@ class HierarchicalIndexer:
     async def _process_single_file(self, file_context: FileContext, ctx: Context) -> FileContext:
         """
         [Class method intent]
-        Processes a single file by delegating content analysis to KnowledgeBuilder.
-        Handles individual file processing with error handling and timing statistics
-        for comprehensive processing tracking and debugging support.
+        Processes a single file by delegating content analysis to KnowledgeBuilder with cache support.
+        Passes source_root parameter enabling high-performance file analysis caching
+        for significant performance improvements on unchanged files.
 
         [Design principles]
         Single file processing delegation to specialized KnowledgeBuilder component.
+        Cache-enabled processing for performance optimization on unchanged files.
         Comprehensive error handling enabling graceful degradation on individual file failures.
         Timing statistics collection for performance analysis and optimization.
         Processing status updates for accurate progress reporting and coordination.
@@ -532,7 +642,8 @@ class HierarchicalIndexer:
 
         [Implementation details]
         Uses semaphore to control concurrent file processing operations.
-        Delegates content analysis to KnowledgeBuilder.build_file_summary method.
+        Delegates content analysis to KnowledgeBuilder.build_file_knowledge method with source_root.
+        Passes source_root parameter enabling FileAnalysisCache for performance optimization.
         Tracks processing timing for performance analysis and optimization insights.
         Handles errors gracefully with detailed logging and statistics updates.
         Returns updated FileContext with processing results for hierarchy assembly.
@@ -541,8 +652,10 @@ class HierarchicalIndexer:
             try:
                 await ctx.debug(f"Processing file: {file_context.file_path}")
                 
-                # Delegate to knowledge builder
-                updated_context = await self.knowledge_builder.build_file_knowledge(file_context, ctx)
+                # Delegate to knowledge builder with source_root for cache support
+                updated_context = await self.knowledge_builder.build_file_knowledge(
+                    file_context, ctx, source_root=getattr(self, '_source_root', None)
+                )
                 
                 return updated_context
                 
