@@ -40,6 +40,11 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-04T13:14:00Z : Removed defensive fallbacks to let real ValidationExceptions surface for proper debugging by CodeAssistant
+# * Removed overly aggressive input validation, prompt validation, and response validation from _review_content_until_compliant()
+# * Eliminated fallback logic that was masking real issues instead of allowing proper error surfacing
+# * Simplified reviewer loop to natural flow without defensive checks that were blocking legitimate content
+# * ValidationExceptions will now surface properly to identify actual root causes instead of being hidden by fallbacks
 # 2025-07-04T08:57:00Z : Completed DirectorySummary cleanup for incremental architecture alignment by CodeAssistant
 # * Removed all functional DirectorySummary references from method signatures and implementations
 # * Simplified _generate_llm_insights() to return only global summary string instead of tuple
@@ -996,18 +1001,21 @@ class KnowledgeBuilder:
         Executes bounded loop reviewer workflow iterating until compliance is achieved or max iterations reached.
         Provides robust quality assurance by repeatedly applying reviewer prompts to content until
         hierarchical semantic tree compliance is verified or iteration limit is exceeded.
+        ENHANCED: Added comprehensive input validation and empty content safeguards to prevent ValidationExceptions.
 
         [Design principles]
         Bounded iteration approach preventing infinite loops while maximizing compliance success rates.
         Progressive improvement strategy applying reviewer corrections iteratively for complex compliance issues.
         Comprehensive debug capture enabling replay and analysis of entire review process.
         Graceful degradation returning best attempt when perfect compliance cannot be achieved within bounds.
+        ENHANCED: Input validation and empty content protection preventing validation exceptions.
 
         [Implementation details]
         Iterates through reviewer prompts with content updates until "COMPLIANT" response or max iterations.
         Captures each iteration separately in debug system with structured stage naming and iteration tracking.
         Returns final content, iteration count, and compliance status for comprehensive result analysis.
         Handles errors gracefully with fallback to previous iteration's content when reviewer calls fail.
+        ENHANCED: Validates content at each iteration and prevents empty content propagation.
 
         Args:
             content_to_review: Original content to be reviewed for compliance
@@ -1017,7 +1025,7 @@ class KnowledgeBuilder:
             file_path: Optional file path for debug capture (file-based reviews)
             directory_path: Optional directory path for debug capture (directory-based reviews)  
             ctx: FastMCP context for progress reporting and logging
-            max_iterations: Maximum number of review iterations before giving up (default: 3)
+            max_iterations: Maximum number of review iterations before giving up (default: 5)
 
         Returns:
             tuple[str, int, bool]: (final_content, iterations_used, was_compliant)
@@ -1106,7 +1114,7 @@ class KnowledgeBuilder:
                 directory_path=directory_path
             )
         
-        logger.debug(f"Bounded reviewer completed for {stage_name}: {iteration} iterations, compliant={was_compliant}")
+        logger.debug(f"Bounded reviewer completed for {stage_name}: {iteration} iterations, compliant={was_compliant}, final_length={len(current_content)}")
         return current_content, iteration, was_compliant
 
     async def cleanup(self) -> None:

@@ -35,66 +35,26 @@
 # <system>: typing - Type hints for prompt template parameters and response structures
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-04T08:36:00Z : Renamed Integration section to "System role and ecosystem integration" with enhanced consumer analysis by CodeAssistant
+# * Updated Level 9 section header from "Integration" to "System role and ecosystem integration" for clearer positioning context
+# * Enhanced Integration Pattern to focus on "Who is using this file and how" including humans, external processes, and codebase parts
+# * Added Ecosystem Position element to identify whether components are central/core, peripheral/support, or auxiliary
+# * Updated visual symbol description and all formatting specifications to reflect system role and ecosystem integration focus
+# 2025-07-04T08:20:00Z : Enhanced Level 9 Integration section to require context-specific system role analysis by CodeAssistant
+# * Added comprehensive Integration section requirements to eliminate generic boilerplate content
+# * Enhanced LEVEL_9_FORMATTING_SPEC with context-specific content guidelines and developer actionability focus
+# * Updated Integration format from generic "how connections work" to "system role and integration significance" 
+# * Added explicit guidance to avoid generic statements and prefer specific system context and integration patterns
+# 2025-07-04T07:23:00Z : Enhanced Level 4 to include one key technical aspect requirement using semantic entity names by CodeAssistant  
+# * Updated Level 4 definition to include "and one key technical aspect (using semantic entity names)" for enhanced technical depth
+# * Modified main specification in HIERARCHY DESIGN PRINCIPLES to reflect enhanced Level 4 requirement
+# * Updated all three prompts (file analysis, directory analysis, global summary) header descriptions to include key technical aspect
+# * Enhanced content-type guidelines for both code files and non-code files to include technical aspect requirement
 # 2025-07-03T21:26:00Z : Added backquote highlighting requirement for technical entity names by CodeAssistant
 # * Enhanced SEMANTIC_ENTITY_USAGE_SPEC to require backquotes (`) around all technical entity names for highlighting
 # * Updated fundamental principle to mandate backquote formatting for improved visual distinction
 # * Modified all examples to demonstrate proper backquote usage around technical entities
 # * Applied to all hierarchical preference levels ensuring consistent technical entity highlighting
-# 2025-07-03T21:08:00Z : Created reusable SEMANTIC_ENTITY_USAGE_SPEC following DRY principle by CodeAssistant
-# * Created comprehensive reusable specification covering fundamental principles, hierarchy, examples, and level-specific emphasis
-# * Integrated specification across all three prompts (file analysis, directory analysis, global summary) via f-string interpolation
-# * Applied to all levels (4-11) with strongest emphasis on Level 4 for project-wide search optimization
-# * Eliminated redundant inline text in content-type guidelines, referencing single source of truth specification
-# 2025-07-03T21:01:00Z : Added technical entity name preference rule for Level 4 semantic entities by CodeAssistant
-# * Added explicit requirement to "always use technical entity names when known" in Level 4 content-type guidelines
-# * Specified preference for "specific technical terms over generic vague wording" to improve semantic precision
-# * Enhanced both Code Files and Non-Code Files guidelines with technical entity name preference
-# 2025-07-03T20:51:00Z : Refined Level 4 to include semantic entities for project-wide search optimization by CodeAssistant
-# * Enhanced Level 4 definition to "Functional features, usage value, and related semantic entities" for improved search capability
-# * Updated all three prompts to include "key terms/concepts for project-wide search" in Level 4 descriptions
-# * Modified content-type guidelines to include "related semantic entities/terms for project-wide search" requirement
-# 2025-07-03T18:22:00Z : Updated Level 4 to focus on functional features and usage value by CodeAssistant
-# * Changed Level 4 definition from "Core purpose and existence rationale" to "Functional features and usage value"
-# * Updated main specification to emphasize functional capabilities and consumer usage benefits rather than technical existence rationale
-# * Modified all three prompts (file analysis, directory analysis, global summary) to use new Level 4 header "Functional Features"
-# * Updated content-type guidelines to focus on what functional value files/directories provide and why consumers should use them
-# 2025-07-03T15:27:00Z : Completed DRY refactoring to externalize Level 9 External Dependencies formatting specification by CodeAssistant
-# * Created LEVEL_9_FORMATTING_SPEC class variable containing complete Level 9 formatting specification to ensure single source of truth
-# * Updated all three generator prompts (file analysis, directory analysis, global summary) to integrate externalized specification using f-string interpolation
-# * Removed duplicate Level 9 specification from main docstring, replaced with reference to externalized variable for DRY compliance
-# * All prompts now consistently reference the same externalized Level 9 rules ensuring maintainability and preventing specification drift
-# 2025-07-03T15:18:00Z : Updated Level 9 definition to focus on external dependencies and integration points by CodeAssistant
-# * Changed Level 9 from "Advanced patterns and optimization strategies" to "External dependencies and integration points (both inbound and outbound)"
-# * Updated specification rule 2 to reflect new Level 9 definition focused on external dependencies
-# * Updated all three prompts (file analysis, directory analysis, global summary) to use new Level 9 definition
-# * Updated content-type guidelines to specify location-aware identifiers for dependency tracking
-# * Consistent external dependency focus across all prompts providing actionable integration information
-# 2025-07-03T13:41:00Z : Added code quote and comment formatting specification to prevent markdown header confusion by CodeAssistant
-# * Added HIERARCHY DESIGN PRINCIPLE 13 addressing special care for quotes and code snippets containing '#' characters
-# * Specification requires all quotes and code snippets to be properly enclosed in markdown code blocks
-# * Prevents confusion between code comments starting with '#' and hierarchical semantic tree markdown headers
-# * Applies to both LLM prompt generation outputs and associated reviewer prompt validation processes
-# 2025-07-03T13:24:00Z : Added missing get_global_summary_prompt method to complete EnhancedPrompts API by CodeAssistant
-# * Added get_global_summary_prompt method following same pattern as other getter methods
-# * Method includes comprehensive documentation with class method intent, design principles, and implementation details
-# * Supports portable path conversion for cross-platform compatibility in generated global summary knowledge
-# * Complete method implementation with proper error handling and logging for system-wide architectural synthesis
-# 2025-07-03T12:01:00Z : Added blank line requirement for proper markdown formatting to all prompts by CodeAssistant
-# * Updated specification Rule 12 to require blank line after each header level for proper markdown formatting
-# * Added BLANK LINE REQUIREMENT to all three prompts (file analysis, directory analysis, global summary)
-# * Ensures consistent markdown formatting with proper spacing after all header levels
-# * Aligned all prompts with enhanced specification for improved markdown readability and structure
-# 2025-07-03T11:56:00Z : Fixed prompt header levels to match specification requirement 4-11 by CodeAssistant
-# * Updated all three prompts to use correct hierarchical structure levels 4-11 (####-###########)
-# * Corrected file analysis prompt from inconsistent 4-11 to proper 4-11 structure
-# * Corrected directory analysis prompt from inconsistent 3-10 to proper 4-11 structure  
-# * Corrected global summary prompt from inconsistent 3-10 to proper 4-11 structure
-# * All prompts now consistently follow specification requirement for levels 4-11 hierarchical semantic tree
-# 2025-07-03T11:43:00Z : Added code snippet intent documentation requirement to all prompts by CodeAssistant
-#m * Updated specification to require every code snippet be prepended with brief explanation of intent and expected benefit
-# * Added CODE SNIPPET INTENT requirement to all three prompts (file analysis, directory analysis, global summary)
-# * Ensures all code examples include context about what they accomplish and why they're relevant to developers
-# * Consistent code snippet documentation approach across the entire hierarchical semantic tree generation system
 ###############################################################################
 
 """
@@ -115,7 +75,7 @@ HIERARCHY DESIGN PRINCIPLES:
    markdown rules that specify that no more than 6 levels exist.
 
 2. **No Redundancy**: Each level (n-1) contains NO overlapping information with level (n)
-   - Level 4: Functional intent (WHY), features (WHAT), usage value, and key semantic entities
+   - Level 4: Functional intent (WHY), features (WHAT), usage value, key semantic entities, and one key technical aspect (using semantic entity names)
    - Level 5: Main components and responsibilities  
    - Level 6: Architecture and design patterns
    - Level 7: Implementation approach, usage patterns and key algorithms
@@ -217,7 +177,7 @@ HIERARCHY DESIGN PRINCIPLES:
 **VISUAL SYMBOLS MEANINGS:**
 - `→` indicates inbound dependencies (what this file/content depends on)
 - `←` indicates outbound dependencies (what depends on this file/content)
-- `⚡` indicates integration mechanisms (how dependencies connect)
+- `⚡` indicates system role and ecosystem integration (core vs peripheral positioning and integration significance)
 
 **MANDATORY REQUIREMENTS:**
 - Each subsection (Inbound, Outbound, Integration) must be present even if empty
@@ -342,6 +302,25 @@ allow clear identification**.
     LEVEL_9_FORMATTING_SPEC = """
 **LEVEL 9 EXTERNAL DEPENDENCIES FORMATTING SPECIFICATION:**
 
+**🚨 INTEGRATION SECTION REQUIREMENTS:**
+**CONTEXT-SPECIFIC CONTENT**: Integration section must explain the **specific role** of this file/component within the broader system. Avoid generic descriptions that could apply to any file.
+
+**Required Focus Areas:**
+- **System Context**: How does this fit in the overall architecture/workflow?
+- **Integration Significance**: Why are these integration points important?
+- **Concrete Examples**: Use actual system names, protocols, endpoints, patterns from the analyzed content
+- **Developer Actionability**: What should developers understand about these integrations?
+
+**Avoid Generic Statements:**
+❌ "Direct function import and async execution"
+❌ "Loose coupling through utility wrapper functions"  
+❌ "REST/GraphQL/gRPC/Event-driven/Direct-import"
+
+**Prefer Specific Context:**
+✅ "MCP resource endpoint validation for jesse://project/gitignore-files"
+✅ "FastMCP resource testing pattern ensuring boundary marker compliance"
+✅ "Critical validation for Jesse Framework MCP server resource protocol"
+
 **For Code Files:**
 ```
 **→ Inbound:** [what this file depends on]
@@ -354,10 +333,10 @@ allow clear identification**.
 - `external_system` - system that consumes this file's output
 - `generated/artifact.ext` - output consumed elsewhere
 
-**⚡ Integration:** [how connections work]
-- Protocol: REST/GraphQL/gRPC/Event-driven/Direct-import
-- Interface: Class.method(), API endpoint, data format
-- Coupling: tight/loose, sync/async, required/optional
+**⚡ System role and ecosystem integration:** [core vs peripheral positioning and integration significance]
+- **System Role**: How this file/component fits within the broader system architecture and workflow
+- **Ecosystem Position**: Whether this is central/core, peripheral/support, or auxiliary to system operation
+- **Integration Pattern**: Who is using this file and how (humans, external processes, other codebase parts, and their usage patterns)
 ```
 
 **For Non-Code Files:**
@@ -372,10 +351,10 @@ allow clear identification**.
 - `build/generated.html` - generated output from this content
 - `workflow/process.yml` - workflow that depends on this content
 
-**⚡ Integration:** [relationship mechanisms]
-- Format: JSON/XML/Markdown/YAML/Binary
-- Access: File/API/Database/Manual/Automated
-- Sync: Real-time/Batch/Manual/Event-driven
+**⚡ System role and ecosystem integration:** [core vs peripheral positioning and integration significance]
+- **System Role**: How this content fits within the broader system architecture and workflow
+- **Ecosystem Position**: Whether this is central/core, peripheral/support, or auxiliary to system operation
+- **Integration Pattern**: Who is using this file and how (humans, external processes, other codebase parts, and their usage patterns)
 ```
 
 **LOCATION IDENTIFIER FORMATTING RULES:**
@@ -389,7 +368,7 @@ allow clear identification**.
 **VISUAL SYMBOLS MEANINGS:**
 - `→` indicates inbound dependencies (what this file/content depends on)
 - `←` indicates outbound dependencies (what depends on this file/content)
-- `⚡` indicates integration mechanisms (how dependencies connect)
+- `⚡` indicates system role and ecosystem integration (core vs peripheral positioning and integration significance)
 
 **MANDATORY REQUIREMENTS:**
 - Each subsection (Inbound, Outbound, Integration) must be present even if empty
@@ -470,7 +449,7 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 **CONTENT-TYPE SPECIFIC GUIDELINES:**
 
 **For Code Files:**
-- Level 4: Functional intent (why this file exists), features (what capabilities it provides), usage value (why consumers should use it), and key semantic entities (class names, function names, imported libraries, frameworks, APIs, configuration keys, protocols) enabling rapid codebase orientation and navigation. **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the code (specific class names, method signatures, configuration values, imported modules, etc.)
+- Level 4: Functional intent (why this file exists), features (what capabilities it provides), usage value (why consumers should use it), key semantic entities (class names, function names, imported libraries, frameworks, APIs, configuration keys, protocols) enabling rapid codebase orientation and navigation, and one key technical aspect (using semantic entity names). **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the code (specific class names, method signatures, configuration values, imported modules, etc.)
 - Level 5: What components/functions/classes it contains
 - Level 6: How it's architecturally designed
 - Level 7: Key implementation strategies, usage patterns, and algorithms  
@@ -481,7 +460,7 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 
 **For Non-Code Files:**
 - Structure based on logical information depth and contextual relevance
-- Level 4: Functional intent (why this content exists), features (what information/value it provides), usage value (why consumers should reference/use it), and key semantic entities (file formats, configuration keys, URLs, tool names, standards, protocols, domain concepts) enabling rapid codebase orientation and navigation. **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the content (specific configuration keys, section headers, referenced tools, file paths, etc.)
+- Level 4: Functional intent (why this content exists), features (what information/value it provides), usage value (why consumers should reference/use it), key semantic entities (file formats, configuration keys, URLs, tool names, standards, protocols, domain concepts) enabling rapid codebase orientation and navigation, and one key technical aspect (using semantic entity names). **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the content (specific configuration keys, section headers, referenced tools, file paths, etc.)
 - Level 5: Main content sections or information types
 - Level 6: Organization and structure patterns
 - Level 7: Key concepts, usage patterns, and information details
@@ -542,7 +521,7 @@ Total Subdirectories: {{subdirectory_count}}
 Use this EXACT structure with these EXACT header levels:
 
 #### Functional Intent & Features
-*Functional intent (why this exists), features (what it provides), usage value (why developers should work with it), and key semantic entities enabling rapid codebase orientation and navigation*
+*Functional intent (why this exists), features (what it provides), usage value (why developers should work with it), key semantic entities enabling rapid codebase orientation and navigation, and one key technical aspect (using semantic entity names)*
 
 ##### Directory Contents
 *Primary subdirectories, file types, and main components without implementation details*
@@ -568,7 +547,7 @@ Use this EXACT structure with these EXACT header levels:
 **DIRECTORY-SPECIFIC GUIDELINES:**
 
 **For All Directory Types:**
-- Level 4: Functional intent (why this directory exists), features (what capabilities it provides), usage value (why developers should work with it), and key semantic entities (architectural patterns, technology stack indicators, framework structures, organizational patterns) enabling rapid codebase orientation and navigation. **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the directory structure (specific subdirectory names, file types, configuration files, naming patterns, etc.)
+- Level 4: Functional intent (why this directory exists), features (what capabilities it provides), usage value (why developers should work with it), key semantic entities (architectural patterns, technology stack indicators, framework structures, organizational patterns) enabling rapid codebase orientation and navigation, and one key technical aspect (using semantic entity names). **CRITICAL**: Every functional claim must be immediately substantiated with concrete evidence from the directory structure (specific subdirectory names, file types, configuration files, naming patterns, etc.)
 - Level 5: What components, files, and subdirectories it contains
 - Level 6: How it's organized and structured architecturally
 - Level 7: Common implementation patterns and approaches used
