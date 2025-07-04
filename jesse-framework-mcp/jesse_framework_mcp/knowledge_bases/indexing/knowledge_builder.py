@@ -40,6 +40,12 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-04T08:57:00Z : Completed DirectorySummary cleanup for incremental architecture alignment by CodeAssistant
+# * Removed all functional DirectorySummary references from method signatures and implementations
+# * Simplified _generate_llm_insights() to return only global summary string instead of tuple
+# * Updated _finalize_knowledge_file() to remove DirectorySummary parameter and usage
+# * Removed complex _generate_directory_analysis() and _collect_subdirectory_summaries() methods
+# * Aligned data flow with incremental markdown engine using direct string content
 # 2025-07-03T16:16:00Z : Integrated FileAnalysisCache for high-performance file analysis caching by CodeAssistant
 # * Added FileAnalysisCache integration with cache-first processing in _process_single_file()
 # * Implemented 4-phase cache workflow: cache check, debug replay, fresh analysis, cache storage
@@ -55,11 +61,6 @@
 # * Added logic to distinguish between project-base and regular indexing modes
 # * Implemented directory structure mirroring within project-base/ subdirectory
 # * Updated documentation to reflect project-base indexing segregation business rule implementation
-# 2025-07-03T13:27:00Z : Aligned knowledge_builder.py with new get_global_summary_prompt method from enhanced_prompts.py by CodeAssistant
-# * Replaced direct template access with get_global_summary_prompt() method call for consistency
-# * Removed manual portable path conversion code since it's now handled internally by the getter method
-# * Enhanced error handling and logging through the standardized getter method approach
-# * Achieved complete alignment with file analysis and directory analysis prompt usage patterns
 # 2025-07-02T23:18:00Z : Simplified LLM output processing to eliminate parsing complexity by CodeAssistant
 # * Removed complex _parse_directory_response method - no longer needed with hierarchical prompts
 # * Simplified _generate_directory_analysis to use raw LLM output directly without section parsing
@@ -96,7 +97,7 @@ from ..models import (
 )
 from ...llm.strands_agent_driver import StrandsClaude4Driver, Claude4SonnetConfig
 from ...helpers.path_utils import get_portable_path
-from .markdown_template_engine import MarkdownTemplateEngine, FileAnalysis, DirectorySummary
+from .markdown_template_engine import IncrementalMarkdownEngine
 from .enhanced_prompts import EnhancedPrompts
 from .debug_handler import DebugHandler
 from .file_analysis_cache import FileAnalysisCache
@@ -157,7 +158,7 @@ class KnowledgeBuilder:
         
         # Initialize new architecture components
         self.enhanced_prompts = EnhancedPrompts()
-        self.template_engine = MarkdownTemplateEngine()
+        self.template_engine = IncrementalMarkdownEngine()
         
         # Initialize file analysis cache for performance optimization
         self.analysis_cache = FileAnalysisCache(config)
@@ -301,11 +302,11 @@ class KnowledgeBuilder:
             markdown_content = await self._initialize_and_assemble_content(directory_context, ctx)
             
             # Phase 2: Generate LLM insights
-            global_summary, directory_summary = await self._generate_llm_insights(directory_context, markdown_content, ctx)
+            global_summary = await self._generate_llm_insights(directory_context, markdown_content, ctx)
             
             # Phase 3: Finalize knowledge file
             knowledge_file_path = await self._finalize_knowledge_file(
-                directory_context, markdown_content, global_summary, directory_summary, source_root, ctx
+                directory_context, markdown_content, global_summary, source_root, ctx
             )
             
             await ctx.info(f"Directory knowledge generation completed: {knowledge_file_path}")
@@ -316,7 +317,7 @@ class KnowledgeBuilder:
                 subdirectory_contexts=directory_context.subdirectory_contexts,
                 processing_status=ProcessingStatus.COMPLETED,
                 knowledge_file_path=knowledge_file_path,
-                directory_summary=directory_summary,
+                directory_summary=global_summary,
                 processing_start_time=processing_start,
                 processing_end_time=datetime.now()
             )
@@ -337,58 +338,51 @@ class KnowledgeBuilder:
     async def _initialize_and_assemble_content(self, directory_context: DirectoryContext, ctx: Context) -> str:
         """
         [Class method intent]
-        Phase 1: Initializes base markdown structure and assembles file and subdirectory content.
-        Creates structured markdown template and programmatically inserts all content
-        for comprehensive directory knowledge foundation.
+        Phase 1: Loads existing knowledge base or creates base structure for incremental updates.
+        Uses IncrementalMarkdownEngine to load existing content or create minimal structure
+        ready for selective section updates without full regeneration.
 
         [Design principles]
-        Programmatic content assembly ensuring consistent structure across knowledge files.
-        Template-based approach providing standard markdown compatibility and parseability.
-        Error handling enabling graceful degradation when content assembly encounters issues.
+        Incremental update foundation preserving existing content and enabling selective modifications.
+        Load-first approach optimizing for existing knowledge bases with incremental changes.
+        Error handling enabling graceful degradation when base structure operations encounter issues.
 
         [Implementation details]
-        Initializes base directory knowledge structure using template engine.
-        Collects and inserts file contexts programmatically maintaining original formatting.
-        Assembles subdirectory summaries for hierarchical knowledge integration.
-        Returns complete markdown ready for LLM insight generation phase.
+        Uses load_or_create_base_structure for existing content preservation or minimal creation.
+        Returns base markdown content ready for selective section updates in subsequent phases.
+        Eliminates complex assembly operations in favor of incremental update approach.
         """
-        await ctx.debug("Phase 1: Initializing base directory knowledge structure")
-        markdown_content = self.template_engine.initialize_directory_knowledge_base(directory_context.directory_path)
+        await ctx.debug("Phase 1: Loading existing or creating base knowledge structure")
         
-        # Insert individual file contexts programmatically
-        file_contexts = self._collect_file_contexts(directory_context)
-        if file_contexts:
-            await ctx.debug(f"Phase 1: Inserting {len(file_contexts)} file contexts")
-            markdown_content = self.template_engine.insert_file_contexts(markdown_content, file_contexts)
+        # Determine knowledge file path
+        knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path)
         
-        # Insert subdirectory summaries programmatically
-        subdirectory_summaries = self._collect_subdirectory_summaries(directory_context)
-        if subdirectory_summaries:
-            await ctx.debug(f"Phase 1: Inserting {len(subdirectory_summaries)} subdirectory summaries")
-            markdown_content = self.template_engine.insert_subdirectory_summaries(markdown_content, subdirectory_summaries)
+        # Load existing or create base structure
+        markdown_content = self.template_engine.load_or_create_base_structure(knowledge_file_path)
         
+        await ctx.debug(f"Phase 1: Base structure ready for incremental updates")
         return markdown_content
 
-    async def _generate_llm_insights(self, directory_context: DirectoryContext, markdown_content: str, ctx: Context) -> tuple[str, DirectorySummary]:
+    async def _generate_llm_insights(self, directory_context: DirectoryContext, markdown_content: str, ctx: Context) -> str:
         """
         [Class method intent]
-        Phase 2: Generates LLM-powered insights including global summary and directory analysis.
+        Phase 2: Generates LLM-powered global summary using assembled content.
         Uses Claude 4 Sonnet to analyze assembled content and generate comprehensive
-        architectural insights and global summary for the directory.
+        global summary for the directory using incremental update approach.
 
         [Design principles]
         LLM insight generation leveraging complete assembled content for comprehensive analysis.
-        Dual analysis approach generating both global summary and structured directory insights.
+        Simplified approach focusing on global summary generation without complex dataclass creation.
         Debug-aware processing supporting replay functionality for consistent results.
         Error handling ensuring graceful degradation when LLM analysis encounters issues.
 
         [Implementation details]
         Extracts assembled content and generates global summary using factual analysis prompts.
-        Creates directory analysis using enhanced prompts for architectural insights.
+        Eliminates complex directory analysis workflow in favor of incremental updates.
         Handles debug replay functionality for consistent testing and development.
-        Returns both global summary and structured DirectorySummary for final assembly.
+        Returns global summary string ready for incremental section replacement.
         """
-        await ctx.debug("Phase 2: Generating LLM insights from assembled content")
+        await ctx.debug("Phase 2: Generating LLM global summary from assembled content")
         
         # Extract assembled content for global summary generation
         assembled_content = self.template_engine.extract_assembled_content(markdown_content)
@@ -396,50 +390,73 @@ class KnowledgeBuilder:
         # Generate global summary
         global_summary = await self._generate_global_summary(directory_context, assembled_content, ctx)
         
-        # Generate directory architectural analysis
-        directory_summary = await self._generate_directory_analysis(directory_context, ctx)
-        
-        return global_summary, directory_summary
+        return global_summary
 
     async def _finalize_knowledge_file(
         self, 
         directory_context: DirectoryContext, 
         markdown_content: str, 
         global_summary: str, 
-        directory_summary: DirectorySummary, 
         source_root: Optional[Path], 
         ctx: Context
     ) -> Path:
         """
         [Class method intent]
-        Phase 3: Finalizes knowledge file by integrating LLM insights and writing to filesystem.
-        Combines global summary and directory insights with assembled content to create
-        complete knowledge file and writes to appropriate location.
+        Phase 3: Finalizes knowledge file using incremental updates and writes to filesystem.
+        Uses selective section updates to integrate LLM insights without full regeneration,
+        then writes complete knowledge file to appropriate location.
 
         [Design principles]
-        Final assembly combining all generated content into complete knowledge file.
+        Incremental update approach modifying only changed sections without full regeneration.
+        Selective updates preserving existing content and maintaining document structure.
         File writing with intelligent path resolution and error handling.
         Validation ensuring generated content meets structural requirements.
-        Comprehensive error handling for reliable knowledge file persistence.
 
         [Implementation details]
-        Uses template engine to finalize markdown with global summary and directory insights.
+        Uses incremental template engine methods for selective section updates.
+        Updates file sections, subdirectory sections, global summary, and metadata incrementally.
         Validates final markdown structure before writing to ensure quality.
-        Determines appropriate knowledge file path and writes content to filesystem.
         Returns knowledge file path for calling context tracking and reporting.
         """
-        await ctx.debug("Phase 3: Finalizing knowledge file with LLM insights")
+        await ctx.debug("Phase 3: Finalizing knowledge file with incremental updates")
         
-        # Finalize markdown with global summary and directory insights
+        current_markdown = markdown_content
+        
+        # Update file sections incrementally
         file_contexts = self._collect_file_contexts(directory_context)
-        subdirectory_summaries = self._collect_subdirectory_summaries(directory_context)
+        for file_context in file_contexts:
+            if file_context.knowledge_content:
+                await ctx.debug(f"Updating file section: {file_context.file_path.name}")
+                current_markdown = self.template_engine.replace_file_section(
+                    current_markdown, 
+                    file_context.file_path, 
+                    file_context.knowledge_content
+                )
         
-        final_markdown = self.template_engine.finalize_with_global_summary(
-            markdown_content=markdown_content,
-            global_summary=global_summary,
-            directory_summary=directory_summary,
-            file_count=len(file_contexts),
-            subdirectory_count=len(subdirectory_summaries)
+        # Update subdirectory sections incrementally
+        for subdir_context in directory_context.subdirectory_contexts:
+            if subdir_context.processing_status == ProcessingStatus.COMPLETED and subdir_context.knowledge_file_path:
+                await ctx.debug(f"Updating subdirectory section: {subdir_context.directory_path.name}")
+                # Extract content from subdirectory knowledge base
+                extracted_content = self.template_engine.extract_subdirectory_summary(subdir_context.knowledge_file_path)
+                current_markdown = self.template_engine.replace_subdirectory_section(
+                    current_markdown,
+                    subdir_context.directory_path,
+                    extracted_content
+                )
+        
+        # Update global summary section
+        await ctx.debug("Updating global summary section")
+        current_markdown = self.template_engine.replace_global_summary_section(current_markdown, global_summary)
+        
+        # Update footer metadata
+        completed_subdirectories = len([subdir for subdir in directory_context.subdirectory_contexts 
+                                        if subdir.processing_status == ProcessingStatus.COMPLETED])
+        await ctx.debug("Updating footer metadata")
+        final_markdown = self.template_engine.update_footer_metadata(
+            current_markdown,
+            len(file_contexts),
+            completed_subdirectories
         )
         
         # Validate final markdown structure
@@ -530,95 +547,6 @@ class KnowledgeBuilder:
         
         return final_global_summary
 
-    async def _generate_directory_analysis(self, directory_context: DirectoryContext, ctx: Context) -> DirectorySummary:
-        """
-        [Class method intent]
-        Generates directory analysis using enhanced prompts with raw hierarchical output.
-        Creates DirectorySummary with the complete hierarchical semantic tree content
-        for direct template integration without parsing complexity.
-
-        [Design principles]
-        Simplified approach using raw LLM output directly without parsing or section extraction.
-        Hierarchical semantic tree content preserved as generated by enhanced prompts.
-        Debug replay support for consistent results during development and testing workflows.
-        Error handling ensuring graceful degradation when directory analysis encounters issues.
-
-        [Implementation details]
-        Generates hierarchical directory analysis using enhanced prompts.
-        Uses raw LLM response content directly for DirectorySummary creation.
-        Eliminates parsing complexity by leveraging structured prompts that generate proper format.
-        Returns DirectorySummary with complete hierarchical content ready for template integration.
-        """
-        await ctx.debug("Generating directory architectural analysis")
-        
-        # Prepare child content summary for enhanced prompts
-        child_content_summary = self._prepare_child_content_summary(directory_context)
-        directory_prompt = self.enhanced_prompts.get_directory_analysis_prompt(
-            directory_path=directory_context.directory_path,
-            file_count=len(directory_context.file_contexts),
-            subdirectory_count=len(directory_context.subdirectory_contexts),
-            child_content_summary=child_content_summary
-        )
-        
-        # Check for main stage replay response (already reviewed content)
-        directory_analysis_replay = self.debug_handler.get_stage_replay_response(
-            stage="stage_4_directory_analysis",
-            directory_path=directory_context.directory_path
-        )
-        
-        if directory_analysis_replay:
-            await ctx.info(f"🔄 REPLAY MODE: Using cached reviewed architectural analysis for {directory_context.directory_path.name}/ (no LLM or reviewer calls)")
-            # Return cached reviewed content directly - no need to review again
-            final_directory_response_content = directory_analysis_replay
-        else:
-            # Make fresh LLM call and review it
-            await ctx.info(f"🤖 LLM CALL: Generating architectural analysis for {directory_context.directory_path.name}/ using Claude 4 Sonnet")
-            conversation_id = f"directory_analysis_{directory_context.directory_path.name}_{datetime.now().isoformat()}"
-            directory_response = await self.llm_driver.send_message(directory_prompt, conversation_id)
-            original_directory_response_content = directory_response.content
-            
-            # Capture original interaction
-            self.debug_handler.capture_stage_llm_output(
-                stage="stage_4_directory_analysis_original",
-                prompt=directory_prompt,
-                response=original_directory_response_content,
-                directory_path=directory_context.directory_path
-            )
-            
-            # QUALITY ASSURANCE: Bounded loop reviewer for robust compliance checking
-            final_directory_response_content, iterations_used, was_compliant = await self._review_content_until_compliant(
-                content_to_review=original_directory_response_content,
-                reviewer_prompt_func=self.enhanced_prompts.get_directory_analysis_reviewer_prompt,
-                base_conversation_id=conversation_id,
-                stage_name="stage_4_directory_analysis",
-                directory_path=directory_context.directory_path,
-                ctx=ctx
-            )
-            
-            # Log final compliance status
-            if was_compliant:
-                await ctx.debug(f"✅ Directory analysis achieved compliance: {directory_context.directory_path.name}/ (after {iterations_used} iteration(s))")
-            else:
-                await ctx.info(f"🔧 Directory analysis using best attempt: {directory_context.directory_path.name}/ (after {iterations_used} iteration(s))")
-            
-            # Capture the final reviewed version for future replay
-            self.debug_handler.capture_stage_llm_output(
-                stage="stage_4_directory_analysis",
-                prompt=directory_prompt,
-                response=final_directory_response_content,
-                directory_path=directory_context.directory_path
-            )
-        
-        # Use raw hierarchical content directly - no parsing needed
-        directory_summary = DirectorySummary(
-            directory_path=directory_context.directory_path,
-            what_this_directory_contains=final_directory_response_content.strip(),
-            how_its_organized="",  # Content is in what_this_directory_contains
-            common_patterns="",    # Content is in what_this_directory_contains  
-            how_it_connects=""     # Content is in what_this_directory_contains
-        )
-        
-        return directory_summary
 
     async def _read_file_content(self, file_path: Path) -> str:
         """
@@ -810,13 +738,8 @@ class KnowledgeBuilder:
                 content_parts.append(f"### {subdir_context.directory_path.name}")
                 if subdir_context.processing_status == ProcessingStatus.COMPLETED and subdir_context.directory_summary:
                     content_parts.append(f"**Status**: Completed")
-                    # Include a condensed version of directory summary
-                    if hasattr(subdir_context.directory_summary, 'directory_overview'):
-                        # DirectorySummary object - extract overview
-                        content_parts.append(f"**Summary**: {subdir_context.directory_summary.directory_overview[:300]}...")
-                    else:
-                        # String summary - use directly
-                        content_parts.append(f"**Summary**: {str(subdir_context.directory_summary)[:300]}...")
+                    # Include a condensed version of directory summary (now always a string)
+                    content_parts.append(f"**Summary**: {str(subdir_context.directory_summary)[:300]}...")
                 elif subdir_context.processing_status == ProcessingStatus.FAILED:
                     content_parts.append(f"**Status**: Failed - {subdir_context.error_message}")
                 else:
@@ -850,46 +773,6 @@ class KnowledgeBuilder:
                         
         return file_contexts
     
-    def _collect_subdirectory_summaries(self, directory_context: DirectoryContext) -> List[DirectorySummary]:
-        """
-        [Class method intent]
-        Collects DirectorySummary objects from completed subdirectory contexts for template engine integration.
-        Extracts structured directory summary data from completed contexts for programmatic
-        template assembly and hierarchical markdown generation.
-
-        [Design principles]
-        Structured data extraction enabling clean template engine integration.
-        DirectorySummary dataclass compatibility supporting consistent template parameter passing.
-        Error handling ensuring graceful degradation when directory summary extraction fails.
-
-        [Implementation details]
-        Iterates through completed subdirectory contexts extracting summary data.
-        Creates DirectorySummary objects from processed directory contexts for template engine.
-        Handles missing or failed directory summaries gracefully with fallback objects.
-        """
-        subdirectory_summaries = []
-        
-        for subdir_context in directory_context.subdirectory_contexts:
-            if subdir_context.processing_status == ProcessingStatus.COMPLETED and subdir_context.directory_summary:
-                try:
-                    # Use the actual DirectorySummary object if it exists
-                    if isinstance(subdir_context.directory_summary, DirectorySummary):
-                        subdirectory_summaries.append(subdir_context.directory_summary)
-                    else:
-                        # Create DirectorySummary from string summary (fallback for legacy)
-                        directory_summary = DirectorySummary(
-                            directory_path=subdir_context.directory_path,
-                            what_this_directory_contains=str(subdir_context.directory_summary)[:500] + "..." if len(str(subdir_context.directory_summary)) > 500 else str(subdir_context.directory_summary),
-                            how_its_organized="See overview section",
-                            common_patterns="See overview section", 
-                            how_it_connects="See overview section"
-                        )
-                        subdirectory_summaries.append(directory_summary)
-                except Exception as e:
-                    logger.warning(f"Failed to extract DirectorySummary for {subdir_context.directory_path}: {e}")
-                    raise
-                        
-        return subdirectory_summaries
     
     def _get_knowledge_file_path(self, directory_path: Path, source_root: Optional[Path] = None) -> Path:
         """

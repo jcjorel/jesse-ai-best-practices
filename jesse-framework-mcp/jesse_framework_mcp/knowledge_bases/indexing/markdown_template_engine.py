@@ -12,23 +12,23 @@
 # - Respect system prompt directives at all times
 ###############################################################################
 # [Source file intent]
-# Markdown template engine for Knowledge Bases Hierarchical Indexing System.
-# Implements 3-phase generation: individual file analysis insertion, subdirectory assembly,
-# and global summary generation with standard Python markdown library compatibility.
+# Incremental markdown engine for Knowledge Bases Hierarchical Indexing System.
+# Provides selective section updates without full regeneration, supporting change-based
+# updates with content extraction and insertion capabilities.
 ###############################################################################
 # [Source file design principles]
+# - Incremental updates: selective section replacement without full markdown regeneration
+# - Content extraction: parse subdirectory summaries from fourth-level headers
 # - Standard Python markdown library compatibility ensuring parseable output structure
-# - 3-phase incremental building: file analysis → subdirectory assembly → global summary
-# - Programmatic content insertion for individual file analyses and subdirectory summaries
-# - Template-based generation providing consistent markdown structure across knowledge files
-# - Token efficiency through selective LLM usage only for analysis and global summary
+# - Mistletoe-based selective updates with formatting preservation
+# - Raw content insertion maintaining LLM formatting without parsing complexity
 ###############################################################################
 # [Source file constraints]
 # - Generated markdown must be parseable by standard Python markdown libraries
-# - Template structure must remain consistent across different content types
-# - Content insertion points must be clearly defined and programmatically accessible
+# - Content extraction must preserve original formatting from source markdown files
+# - Section replacement must maintain document structure and spacing consistency
 # - All markdown formatting must follow CommonMark specification for maximum compatibility
-# - Template rendering must be performant for large-scale knowledge base generation
+# - Performance optimized for incremental updates over full regeneration
 ###############################################################################
 # [Dependencies]
 # <codebase>: ..models.knowledge_context - Context structures and file metadata
@@ -37,6 +37,11 @@
 # <system>: typing - Type hints for template parameters and content structures
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-04T08:40:00Z : Simplified to incremental architecture with selective section updates by CodeAssistant
+# * Removed unused FileAnalysis and DirectorySummary dataclasses (fields never used)
+# * Replaced 3-phase workflow complexity with focused incremental update methods
+# * Added extract_subdirectory_summary method for fourth-level header content extraction
+# * Simplified to core functionality: load existing, selective updates, content extraction
 # 2025-07-03T11:35:00Z : Updated file and directory headers to use get_portable_path() for cross-platform compatibility by CodeAssistant
 # * Modified _assemble_file_content() to use get_portable_path() for file path headers instead of just filename
 # * Modified _assemble_subdirectory_content() to use get_portable_path() for directory path headers with trailing slash preservation
@@ -55,18 +60,16 @@
 ###############################################################################
 
 """
-Markdown Template Engine for Knowledge Bases System.
+Incremental Markdown Engine for Knowledge Bases System.
 
-This module provides template-based markdown generation with programmatic content
-insertion, enabling standard Python markdown library compatibility while optimizing
-LLM token usage through selective content generation.
+This module provides selective markdown updates without full regeneration, enabling
+efficient change-based updates with content extraction and section replacement.
 """
 
 import logging
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
 
 from .markdown_parser import MarkdownParser
 from ...helpers.path_utils import get_project_root
@@ -77,77 +80,25 @@ from ..models.knowledge_context import FileContext
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class FileAnalysis:
+class IncrementalMarkdownEngine:
     """
     [Class intent]
-    Structured container for individual file analysis results from LLM processing.
-    Holds navigation-focused analysis content for programmatic insertion
-    into markdown templates helping developers understand what they'll find when working with files.
+    Incremental markdown engine for selective knowledge base updates without full regeneration.
+    Provides content extraction from subdirectory summaries and selective section replacement
+    for efficient change-based updates maintaining document structure and formatting.
 
     [Design principles]
-    Structured data container enabling clean separation between analysis content and formatting.
-    Navigation-focused content organization supporting developer understanding and code exploration.
-    Immutable data structure preventing accidental content modification during template rendering.
-
-    [Implementation details]
-    Uses dataclass for automatic initialization and immutable structure definition.
-    Contains specific navigation categories matching developer guidance requirements.
-    Provides clean interface for template parameter substitution and content assembly.
-    """
-    file_path: Path
-    what_you_ll_find: str
-    main_components: str
-    how_its_organized: str
-    connections: str
-    context_you_need: str
-    implementation_notes: str
-
-
-@dataclass
-class DirectorySummary:
-    """
-    [Class intent]
-    Structured container for directory-level summary content from LLM processing.
-    Holds navigation-focused insights and module organization information
-    for programmatic insertion into hierarchical knowledge file templates.
-
-    [Design principles]
-    Hierarchical summary container enabling consistent directory knowledge structure.
-    Navigation focus supporting developer understanding and effective directory exploration.
-    Clean interface for template parameter substitution in directory knowledge generation.
-
-    [Implementation details]
-    Contains directory-level navigation insights and organizational information.
-    Supports hierarchical knowledge assembly through structured content organization.
-    Provides type-safe interface for template rendering and content assembly operations.
-    """
-    directory_path: Path
-    what_this_directory_contains: str
-    how_its_organized: str
-    common_patterns: str
-    how_it_connects: str
-
-
-class MarkdownTemplateEngine:
-    """
-    [Class intent]
-    Template engine for 3-phase markdown knowledge file generation with standard parseability.
-    Implements incremental building: individual file analysis insertion, subdirectory assembly,
-    and global summary generation with programmatic content insertion for token efficiency.
-
-    [Design principles]
-    3-phase incremental building supporting efficient knowledge file generation workflow.
-    Programmatic content insertion enabling selective LLM usage for token cost optimization.
+    Incremental updates: selective section replacement without full markdown regeneration.
+    Content extraction: parse subdirectory summaries from fourth-level headers with formatting preservation.
     Standard markdown compatibility supporting integration with existing markdown tooling.
-    Incremental assembly supporting complex directory structures with nested content organization.
-    Clean separation between LLM-generated content and programmatic structural formatting.
+    Raw content insertion maintaining LLM formatting without parsing complexity.
+    Performance optimization favoring targeted updates over complete file recreation.
 
     [Implementation details]
-    Implements 3-phase generation workflow with incremental markdown building capabilities.
-    Uses string template substitution with programmable insertion points for content assembly.
-    Provides separate templates and methods for each phase of the generation process.
-    Supports global summary integration reading assembled content for comprehensive synthesis.
+    Uses mistletoe parser for selective section identification and replacement operations.
+    Extracts content sections from existing markdown files preserving original formatting.
+    Maintains minimal standardized structure for new knowledge base files.
+    Provides targeted update methods for files, subdirectories, and metadata sections.
     """
     
     def __init__(self):
@@ -262,405 +213,386 @@ class MarkdownTemplateEngine:
     
     
     
-    def _assemble_subdirectory_content(self, subdirectory_summaries: List[DirectorySummary]) -> str:
+    def load_or_create_base_structure(self, kb_file_path: Path) -> str:
         """
         [Class method intent]
-        Assembles subdirectory summary content using hierarchical semantic tree format.
-        Renders complete hierarchical content directly from what_this_directory_contains field
-        which now contains the full hierarchical semantic tree from enhanced prompts.
+        Loads existing knowledge base file or creates minimal standardized structure if file doesn't exist.
+        Enables incremental updates by starting from existing content or creating foundation structure
+        with standard sections ready for selective content insertion.
 
         [Design principles]
-        Hierarchical content preservation using raw LLM output without section parsing or transformation.
-        Direct rendering of complete semantic trees maintaining original LLM formatting and structure.
-        Graceful handling of empty subdirectory lists maintaining template rendering stability.
-        Timestamp integration providing content freshness tracking for individual subdirectory summaries.
-        Portable path usage ensuring cross-platform compatibility in markdown headers.
+        Incremental update foundation: load existing content to preserve unchanged sections.
+        Minimal structure creation: only essential headers and placeholders for new files.
+        Standard markdown compatibility ensuring parseable structure at all times.
+        Error handling enabling graceful degradation when file operations encounter issues.
 
         [Implementation details]
-        Iterates through subdirectory summaries rendering complete hierarchical content directly.
-        Uses what_this_directory_contains field which contains full hierarchical semantic tree.
-        Uses get_portable_path() for cross-platform compatible directory path headers.
-        Only renders sections with actual content to avoid empty section headers.
-        Returns formatted markdown ready for insertion into parent directory knowledge template.
+        Attempts to read existing knowledge base file preserving all current content.
+        Creates minimal standardized structure if file doesn't exist with essential sections.
+        Returns markdown content ready for selective section updates using mistletoe parser.
         """
-        if not subdirectory_summaries:
-            return "*No subdirectories in this directory*"
-        
-        sections = []
-        for subdir_summary in subdirectory_summaries:
-            # Generate timestamp for this specific subdirectory summary
+        try:
+            if kb_file_path.exists():
+                # Load existing knowledge base file
+                with open(kb_file_path, 'r', encoding='utf-8') as f:
+                    existing_content = f.read()
+                logger.debug(f"Loaded existing knowledge base: {kb_file_path}")
+                return existing_content
+            else:
+                # Create minimal standardized structure
+                directory_path = kb_file_path.parent
+                directory_name = kb_file_path.stem.replace('_kb', '')
+                
+                content_parts = []
+                
+                # Add warning header
+                warning_header = self._generate_warning_header()
+                content_parts.append(warning_header.strip())
+
+                # Add main title with portable path
+                try:
+                    portable_path = get_portable_path(directory_path)
+                    if not portable_path.endswith('/') and not portable_path.endswith('\\'):
+                        if len(portable_path) >= 3 and portable_path[1:3] == ':\\':
+                            title_path = portable_path + "\\"
+                        else:
+                            title_path = portable_path + "/"
+                    else:
+                        title_path = portable_path
+                except Exception as e:
+                    logger.warning(f"Failed to get portable path for {directory_path}, using fallback: {e}")
+                    title_path = f"{directory_name}/"
+                
+                content_parts.append(f"# Directory Knowledge Base {title_path}")
+                
+                # Add standard sections with placeholders
+                sections = [
+                    ("Global Summary", "*Global summary to be generated*"),
+                    ("Subdirectory Knowledge Integration", "*No subdirectories processed*"),
+                    ("File Knowledge Integration", "*No files processed*")
+                ]
+                
+                for section_name, placeholder in sections:
+                    content_parts.append(f"\n## {section_name}\n")
+                    content_parts.append(placeholder)
+                
+                # Add metadata footer
+                metadata = self._generate_metadata_footer(
+                    timestamp=self._generate_jesse_timestamp(),
+                    directory_path=str(directory_path),
+                    file_count=0,
+                    subdirectory_count=0,
+                    directory_name=directory_name
+                )
+                content_parts.append(f"\n{metadata}")
+                
+                new_content = "\n".join(content_parts)
+                logger.debug(f"Created minimal structure for new knowledge base: {kb_file_path}")
+                return new_content
+                
+        except Exception as e:
+            logger.error(f"Failed to load or create base structure for {kb_file_path}: {e}")
+            raise RuntimeError(f"Base structure initialization failed: {e}") from e
+
+    def extract_subdirectory_summary(self, subdir_kb_path: Path) -> str:
+        """
+        [Class method intent]
+        Extracts content from fourth-level header (####) to next same/higher level header from subdirectory knowledge base.
+        Preserves original formatting while extracting content sections for integration into parent directory
+        knowledge base maintaining hierarchical content structure.
+
+        [Design principles]
+        Content extraction with formatting preservation maintaining original LLM output quality.
+        Fourth-level header targeting supporting hierarchical semantic context pattern extraction.
+        Flexible header name matching enabling extraction regardless of specific header text.
+        Error handling ensuring graceful degradation when extraction encounters parsing issues.
+
+        [Implementation details]
+        Parses subdirectory knowledge base file using mistletoe parser for header identification.
+        Extracts all content from first fourth-level header until next same or higher level header.
+        Preserves original markdown formatting including lists, code blocks, and emphasis.
+        Returns extracted content ready for insertion into parent directory knowledge base.
+        """
+        try:
+            if not subdir_kb_path.exists():
+                logger.warning(f"Subdirectory knowledge base file not found: {subdir_kb_path}")
+                return f"*Content not available from {subdir_kb_path.name}*"
+            
+            # Read subdirectory knowledge base file
+            with open(subdir_kb_path, 'r', encoding='utf-8') as f:
+                subdir_content = f.read()
+            
+            # Parse content using mistletoe parser
+            doc = self.markdown_parser.parse_content(subdir_content)
+            if not doc:
+                logger.warning(f"Failed to parse subdirectory knowledge base: {subdir_kb_path}")
+                return f"*Failed to extract content from {subdir_kb_path.name}*"
+            
+            # Find first fourth-level header (####) and extract content until next same/higher level header
+            extracted_content = []
+            in_target_section = False
+            
+            for token in doc.children:
+                # Check if this is a header
+                if hasattr(token, 'level'):
+                    header_level = token.level
+                    if header_level == 4 and not in_target_section:
+                        # Found first fourth-level header - start extracting
+                        in_target_section = True
+                        continue  # Skip the header itself
+                    elif header_level <= 4 and in_target_section:
+                        # Found next same or higher level header - stop extracting
+                        break
+                
+                # Extract content if we're in the target section
+                if in_target_section:
+                    # Render this token back to markdown
+                    temp_doc = type(doc)([])
+                    temp_doc.children = [token]
+                    token_content = self.markdown_parser.render_to_markdown(temp_doc)
+                    if token_content and token_content.strip():
+                        extracted_content.append(token_content.strip())
+            
+            if extracted_content:
+                result = "\n\n".join(extracted_content)
+                logger.debug(f"Extracted {len(result)} characters from {subdir_kb_path}")
+                return result
+            else:
+                logger.info(f"No fourth-level header content found in {subdir_kb_path}")
+                return f"*No detailed content available from {subdir_kb_path.name}*"
+                
+        except Exception as e:
+            logger.error(f"Failed to extract subdirectory summary from {subdir_kb_path}: {e}")
+            return f"*Error extracting content from {subdir_kb_path.name}: {e}*"
+
+    def replace_file_section(self, markdown_content: str, file_path: Path, analysis_content: str) -> str:
+        """
+        [Class method intent]
+        Selectively replaces individual file section in knowledge base markdown without affecting other content.
+        Uses file path to identify target section and updates only that specific section
+        while preserving all other content and document structure.
+
+        [Design principles]
+        Selective replacement: update only the specific file section without touching other content.
+        Path-based identification: use file path for reliable section targeting.
+        Content preservation: maintain all other sections and document structure unchanged.
+        Raw content insertion: preserve LLM analysis formatting without transformation.
+
+        [Implementation details]
+        Creates section header from file path using portable path conversion.
+        Uses mistletoe parser to locate and replace specific file section content.
+        Maintains timestamp and formatting consistency with existing content structure.
+        Returns updated markdown with only the target file section modified.
+        """
+        try:
+            # Create section header for this file
+            try:
+                portable_file_path = get_portable_path(file_path)
+            except Exception as e:
+                logger.warning(f"Failed to get portable path for {file_path}, using original: {e}")
+                portable_file_path = str(file_path)
+            
+            section_header = f"{portable_file_path} file"
             timestamp = self._generate_jesse_timestamp()
             
-            # Convert directory path to portable format for cross-platform compatibility
+            # Format new section content
+            new_section_content = f"*Last Updated: {timestamp}*\n\n{analysis_content.strip()}"
+            
+            # Parse existing markdown
+            doc = self.markdown_parser.parse_content(markdown_content)
+            if not doc:
+                logger.warning("Failed to parse markdown content for file section replacement")
+                return markdown_content
+            
+            # Use section replacement with specific file header
+            updated_doc = self.markdown_parser.replace_section_content(doc, section_header, new_section_content)
+            
+            if updated_doc:
+                # Render back to markdown with spacing preservation
+                updated_markdown = render_with_spacing_preservation(updated_doc)
+                if updated_markdown:
+                    logger.debug(f"Replaced file section: {portable_file_path}")
+                    return updated_markdown
+                else:
+                    # Fallback to standard rendering
+                    updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
+                    if updated_markdown:
+                        logger.debug(f"Replaced file section with standard rendering: {portable_file_path}")
+                        return updated_markdown
+            
+            # Fallback: return original content
+            logger.warning(f"File section replacement failed for: {portable_file_path}")
+            return markdown_content
+            
+        except Exception as e:
+            logger.error(f"File section replacement failed for {file_path}: {e}")
+            return markdown_content
+
+    def replace_subdirectory_section(self, markdown_content: str, subdir_path: Path, extracted_content: str) -> str:
+        """
+        [Class method intent]
+        Selectively replaces individual subdirectory section in knowledge base markdown without affecting other content.
+        Uses subdirectory path to identify target section and updates only that specific section
+        while preserving all other content and document structure with extracted formatting.
+
+        [Design principles]
+        Selective replacement: update only the specific subdirectory section without touching other content.
+        Path-based identification: use subdirectory path for reliable section targeting.
+        Content preservation: maintain all other sections and document structure unchanged.
+        Formatting preservation: maintain extracted content formatting from source knowledge base.
+
+        [Implementation details]
+        Creates section header from subdirectory path using portable path conversion with trailing slash.
+        Uses mistletoe parser to locate and replace specific subdirectory section content.
+        Maintains timestamp and formatting consistency with existing content structure.
+        Returns updated markdown with only the target subdirectory section modified.
+        """
+        try:
+            # Create section header for this subdirectory
             try:
-                portable_dir_path = get_portable_path(subdir_summary.directory_path)
-                # Ensure trailing slash is preserved for directory formatting
+                portable_dir_path = get_portable_path(subdir_path)
+                # Ensure trailing slash for directory formatting
                 if not portable_dir_path.endswith('/') and not portable_dir_path.endswith('\\'):
-                    # Add appropriate trailing slash based on path type
                     if len(portable_dir_path) >= 3 and portable_dir_path[1:3] == ':\\':
-                        # Windows path - use backslash
                         portable_dir_path += "\\"
                     else:
-                        # Unix/relative path - use forward slash
                         portable_dir_path += "/"
             except Exception as e:
-                logger.warning(f"Failed to get portable path for {subdir_summary.directory_path}, using original: {e}")
-                portable_dir_path = f"{subdir_summary.directory_path.name}/"
+                logger.warning(f"Failed to get portable path for {subdir_path}, using original: {e}")
+                portable_dir_path = f"{subdir_path.name}/"
             
-            # Only render content that exists - skip empty fields
-            section_parts = [f"### {portable_dir_path} directory", f"*Last Updated: {timestamp}*"]
+            section_header = f"{portable_dir_path} directory"
+            timestamp = self._generate_jesse_timestamp()
             
-            # Use hierarchical content directly from what_this_directory_contains as-is
-            if subdir_summary.what_this_directory_contains and subdir_summary.what_this_directory_contains.strip():
-                # Insert LLM content as-is without any parsing or transformation
-                section_parts.append(subdir_summary.what_this_directory_contains.strip())
+            # Format new section content with extracted content
+            new_section_content = f"*Last Updated: {timestamp}*\n\n{extracted_content.strip()}"
             
-            # Only add other fields if they contain actual content (not empty strings)
-            if subdir_summary.how_its_organized and subdir_summary.how_its_organized.strip():
-                section_parts.append(f"**How It's Organized**: {subdir_summary.how_its_organized}")
-            
-            if subdir_summary.common_patterns and subdir_summary.common_patterns.strip():
-                section_parts.append(f"**Common Patterns**: {subdir_summary.common_patterns}")
-            
-            section = "\n\n".join(section_parts)
-            sections.append(section)
-        
-        return "\n\n".join(sections)
-    
-    def _assemble_file_content(self, file_contexts: List[FileContext]) -> str:
-        """
-        [Class method intent]
-        Assembles file content into formatted markdown sections using raw LLM outputs.
-        Creates simple sections with headers and timestamps, inserting LLM content as-is
-        without any parsing or transformation to preserve original formatting.
-
-        [Design principles]
-        Raw content insertion maintaining complete LLM response integrity without transformation.
-        Section-based organization with headers and timestamps for navigation.
-        Simple assembly process avoiding complex parsing or spacing manipulation.
-        Portable path usage ensuring cross-platform compatibility in markdown headers.
-
-        [Implementation details]
-        Iterates through FileContext objects using knowledge_content as-is.
-        Creates sections with portable path header, timestamp, and raw LLM content.
-        Uses get_portable_path() for cross-platform compatible file path headers.
-        Returns formatted markdown ready for insertion without any modifications.
-        """
-        if not file_contexts:
-            return "*No files analyzed in this directory*"
-        
-        sections = []
-        for file_context in file_contexts:
-            if file_context.is_completed and file_context.knowledge_content:
-                # Generate timestamp for this specific file analysis
-                timestamp = self._generate_jesse_timestamp()
-                
-                # Convert file path to portable format for cross-platform compatibility
-                try:
-                    portable_file_path = get_portable_path(file_context.file_path)
-                except Exception as e:
-                    logger.warning(f"Failed to get portable path for {file_context.file_path}, using original: {e}")
-                    portable_file_path = str(file_context.file_path)
-                
-                # Use LLM content as-is without any parsing or transformation
-                section = f"### {portable_file_path} file\n*Last Updated: {timestamp}*\n\n{file_context.knowledge_content}"
-                sections.append(section)
-        
-        # Use double newlines between sections for proper separation
-        return "\n\n".join(sections)
-    
-    def initialize_directory_knowledge_base(self, directory_path: Path) -> str:
-        """
-        [Class method intent]
-        Phase 1: Initializes base directory knowledge markdown structure programmatically.
-        Creates structured markdown template ready for programmatic content insertion
-        in subsequent phases of the 3-phase generation workflow.
-
-        [Design principles]
-        Programmatic structure initialization enabling clean incremental building workflow.
-        Header-based approach supporting mistletoe content insertion without template complexity.
-        Standard markdown compatibility ensuring parseability at every phase of generation.
-
-        [Implementation details]
-        Uses programmatic generation with structured headers for content insertion points.
-        Creates initial markdown structure with proper headers and metadata sections.
-        Returns markdown ready for Phase 2 file analysis insertion and Phase 3 global summary generation.
-        """
-        try:
-            # Generate content programmatically
-            content_parts = []
-            
-            # Add warning header (spacing handled by HTML transition logic in parser)
-            warning_header = self._generate_warning_header()
-            content_parts.append(warning_header.strip())
-
-            # Add main title with portable path using new path utilities
-            try:
-                portable_path = get_portable_path(directory_path)
-                # Ensure directory path has trailing separator for proper formatting
-                # Use appropriate separator based on path type (backslash for Windows, forward slash for others)
-                if len(portable_path) >= 3 and portable_path[1:3] == ':\\':
-                    # Windows path - use backslash
-                    if not portable_path.endswith('\\'):
-                        title_path = portable_path + "\\"
-                    else:
-                        title_path = portable_path
-                else:
-                    # Unix/relative path - use forward slash
-                    if not portable_path.endswith('/'):
-                        title_path = portable_path + "/"
-                    else:
-                        title_path = portable_path
-            except Exception as e:
-                logger.warning(f"Failed to get portable path for {directory_path}, using fallback: {e}")
-                # Fallback to full path if portable path conversion fails
-                dir_str = str(directory_path)
-                if len(dir_str) >= 3 and dir_str[1:3] == ':\\':
-                    # Windows path fallback - use backslash
-                    title_path = dir_str + "\\"
-                else:
-                    # Unix path fallback - use forward slash
-                    title_path = dir_str + "/"
-            
-            content_parts.append(f"# Directory Knowledge Base {title_path}'\n")
-            
-            # Generate sections programmatically with placeholder content
-            sections = [
-                "Global Summary",
-                "Subdirectory Knowledge Integration",
-                "File Knowledge Integration"
-            ]
-            placeholder_values = [
-                "*To be generated using complete assembled content*",
-                "*No subdirectories processed*",
-                "*No files processed*"
-            ]
-            
-            for section, placeholder in zip(sections, placeholder_values):
-                content_parts.append(f"## {section}")
-                content_parts.append("")  # Add blank line between header and content
-                content_parts.append(placeholder)
-            
-            # Add metadata footer
-            metadata = self._generate_metadata_footer(
-                timestamp=datetime.now().isoformat(),
-                directory_path=str(directory_path),
-                file_count=0,
-                subdirectory_count=0,
-                directory_name=directory_path.name
-            )
-            content_parts.append(metadata)
-            
-            base_content = "\n".join(content_parts)
-            
-            logger.debug(f"Initialized base directory knowledge structure programmatically for: {directory_path}")
-            return base_content
-            
-        except Exception as e:
-            logger.error(f"Base directory initialization failed for {directory_path}: {e}")
-            raise RuntimeError(f"Programmatic base generation failed: {e}") from e
-    
-    def insert_file_analyses(self, markdown_content: str, file_contexts: List[FileContext]) -> str:
-        """
-        [Class method intent]
-        Phase 2: Programmatically inserts individual file contexts into markdown structure using mistletoe parser.
-        Uses AST-based section identification with robust parsing for reliable content updates
-        while preserving all LLM response spacing and formatting through MarkdownPreservingRenderer.
-
-        [Design principles]
-        AST-based content identification enabling robust file content integration with mistletoe parsing.
-        Spacing preservation through MarkdownPreservingRenderer maintaining all original formatting.
-        Raw content insertion maintaining complete LLM response integrity without transformation.
-        Robust error handling ensuring reliable content insertion with fallback to original content.
-
-        [Implementation details]
-        Parses markdown content using mistletoe MarkdownParser for header-based section replacement.
-        Assembles file content directly from FileContext objects and uses AST-based section replacement.
-        Returns updated markdown with enhanced spacing through MarkdownPreservingRenderer integration.
-        """
-        try:
-            # Parse existing markdown content using mistletoe parser
+            # Parse existing markdown
             doc = self.markdown_parser.parse_content(markdown_content)
             if not doc:
-                logger.warning("Failed to parse markdown content, returning original")
+                logger.warning("Failed to parse markdown content for subdirectory section replacement")
                 return markdown_content
             
-            # Assemble file content using existing method with FileContext objects
-            file_content = self._assemble_file_content(file_contexts)
-            
-            # Use mistletoe section replacement with AST manipulation
-            updated_doc = self.markdown_parser.replace_section_content(doc, "File Knowledge Integration", file_content)
+            # Use section replacement with specific subdirectory header
+            updated_doc = self.markdown_parser.replace_section_content(doc, section_header, new_section_content)
             
             if updated_doc:
-                # Render back to markdown with enhanced spacing preservation
+                # Render back to markdown with spacing preservation
                 updated_markdown = render_with_spacing_preservation(updated_doc)
                 if updated_markdown:
-                    logger.debug(f"Inserted {len(file_contexts)} file contexts using mistletoe parser with enhanced spacing")
+                    logger.debug(f"Replaced subdirectory section: {portable_dir_path}")
                     return updated_markdown
                 else:
                     # Fallback to standard rendering
                     updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
                     if updated_markdown:
-                        logger.debug(f"Inserted {len(file_contexts)} file contexts using mistletoe parser with standard rendering")
+                        logger.debug(f"Replaced subdirectory section with standard rendering: {portable_dir_path}")
                         return updated_markdown
             
             # Fallback: return original content
-            logger.warning("File context insertion failed, returning original content")
+            logger.warning(f"Subdirectory section replacement failed for: {portable_dir_path}")
             return markdown_content
             
         except Exception as e:
-            logger.error(f"File context insertion failed: {e}")
+            logger.error(f"Subdirectory section replacement failed for {subdir_path}: {e}")
             return markdown_content
-    
-    def insert_file_contexts(self, markdown_content: str, file_contexts: List[FileContext]) -> str:
+
+    def update_footer_metadata(self, markdown_content: str, file_count: int, subdirectory_count: int) -> str:
         """
         [Class method intent]
-        Alias method for insert_file_analyses providing compatibility with simplified naming.
-        Delegates to insert_file_analyses for actual implementation while maintaining
-        consistent interface for ultra-simplified data pipeline processing.
+        Updates only the footer metadata counts without affecting other content in knowledge base markdown.
+        Selectively modifies file and subdirectory counts while preserving all other document content
+        and maintaining consistent metadata footer structure.
 
         [Design principles]
-        Interface compatibility supporting calling code without breaking changes.
-        Method delegation maintaining single implementation point for file context insertion.
-        Simplified naming reflecting ultra-simplified data pipeline architecture.
+        Selective metadata update: modify only count values without affecting other content.
+        String replacement strategy: use targeted replacement for specific metadata fields.
+        Structure preservation: maintain all other footer content and document structure.
+        Consistency maintenance: ensure metadata footer format remains standardized.
 
         [Implementation details]
-        Direct delegation to insert_file_analyses with identical parameters and return behavior.
-        Maintains same error handling and processing logic through delegation pattern.
-        """
-        return self.insert_file_analyses(markdown_content, file_contexts)
-    
-    def insert_subdirectory_summaries(self, markdown_content: str, subdirectory_summaries: List[DirectorySummary]) -> str:
-        """
-        [Class method intent]
-        Phase 2b: Programmatically inserts subdirectory summaries into markdown structure using mistletoe parser.
-        Uses AST-based section identification with robust parsing for reliable content updates
-        while preserving all LLM response spacing and formatting through MarkdownPreservingRenderer.
-
-        [Design principles]
-        AST-based content identification enabling robust subdirectory integration with mistletoe parsing.
-        Spacing preservation through MarkdownPreservingRenderer maintaining all original formatting.
-        Hierarchical content integration supporting bottom-up knowledge assembly patterns.
-
-        [Implementation details]
-        Parses markdown content using mistletoe MarkdownParser for header-based section replacement.
-        Assembles subdirectory content and uses AST-based section replacement with enhanced spacing.
-        Returns updated markdown ready for Phase 3 global summary generation using assembled content.
+        Uses targeted string replacement to update specific count values in metadata footer.
+        Updates generation timestamp to reflect metadata modification time.
+        Preserves all other metadata fields and document content unchanged.
+        Returns updated markdown with refreshed metadata counts and timestamp.
         """
         try:
-            # Parse existing markdown content using mistletoe parser
-            doc = self.markdown_parser.parse_content(markdown_content)
-            if not doc:
-                logger.warning("Failed to parse markdown content, returning original")
-                return markdown_content
+            updated_content = markdown_content
             
-            # Assemble subdirectory content using existing method
-            subdirectory_content = self._assemble_subdirectory_content(subdirectory_summaries)
+            # Update file and subdirectory counts using targeted replacement
+            updated_content = updated_content.replace("*Total Files: 0*", f"*Total Files: {file_count}*")
+            updated_content = updated_content.replace("*Total Subdirectories: 0*", f"*Total Subdirectories: {subdirectory_count}*")
             
-            # Apply spacing preservation to hierarchical content
-            subdirectory_content = preserve_llm_spacing(subdirectory_content)
+            # Update existing counts if they're not zero
+            import re
             
-            # Use mistletoe section replacement with AST manipulation
-            updated_doc = self.markdown_parser.replace_section_content(doc, "Subdirectory Knowledge Integration", subdirectory_content)
+            # Replace any existing file count
+            updated_content = re.sub(r'\*Total Files: \d+\*', f'*Total Files: {file_count}*', updated_content)
             
-            if updated_doc:
-                # Render back to markdown with enhanced spacing preservation
-                updated_markdown = render_with_spacing_preservation(updated_doc)
-                if updated_markdown:
-                    logger.debug(f"Inserted {len(subdirectory_summaries)} subdirectory summaries using mistletoe parser with enhanced spacing")
-                    return updated_markdown
-                else:
-                    # Fallback to standard rendering
-                    updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
-                    if updated_markdown:
-                        logger.debug(f"Inserted {len(subdirectory_summaries)} subdirectory summaries using mistletoe parser with standard rendering")
-                        return updated_markdown
+            # Replace any existing subdirectory count  
+            updated_content = re.sub(r'\*Total Subdirectories: \d+\*', f'*Total Subdirectories: {subdirectory_count}*', updated_content)
             
-            # Fallback: return original content
-            logger.warning("Subdirectory summary insertion failed, returning original content")
-            return markdown_content
+            # Update generation timestamp
+            timestamp = self._generate_jesse_timestamp()
+            updated_content = re.sub(r'\*Generated: [^*]+\*', f'*Generated: {timestamp}*', updated_content)
+            
+            logger.debug(f"Updated footer metadata: {file_count} files, {subdirectory_count} subdirectories")
+            return updated_content
             
         except Exception as e:
-            logger.error(f"Subdirectory summary insertion failed: {e}")
+            logger.error(f"Footer metadata update failed: {e}")
             return markdown_content
     
-    def finalize_with_global_summary(
-        self, 
-        markdown_content: str, 
-        global_summary: str,
-        directory_summary: DirectorySummary,
-        file_count: int,
-        subdirectory_count: int
-    ) -> str:
+    def replace_global_summary_section(self, markdown_content: str, global_summary: str) -> str:
         """
         [Class method intent]
-        Phase 3: Finalizes directory knowledge with LLM-generated global summary using mistletoe parser.
-        Uses AST-based section identification with robust parsing for reliable content updates
-        while preserving all LLM response spacing through MarkdownPreservingRenderer to complete workflow.
+        Selectively replaces global summary section in knowledge base markdown without affecting other content.
+        Updates only the global summary section while preserving all other content and document structure
+        with LLM-generated summary content and formatting preservation.
 
         [Design principles]
-        AST-based content identification enabling robust global summary integration with mistletoe parsing.
-        Spacing preservation through MarkdownPreservingRenderer maintaining all original formatting.
-        Global summary integration leveraging complete assembled content for comprehensive synthesis.
-        Metadata finalization providing complete directory statistics and generation information.
+        Selective replacement: update only the global summary section without touching other content.
+        Content preservation: maintain all other sections and document structure unchanged.
+        Raw content insertion: preserve LLM global summary formatting without transformation.
+        Spacing preservation: maintain consistent formatting through enhanced rendering.
 
         [Implementation details]
-        Parses markdown content using mistletoe MarkdownParser for header-based section replacement.
-        Updates global summary section with enhanced spacing preservation and updates metadata counts.
-        Returns final markdown with enhanced spacing through MarkdownPreservingRenderer integration.
+        Uses mistletoe parser to locate and replace specific global summary section content.
+        Applies spacing preservation to LLM-generated global summary content.
+        Returns updated markdown with only the global summary section modified.
         """
         try:
-            # Parse existing markdown content using mistletoe parser
+            # Parse existing markdown
             doc = self.markdown_parser.parse_content(markdown_content)
             if not doc:
-                logger.warning("Failed to parse markdown content, returning original")
+                logger.warning("Failed to parse markdown content for global summary replacement")
                 return markdown_content
             
-            # Use global summary content with spacing preservation
+            # Apply spacing preservation to global summary content
             content_to_use = preserve_llm_spacing(global_summary.strip())
             
-            # Use mistletoe section replacement with AST manipulation
+            # Use section replacement with Global Summary header
             updated_doc = self.markdown_parser.replace_section_content(doc, "Global Summary", content_to_use)
             
             if updated_doc:
-                # Render back to markdown with enhanced spacing preservation
+                # Render back to markdown with spacing preservation
                 updated_markdown = render_with_spacing_preservation(updated_doc)
-                if not updated_markdown:
+                if updated_markdown:
+                    logger.debug("Replaced global summary section")
+                    return updated_markdown
+                else:
                     # Fallback to standard rendering
                     updated_markdown = self.markdown_parser.render_to_markdown(updated_doc)
-                
-                if updated_markdown:
-                    # Update metadata using simple string replacement (safe for metadata)
-                    updated_markdown = updated_markdown.replace("*Total Files: 0*", f"*Total Files: {file_count}*")
-                    updated_markdown = updated_markdown.replace("*Total Subdirectories: 0*", f"*Total Subdirectories: {subdirectory_count}*")
-                    
-                    # Ensure metadata footer is present
-                    if "---" not in updated_markdown or "*Generated:" not in updated_markdown:
-                        # Re-add metadata footer if it was stripped
-                        directory_name = directory_summary.directory_path.name
-                        metadata_footer = self._generate_metadata_footer(
-                            timestamp=datetime.now().isoformat(),
-                            directory_path=str(directory_summary.directory_path),
-                            file_count=file_count,
-                            subdirectory_count=subdirectory_count,
-                            directory_name=directory_name
-                        )
-                        
-                        # Remove the existing end marker if present and add complete metadata footer
-                        if f"# End of {directory_name}_kb.md" in updated_markdown:
-                            updated_markdown = updated_markdown.replace(f"# End of {directory_name}_kb.md", "")
-                        
-                        updated_markdown = updated_markdown.rstrip() + "\n\n" + metadata_footer
-                    
-                    logger.debug("Finalized directory knowledge using mistletoe parser with enhanced spacing preservation")
-                    return updated_markdown
+                    if updated_markdown:
+                        logger.debug("Replaced global summary section with standard rendering")
+                        return updated_markdown
             
             # Fallback: return original content
-            logger.warning("Global summary finalization failed, returning original content")
+            logger.warning("Global summary section replacement failed")
             return markdown_content
             
         except Exception as e:
-            logger.error(f"Global summary finalization failed: {e}")
+            logger.error(f"Global summary section replacement failed: {e}")
             return markdown_content
     
     def extract_assembled_content(self, markdown_content: str) -> str:

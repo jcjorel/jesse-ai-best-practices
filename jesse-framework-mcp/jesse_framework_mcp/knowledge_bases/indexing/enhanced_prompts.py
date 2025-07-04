@@ -24,14 +24,14 @@
 # - Technical depth ensuring comprehensive coverage of implementation details and architectural insights
 ###############################################################################
 # [Source file constraints]
-# - All prompts must generate structured responses compatible with FileAnalysis and DirectorySummary dataclasses
-# - Response format must be parseable and extractable for programmatic content insertion
+# - All prompts must generate raw markdown content ready for direct insertion into knowledge files
+# - Response format optimized for direct template insertion without parsing complexity
 # - Prompts must emphasize architectural and technical aspects over generic functionality descriptions
 # - Content must be written in present tense for intemporal knowledge representation
 # - Analysis depth must be comprehensive enough for technical decision-making and code understanding
 ###############################################################################
 # [Dependencies]
-# <codebase>: .markdown_template_engine - FileAnalysis and DirectorySummary structure definitions
+# <codebase>: .markdown_template_engine - Incremental markdown engine for template operations
 # <system>: typing - Type hints for prompt template parameters and response structures
 ###############################################################################
 # [GenAI tool change history]
@@ -289,7 +289,7 @@ class EnhancedPrompts:
     Defines specialized prompts for file analysis with architectural emphasis and technical depth.
     Implements directory analysis prompts focusing on module organization and design relationships.
     Provides content-type specific prompts for different technical contexts and file types.
-    Uses structured response format compatible with FileAnalysis and DirectorySummary dataclasses.
+    Uses structured response format compatible with incremental markdown engine operations.
     """
     
     # Semantic Entity Usage specification (DRY principle - applies to all levels)
