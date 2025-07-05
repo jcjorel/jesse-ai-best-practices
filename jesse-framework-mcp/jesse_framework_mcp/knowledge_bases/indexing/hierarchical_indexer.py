@@ -41,6 +41,11 @@
 # <system>: logging - Structured logging and error reporting
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-05T13:29:00Z : Integrated orphaned analysis cleanup component by CodeAssistant
+# * Added OrphanedAnalysisCleanup integration for comprehensive knowledge base maintenance
+# * Implemented Phase 1.7 orphaned file cleanup after cache structure preparation
+# * Added support for cleaning up orphaned analysis files (.analysis.md) and knowledge files (_kb.md)
+# * Integrated leaf-first cleanup strategy ensuring safe bottom-up directory processing
 # 2025-07-04T16:49:00Z : Implemented complete truncation artifact prevention system by CodeAssistant
 # * Updated _process_single_file() to handle None return from KnowledgeBuilder indicating truncated files
 # * Modified _process_directory_files() to completely omit truncated files from DirectoryContext file_contexts
@@ -55,9 +60,6 @@
 # * Moved semaphore usage from directory processing to file processing level
 # * Prevented recursive deadlocks in leaf-first directory processing
 # * Ensured concurrent file processing without blocking directory traversal
-# 2025-07-01T12:08:00Z : Initial hierarchical indexer creation by CodeAssistant
-# * Created core hierarchical indexing orchestrator with leaf-first processing
-# * Implemented bottom-up assembly pattern for knowledge file generation
 ###############################################################################
 
 """
@@ -87,6 +89,7 @@ from ..models import (
 from .change_detector import ChangeDetector
 from .knowledge_builder import KnowledgeBuilder
 from .special_handlers import GitCloneHandler, ProjectBaseHandler
+from .orphaned_cleanup import OrphanedAnalysisCleanup
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +138,7 @@ class HierarchicalIndexer:
         self.knowledge_builder = KnowledgeBuilder(config)
         self.git_clone_handler = GitCloneHandler(config)
         self.project_base_handler = ProjectBaseHandler(config)
+        self.orphaned_cleanup = OrphanedAnalysisCleanup(config)
         
         # Processing coordination
         self._processing_semaphore = asyncio.Semaphore(config.max_concurrent_operations)
@@ -188,6 +192,14 @@ class HierarchicalIndexer:
             await ctx.info("Phase 1.5: Preparing cache directory structure")
             self._current_status.current_operation = "Preparing cache structure"
             await self.knowledge_builder.analysis_cache.prepare_cache_structure(root_context, root_path, ctx)
+            
+            # Phase 1.7: Orphaned Analysis Cleanup
+            await ctx.info("Phase 1.7: Cleaning up orphaned analysis files")
+            self._current_status.current_operation = "Cleaning up orphaned files"
+            cleanup_stats = await self.orphaned_cleanup.cleanup_orphaned_files(
+                self.config.knowledge_output_directory, root_path, ctx
+            )
+            await ctx.info(f"Cleanup completed: {cleanup_stats.total_items_deleted} items removed")
             
             # Phase 2: Change Detection (for incremental mode)
             if self.config.indexing_mode.value == "incremental":
