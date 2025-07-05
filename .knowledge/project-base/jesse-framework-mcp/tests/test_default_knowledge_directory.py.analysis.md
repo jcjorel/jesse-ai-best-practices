@@ -1,92 +1,84 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/tests/test_default_knowledge_directory.py -->
-<!-- Cached On: 2025-07-05T11:36:01.476246 -->
-<!-- Source Modified: 2025-07-03T23:01:11.066874 -->
+<!-- Cached On: 2025-07-05T19:43:22.571455 -->
+<!-- Source Modified: 2025-07-05T19:36:22.064859 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This test script validates the default knowledge directory configuration behavior for the JESSE Framework knowledge base system, specifically testing that `IndexingConfig` automatically defaults to `{PROJECT_ROOT}/.knowledge/` when no explicit `knowledge_output_directory` is specified. The script provides comprehensive validation of configuration initialization, explicit override behavior, serialization correctness, and project root detection integration. Key semantic entities include `IndexingConfig` class, `get_project_root()` function, `test_default_knowledge_directory()`, `test_project_root_integration()`, `knowledge_output_directory` attribute, `to_dict()` method, `pathlib.Path` operations, and `.knowledge/` directory convention. The testing framework enables developers to verify that knowledge base files are automatically stored in the correct project-relative location without requiring explicit configuration, ensuring consistent knowledge management across different deployment environments.
+This test script validates the default behavior of `IndexingConfig` to automatically set `knowledge_output_directory` to `{PROJECT_ROOT}/.knowledge/` when not explicitly specified, ensuring proper knowledge base storage location configuration within the Jesse Framework MCP ecosystem. It provides comprehensive testing capabilities for default directory assignment, explicit path override functionality, serialization behavior validation, and project root detection integration. The suite enables developers to verify that knowledge indexing operations will correctly default to the standardized `.knowledge/` directory structure. Key semantic entities include `IndexingConfig`, `OutputConfig`, `get_project_root`, `knowledge_output_directory`, `to_dict`, `pathlib.Path`, project root detection, and `.knowledge/` directory convention. The implementation leverages path manipulation and configuration serialization to ensure consistent knowledge storage behavior across different deployment scenarios.
 
 ##### Main Components
 
-The script contains two primary test functions: `test_default_knowledge_directory()` for comprehensive configuration behavior validation with three sub-tests (default behavior, explicit specification, serialization), and `test_project_root_integration()` for project root detection verification. The main execution block orchestrates sequential test execution with success tracking and detailed console output formatting. Each test function implements structured validation with expected vs actual comparisons, emoji-based status indicators, and graceful handling of edge cases where project root detection fails.
+The test suite contains two primary test functions: `test_default_knowledge_directory()` performs three validation scenarios including default behavior verification, explicit specification override testing, and serialization correctness validation, while `test_project_root_integration()` validates the underlying project root detection mechanism. Supporting components include comprehensive console output formatting with emoji indicators for test status, assertion-based validation with descriptive error messages, and main execution orchestration with success tracking and exit code management. The test structure implements sequential validation with early failure detection and detailed diagnostic output for troubleshooting configuration issues.
 
 ###### Architecture & Design
 
-The test architecture follows a multi-phase validation pattern where configuration behavior is tested through three distinct scenarios: default initialization, explicit override, and serialization round-trip. The design implements defensive testing with fallback behavior validation when project root detection fails, treating it as expected rather than failure. The script uses direct object instantiation and attribute comparison for validation rather than complex mocking frameworks. Error handling is implemented through boolean return values and structured console output with clear pass/fail indicators for each test phase.
+The test architecture follows a sequential validation pattern with three distinct test phases: default behavior validation, explicit override verification, and serialization integrity checking. The design implements graceful degradation when project root detection fails, allowing tests to continue with appropriate fallback behavior validation. Error handling uses assertion-based validation with descriptive failure messages and conditional test execution based on environment capabilities. The architecture separates concerns between configuration behavior testing and underlying utility function validation, enabling independent verification of each component while maintaining integration testing coverage.
 
 ####### Implementation Approach
 
-The testing strategy employs direct configuration object instantiation with `IndexingConfig()` for default behavior testing and `IndexingConfig(knowledge_output_directory=custom_path)` for override validation. Path comparison uses `pathlib.Path` equality operations for cross-platform compatibility. Serialization testing uses the `to_dict()` method with string representation validation to ensure configuration persistence works correctly. The implementation includes comprehensive logging with expected vs actual value reporting and structured test phase separation for debugging purposes.
+Test execution uses direct function calls with boolean return tracking and comprehensive console output for immediate feedback. Default behavior testing creates `IndexingConfig()` instances without parameters and compares the resulting `knowledge_output_directory` against expected `PROJECT_ROOT/.knowledge/` paths. Override testing instantiates `OutputConfig` with custom paths and verifies that `IndexingConfig(output_config=output_config)` respects explicit specifications. Serialization testing calls `to_dict()` method and validates that the nested dictionary structure contains correct string representations of path objects. Project root integration uses `get_project_root()` directly to verify the underlying path detection mechanism.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - primary configuration class under test
-- `jesse_framework_mcp.helpers.path_utils:get_project_root` - project root detection utility
-- `pathlib.Path` (stdlib) - cross-platform path operations
-- `sys` (stdlib) - path manipulation and exit code management
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - core configuration class being tested
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:OutputConfig` - nested configuration for explicit path specification
+- `jesse_framework_mcp.helpers.path_utils:get_project_root` - project root detection utility function
+- `pathlib.Path` (stdlib) - path manipulation and comparison operations
+- `sys` (stdlib) - path modification and exit code management
 
 **← Outbound:**
-- Test execution reports consumed by developers for validation
-- Console output with structured test results for debugging
-- Exit codes for CI/CD pipeline integration and automated testing
+- Test execution reports for CI/CD pipeline validation
+- Configuration behavior verification for knowledge indexing system
+- Default directory validation for Jesse Framework MCP deployment
+- Integration testing results for knowledge base storage configuration
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring knowledge base configuration defaults work correctly across different deployment environments
-- **Ecosystem Position**: Core testing infrastructure for JESSE Framework knowledge management system configuration validation
-- **Integration Pattern**: Executed by developers during development and CI/CD pipelines to verify that knowledge bases are stored in consistent, predictable locations without requiring explicit configuration
+- **System Role**: Critical validation component ensuring knowledge base storage defaults work correctly before production deployment of indexing operations
+- **Ecosystem Position**: Development and testing infrastructure supporting the Jesse Framework MCP knowledge indexing subsystem's default configuration behavior
+- **Integration Pattern**: Executed by developers during configuration changes, CI/CD pipelines for regression testing, and deployment validation for knowledge storage setup
 
 ######### Edge Cases & Error Handling
 
-The script handles multiple edge cases including project root detection failure (treated as expected behavior with appropriate fallback validation), missing or invalid configuration attributes, and serialization failures. Error handling includes graceful degradation when `get_project_root()` returns `None`, with specific validation that the configuration correctly handles this scenario. The testing framework provides detailed diagnostic output for each failure scenario, including expected vs actual value comparisons and specific error categorization. Individual test isolation ensures that failures in one validation phase do not prevent execution of subsequent tests.
+The suite handles project root detection failure through conditional test execution with warning messages and fallback behavior validation. When `get_project_root()` returns `None`, tests skip directory comparison but verify that `knowledge_output_directory` also returns `None` as expected fallback behavior. Configuration validation failures trigger assertion errors with descriptive messages indicating which specific test scenario failed. Serialization edge cases are handled by checking for nested dictionary key existence before attempting string comparison. The test framework provides detailed diagnostic output showing expected versus actual values for troubleshooting configuration mismatches.
 
 ########## Internal Implementation Details
 
-The test functions implement emoji-based status reporting using Unicode characters (`✅`, `❌`, `⚠️`, `🎉`, `💥`) for immediate visual feedback on test results. Configuration validation includes direct attribute comparison with `pathlib.Path` objects and string representation verification for serialization testing. The script uses boolean return value aggregation for overall success tracking and structured console output with separator lines for visual test phase separation. Project root integration testing validates the underlying utility function independently to isolate configuration-specific issues from path detection problems.
+Path comparison uses direct equality checking between `Path` objects rather than string comparison to ensure platform-independent validation. Test result tracking uses boolean variables with conditional logic for success determination and appropriate exit code setting. Console output formatting employs emoji indicators (`✅`, `❌`, `⚠️`, `🎉`, `💥`) for immediate visual feedback on test status. The serialization test accesses nested dictionary values using `.get()` method with empty dictionary defaults to prevent KeyError exceptions. Project root path construction uses the `/` operator for `Path` objects to ensure proper path joining across different operating systems.
 
 ########### Code Usage Examples
 
-**Basic configuration default behavior validation:**
-
-This code demonstrates the standard pattern for testing IndexingConfig default behavior. It validates that the configuration automatically sets the knowledge directory to the project root when not explicitly specified.
-
+**Basic test execution demonstrates the complete validation suite:**
 ```python
-# Test default knowledge directory configuration behavior
+# Run the complete test suite to verify default knowledge directory behavior
+python test_default_knowledge_directory.py
+```
+
+**Default configuration testing shows automatic directory assignment:**
+```python
+# Test that IndexingConfig automatically sets knowledge_output_directory to PROJECT_ROOT/.knowledge/
 config = IndexingConfig()
-expected_project_root = get_project_root()
-if expected_project_root:
-    expected_knowledge_dir = expected_project_root / '.knowledge'
-    if config.knowledge_output_directory == expected_knowledge_dir:
-        print("✅ Default correctly set to PROJECT_ROOT/.knowledge/")
+expected_knowledge_dir = get_project_root() / '.knowledge'
+assert config.knowledge_output_directory == expected_knowledge_dir
 ```
 
-**Configuration override and serialization testing:**
-
-This pattern validates that explicit configuration values override defaults and serialize correctly. It ensures that custom knowledge directories work properly while maintaining serialization compatibility.
-
+**Explicit override testing validates custom path specification:**
 ```python
-# Test explicit configuration override and serialization
+# Test that explicit specification overrides the default behavior
 custom_path = Path("/tmp/custom_knowledge")
-config2 = IndexingConfig(knowledge_output_directory=custom_path)
-config_dict = config2.to_dict()
-knowledge_dir_str = config_dict.get('knowledge_output_directory')
-if config2.knowledge_output_directory == custom_path:
-    print("✅ Explicit specification overrides default")
+output_config = OutputConfig(knowledge_output_directory=custom_path)
+config2 = IndexingConfig(output_config=output_config)
+assert config2.knowledge_output_directory == custom_path
 ```
 
-**Project root detection integration validation:**
-
-This approach validates the underlying project root detection functionality independently. It ensures that the configuration system has reliable access to project structure information for default path resolution.
-
+**Serialization validation ensures configuration persistence works correctly:**
 ```python
-# Validate project root detection for configuration defaults
-project_root = get_project_root()
-if project_root:
-    print(f"✅ Project root detected: {project_root}")
-    print(f"Expected knowledge directory: {project_root / '.knowledge'}")
-else:
-    print("❌ Project root detection failed")
+# Test that configuration serializes correctly with proper path string conversion
+config_dict = config.to_dict()
+knowledge_dir_str = config_dict.get('output_config', {}).get('knowledge_output_directory')
+expected_str = str(get_project_root() / '.knowledge')
+assert knowledge_dir_str == expected_str
 ```
