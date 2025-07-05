@@ -44,8 +44,18 @@ def temp_directories():
 @pytest.fixture
 def indexing_config(temp_directories):
     """Create test indexing configuration."""
+    # Create configuration with explicit knowledge output directory
+    from jesse_framework_mcp.knowledge_bases.models.indexing_config import (
+        OutputConfig, FileProcessingConfig, ContentFilteringConfig, 
+        LLMConfig, ChangeDetectionConfig, ErrorHandlingConfig, DebugConfig
+    )
+    
+    output_config = OutputConfig(knowledge_output_directory=temp_directories['knowledge_root'])
+    
     return IndexingConfig(
-        knowledge_output_directory=temp_directories['knowledge_root']
+        handler_type="project-base",
+        description="Test configuration for orphaned cleanup",
+        output_config=output_config
     )
 
 

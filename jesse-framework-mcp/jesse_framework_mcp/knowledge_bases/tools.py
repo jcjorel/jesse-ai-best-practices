@@ -127,7 +127,7 @@ def register_knowledge_bases_tools(server: FastMCP) -> None:
             except ValueError:
                 return format_http_response(
                     400, "Bad Request",
-                    {"error": f"Invalid indexing mode: {indexing_mode}. Valid modes: full, incremental, selective"}
+                    {"error": f"Invalid indexing mode: {indexing_mode}. Valid modes: full, full_kb_rebuild, incremental"}
                 )
             
             # Check if indexing is already in progress

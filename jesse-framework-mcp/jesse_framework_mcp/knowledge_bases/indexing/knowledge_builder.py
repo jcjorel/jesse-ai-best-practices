@@ -689,13 +689,15 @@ class KnowledgeBuilder:
         Returns raw analysis content ready for direct insertion into knowledge files.
         """
         try:
-            # PHASE 1: Check cache first for performance optimization
-            if source_root:
+            # PHASE 1: Check cache first for performance optimization (unless FULL mode)
+            if source_root and self.config.indexing_mode.value != "full":
                 cached_analysis = await self.analysis_cache.get_cached_analysis(file_path, source_root)
                 if cached_analysis:
                     cache_path = self.analysis_cache.get_cache_path(file_path, source_root)
                     await ctx.info(f"📄 CACHE HIT: Using cached analysis for {file_path.name} from {cache_path}")
                     return cached_analysis
+            elif source_root and self.config.indexing_mode.value == "full":
+                await ctx.info(f"💥 FULL MODE: Bypassing cache for {file_path.name} - generating fresh analysis")
             
             # PHASE 2: Cache miss - check debug replay (existing debug system)
             replay_response = self.debug_handler.get_stage_replay_response(
@@ -789,10 +791,12 @@ class KnowledgeBuilder:
             # PHASE 4: Remove truncation marker and cache/return clean content
             clean_final_content = self._remove_truncation_marker(final_response_content.strip())
             
-            # Cache the clean analysis result - both compliant and max-iterations-reached cases
-            if source_root:
+            # Cache the clean analysis result - both compliant and max-iterations-reached cases (unless FULL mode)
+            if source_root and self.config.indexing_mode.value != "full":
                 await self.analysis_cache.cache_analysis(file_path, clean_final_content, source_root)
                 await ctx.debug(f"💾 CACHED: Clean analysis cached for {file_path.name} (compliant: {was_compliant})")
+            elif source_root and self.config.indexing_mode.value == "full":
+                await ctx.debug(f"💥 FULL MODE: Not caching analysis for {file_path.name} - nuclear rebuild mode")
             
             # Return clean final analysis content
             return clean_final_content

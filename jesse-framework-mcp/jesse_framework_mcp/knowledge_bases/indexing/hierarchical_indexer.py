@@ -88,7 +88,6 @@ from ..models import (
 )
 from .change_detector import ChangeDetector
 from .knowledge_builder import KnowledgeBuilder
-from .special_handlers import GitCloneHandler, ProjectBaseHandler
 from .orphaned_cleanup import OrphanedAnalysisCleanup
 
 logger = logging.getLogger(__name__)
@@ -136,8 +135,6 @@ class HierarchicalIndexer:
         self.config = config
         self.change_detector = ChangeDetector(config)
         self.knowledge_builder = KnowledgeBuilder(config)
-        self.git_clone_handler = GitCloneHandler(config)
-        self.project_base_handler = ProjectBaseHandler(config)
         self.orphaned_cleanup = OrphanedAnalysisCleanup(config)
         
         # Processing coordination
@@ -201,12 +198,18 @@ class HierarchicalIndexer:
             )
             await ctx.info(f"Cleanup completed: {cleanup_stats.total_items_deleted} items removed")
             
-            # Phase 2: Change Detection (for incremental mode)
+            # Phase 2: Change Detection (conditional based on mode)
             if self.config.indexing_mode.value == "incremental":
                 await ctx.info("Phase 2: Detecting changes for incremental processing")
                 self._current_status.current_operation = "Detecting changes"
                 root_context = await self._detect_changes(root_context, ctx)
                 self._current_status.root_directory_context = root_context
+            elif self.config.indexing_mode.value == "full_kb_rebuild":
+                await ctx.info("Phase 2: Skipping change detection - rebuilding all KB files (with file analysis cache)")
+                # No change detection, but individual file analysis still uses cache
+            else:  # self.config.indexing_mode.value == "full"
+                await ctx.info("Phase 2: Skipping change detection - nuclear rebuild of everything from scratch")
+                # No change detection, and file analysis cache will be bypassed
             
             # Phase 3: Leaf-First Processing
             await ctx.info("Phase 3: Processing files and directories (leaf-first)")

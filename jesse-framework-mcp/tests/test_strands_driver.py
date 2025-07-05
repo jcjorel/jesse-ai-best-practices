@@ -189,23 +189,23 @@ async def test_caching_system():
     
     # Test cache operations
     cache = PromptCache(max_entries=3, ttl_seconds=1)
-    
+
     # Test cache set/get
-    await cache.set("test prompt", "config_hash", "test response")
-    cached_response = await cache.get("test prompt", "config_hash")
+    await cache.set("test prompt", "test_conversation", "config_hash", "test response")
+    cached_response = await cache.get("test prompt", "test_conversation", "config_hash")
     
     assert cached_response == "test response", "Cache retrieval failed"
     logger.info("✅ Cache set/get working")
     
     # Test cache expiration
     await asyncio.sleep(1.1)  # Wait for TTL
-    expired_response = await cache.get("test prompt", "config_hash")
+    expired_response = await cache.get("test prompt", "test_conversation", "config_hash")
     assert expired_response is None, "Cache expiration not working"
     logger.info("✅ Cache expiration working")
     
     # Test cache eviction
     for i in range(5):
-        await cache.set(f"prompt_{i}", "config_hash", f"response_{i}")
+        await cache.set(f"prompt_{i}", f"conversation_{i}", "config_hash", f"response_{i}")
     
     stats = cache.stats()
     assert stats["total_entries"] <= 3, "Cache eviction not working"

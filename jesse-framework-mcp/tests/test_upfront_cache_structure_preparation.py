@@ -63,9 +63,14 @@ async def test_cache_structure_preparation():
                     files_created.append(file_path)
         
         # Create configuration
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True
+            handler_type="project-base",
+            description="Test configuration for cache structure preparation",
+            output_config=output_config
         )
         
         # Create cache and context
@@ -148,11 +153,18 @@ async def test_hierarchical_indexer_integration():
                 test_files.append(file_path)
         
         # Create configuration
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import (
+            OutputConfig, DebugConfig
+        )
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        debug_config = DebugConfig(debug_mode=False, enable_llm_replay=False)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True,
-            debug_mode=False,
-            enable_llm_replay=False
+            handler_type="project-base",
+            description="Test configuration for hierarchical indexer integration",
+            output_config=output_config,
+            debug_config=debug_config
         )
         
         # Create hierarchical indexer
@@ -327,9 +339,14 @@ async def test_fallback_behavior():
         test_file.write_text("print('test')")
         
         # Create configuration
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True
+            handler_type="project-base",
+            description="Test configuration for fallback behavior",
+            output_config=output_config
         )
         
         cache = FileAnalysisCache(config)

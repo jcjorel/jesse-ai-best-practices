@@ -157,21 +157,40 @@ async def test_real_project_indexing():
     print(f"Debug output directory: {debug_dir}")
     
     try:
-        # Create integration test configuration
-        config = IndexingConfig(
-            indexing_mode=IndexingMode.INCREMENTAL,  # Safer than FULL for first test
-            enable_project_base_indexing=True,       # Index actual project content
-            enable_git_clone_indexing=False,         # Focus on project content only
+        # Create integration test configuration using hierarchical structure
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import (
+            FileProcessingConfig, ChangeDetectionConfig, ErrorHandlingConfig, DebugConfig
+        )
+        
+        file_processing = FileProcessingConfig(
+            max_file_size=2 * 1024 * 1024,  # 2MB limit
+            batch_size=5,                    # Moderate batch size for stability
+            max_concurrent_operations=1      # Conservative concurrency
+        )
+        
+        change_detection = ChangeDetectionConfig(
+            indexing_mode=IndexingMode.FULL_KB_REBUILD  # Safer than nuclear FULL for first test, but more thorough than INCREMENTAL
+        )
+        
+        error_handling = ErrorHandlingConfig(
+            continue_on_file_errors=True  # Don't stop on individual file failures
+        )
+        
+        debug_config = DebugConfig(
             debug_mode=True,                         # Capture debug info for errors
             debug_output_directory=debug_dir,        # Store debug files for analysis
-            enable_llm_replay=False,                 # Force fresh LLM calls
-            max_file_size=2 * 1024 * 1024,          # 2MB limit
-            batch_size=5,                            # Moderate batch size for stability
-            max_concurrent_operations=1,             # Conservative concurrency
-            continue_on_file_errors=True,            # Don't stop on individual file failures
-            enable_progress_reporting=True           # Monitor progress
+            enable_llm_replay=False                  # Force fresh LLM calls
         )
-        print(f"Configuration: {config.indexing_mode.value} mode, project-base enabled")
+        
+        config = IndexingConfig(
+            handler_type="project-base",
+            description="Integration test configuration",
+            file_processing=file_processing,
+            change_detection=change_detection,
+            error_handling=error_handling,
+            debug_config=debug_config
+        )
+        print(f"Configuration: {config.indexing_mode.value} mode")
         
         # Show what files/directories will be processed
         print("\n=== PROJECT STRUCTURE ANALYSIS ===")

@@ -63,10 +63,16 @@ async def test_file_analysis_cache_staleness_checking():
         file3.write_text("export function Button() {}")
         
         # Create configuration and cache with smaller tolerance for testing
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig, ChangeDetectionConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        change_detection = ChangeDetectionConfig(timestamp_tolerance_seconds=0.05)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True,
-            timestamp_tolerance_seconds=0.05  # Smaller tolerance for testing
+            handler_type="project-base",
+            description="Test configuration for change detection",
+            output_config=output_config,
+            change_detection=change_detection
         )
         
         cache = FileAnalysisCache(config)
@@ -190,10 +196,16 @@ async def test_detailed_staleness_info():
         file1.write_text("class Core: pass")
         file2.write_text("def helper(): pass")
         
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig, ChangeDetectionConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        change_detection = ChangeDetectionConfig(timestamp_tolerance_seconds=0.05)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True,
-            timestamp_tolerance_seconds=0.05  # Smaller tolerance for testing
+            handler_type="project-base",
+            description="Test configuration for change detection",
+            output_config=output_config,
+            change_detection=change_detection
         )
         
         cache = FileAnalysisCache(config)
@@ -270,10 +282,16 @@ async def test_change_detector_enhancements():
         file1.write_text("def main(): pass")
         file2.write_text("CONFIG = {}")
         
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig, ChangeDetectionConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        change_detection = ChangeDetectionConfig(timestamp_tolerance_seconds=0.05)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True,
-            timestamp_tolerance_seconds=0.05  # Smaller tolerance for testing
+            handler_type="project-base",
+            description="Test configuration for change detection",
+            output_config=output_config,
+            change_detection=change_detection
         )
         
         detector = ChangeDetector(config)
@@ -368,10 +386,16 @@ async def test_realistic_change_scenarios():
         util_file.write_text("export function capitalize(str) { return str.toUpperCase(); }")
         test_file.write_text("import { test } from 'vitest';")
         
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig, ChangeDetectionConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        change_detection = ChangeDetectionConfig(timestamp_tolerance_seconds=0.05)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True,
-            timestamp_tolerance_seconds=0.05  # Smaller tolerance for testing
+            handler_type="project-base",
+            description="Test configuration for change detection",
+            output_config=output_config,
+            change_detection=change_detection
         )
         
         cache = FileAnalysisCache(config)
@@ -522,10 +546,16 @@ async def test_performance_optimization():
                 test_files.append(file_path)
                 file_count += 1
         
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig, ChangeDetectionConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        change_detection = ChangeDetectionConfig(timestamp_tolerance_seconds=0.05)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True,
-            timestamp_tolerance_seconds=0.05  # Smaller tolerance for testing
+            handler_type="project-base",
+            description="Test configuration for performance optimization",
+            output_config=output_config,
+            change_detection=change_detection
         )
         
         cache = FileAnalysisCache(config)

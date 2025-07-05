@@ -36,6 +36,11 @@
 # <system>: typing - Type annotations and validation
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-05T15:58:00Z : Added configuration manager integration and new parameters by CodeAssistant
+# * Added project_base_exclusions parameter for hierarchical exclusion system
+# * Added load_for_handler class method for configuration manager integration
+# * Added from_dict class method for Pydantic model conversion support
+# * Enhanced should_process_directory to support project-base specific exclusions
 # 2025-07-03T15:38:00Z : Set default knowledge_output_directory to {PROJECT_ROOT}/.knowledge/ by CodeAssistant
 # * Added get_project_root import for project root detection integration
 # * Modified __post_init__ to set knowledge_output_directory default to project_root/.knowledge when None
@@ -80,82 +85,232 @@ class IndexingMode(str, Enum):
     String-based enum for serialization compatibility and configuration persistence.
     Mode values map directly to processing strategies in HierarchicalIndexer.
     """
-    FULL = "full"  # Complete re-indexing of entire hierarchy
-    INCREMENTAL = "incremental"  # Update only changed files and dependencies
-    SELECTIVE = "selective"  # Index specific paths only
+    FULL = "full"  # Nuclear - Complete regeneration of everything from scratch (no cache)
+    FULL_KB_REBUILD = "full_kb_rebuild"  # Hybrid - Rebuild all KB files but use file analysis cache  
+    INCREMENTAL = "incremental"  # Smart - Update only changed files and dependencies
+
+
+@dataclass(frozen=True)
+class FileProcessingConfig:
+    """
+    [Class intent]
+    Configuration for file processing limits and batch operations.
+    Controls file size constraints, batching parameters, and concurrency limits.
+
+    [Design principles]
+    Focused configuration group for file processing concerns.
+    Clear separation from other configuration aspects for maintainability.
+    """
+    max_file_size: int = 2 * 1024 * 1024  # 2MB max per file
+    batch_size: int = 7                    # Files per LLM batch (cost/performance balance)
+    max_concurrent_operations: int = 3     # Async concurrency limit
+
+
+@dataclass(frozen=True)
+class ContentFilteringConfig:
+    """
+    [Class intent]
+    Configuration for content filtering and exclusion rules.
+    Controls which files and directories are excluded from processing.
+
+    [Design principles]
+    Centralized filtering logic with hierarchical exclusion support.
+    Separate concerns for different types of exclusions.
+    """
+    excluded_extensions: Set[str] = field(default_factory=lambda: {
+        '.pyc', '.pyo', '.git', '__pycache__', 
+        '.DS_Store', '.env', '.log', '.tmp',
+        '.cache', '.pytest_cache', '.mypy_cache'
+    })
+    excluded_directories: Set[str] = field(default_factory=lambda: {
+        '.git', '__pycache__', '.pytest_cache', 
+        '.mypy_cache', 'node_modules', '.venv', 'venv'
+    })
+    project_base_exclusions: Optional[Set[str]] = None  # Project-base specific exclusions
+
+
+@dataclass(frozen=True)
+class LLMConfig:
+    """
+    [Class intent]
+    Configuration for LLM integration and behavior.
+    Controls Claude 4 Sonnet model parameters and response generation.
+
+    [Design principles]
+    Focused LLM configuration with model-specific parameters.
+    Integration with strands_agent_driver Claude 4 Sonnet configuration.
+    """
+    llm_model: str = Claude4SonnetModel.CLAUDE_4_SONNET  # Official Claude 4 Sonnet model ID
+    temperature: float = 0.3                              # Low temperature for consistent summarization
+    max_tokens: int = 20000                              # Response length limit
+
+
+@dataclass(frozen=True)
+class ChangeDetectionConfig:
+    """
+    [Class intent]
+    Configuration for change detection and processing mode.
+    Controls indexing strategy and timestamp comparison behavior.
+
+    [Design principles]
+    Focused configuration for change detection logic.
+    Clear separation of timing and mode concerns.
+    """
+    indexing_mode: IndexingMode = IndexingMode.INCREMENTAL
+    timestamp_tolerance_seconds: int = 2  # Tolerance for filesystem timestamp comparison
+
+
+@dataclass(frozen=True)
+class ErrorHandlingConfig:
+    """
+    [Class intent]
+    Configuration for error handling and resilience.
+    Controls retry behavior and error recovery strategies.
+
+    [Design principles]
+    Centralized error handling configuration.
+    Separate concerns for different types of error handling.
+    """
+    max_retries: int = 3
+    retry_delay_seconds: float = 1.0
+    continue_on_file_errors: bool = True  # Continue processing when individual files fail
+
+
+@dataclass(frozen=True)
+class OutputConfig:
+    """
+    [Class intent]
+    Configuration for output generation and storage.
+    Controls where knowledge files are generated and stored.
+
+    [Design principles]
+    Focused configuration for output management.
+    Clear separation of output concerns from processing logic.
+    """
+    knowledge_output_directory: Optional[Path] = None  # Directory for generated knowledge files
+
+
+@dataclass(frozen=True)
+class DebugConfig:
+    """
+    [Class intent]
+    Configuration for debug and development features.
+    Controls debug mode, output persistence, and replay functionality.
+
+    [Design principles]
+    Isolated debug configuration to avoid interfering with production settings.
+    Clear separation of debug concerns from operational configuration.
+    """
+    debug_mode: bool = False                            # Enable debug mode for LLM output persistence
+    debug_output_directory: Optional[Path] = None      # Directory for debug artifacts
+    enable_llm_replay: bool = False                    # Use saved LLM outputs instead of making new calls
 
 
 @dataclass(frozen=True)
 class IndexingConfig:
     """
     [Class intent]
-    Immutable configuration for Knowledge Bases Hierarchical Indexing System operations.
+    Hierarchical immutable configuration for Knowledge Bases Hierarchical Indexing System operations.
     Controls all aspects of file processing, LLM integration, change detection,
     and special handling for git-clones and project-base indexing.
 
     [Design principles]
     Frozen dataclass ensuring configuration immutability after initialization.
+    Hierarchical organization with focused configuration groups for maintainability.
     Comprehensive validation at creation time prevents runtime configuration errors.
-    Clear separation between file processing and LLM operational parameters.
     Integration with existing strands_agent_driver Claude 4 Sonnet configuration.
 
     [Implementation details]
-    Uses Claude 4 Sonnet model ID from strands_agent_driver for consistency.
-    File size and processing limits designed for optimal LLM context usage.
-    Validation occurs in __post_init__ with descriptive error messages.
+    Uses hierarchical configuration groups for logical organization.
+    Each configuration group handles its specific domain concerns.
+    Provides convenient access properties for backward compatibility during transition.
     """
     
-    # File Processing Configuration
-    max_file_size: int = 2 * 1024 * 1024  # 2MB max per file (increased for better coverage)
-    chunk_size: int = 8000  # 8k chars (optimized for Claude 4 context)
-    chunk_overlap: int = 400  # Overlap between chunks for context preservation
+    # Handler Identification
+    handler_type: str = "project-base"
+    description: str = "Hierarchical indexing configuration"
     
-    # Batch Processing Configuration  
-    batch_size: int = 7  # Files per LLM batch (cost/performance balance)
-    max_concurrent_operations: int = 3  # Async concurrency limit
+    # Hierarchical Configuration Groups
+    file_processing: FileProcessingConfig = field(default_factory=FileProcessingConfig)
+    content_filtering: ContentFilteringConfig = field(default_factory=ContentFilteringConfig)
+    llm_config: LLMConfig = field(default_factory=LLMConfig)
+    change_detection: ChangeDetectionConfig = field(default_factory=ChangeDetectionConfig)
+    error_handling: ErrorHandlingConfig = field(default_factory=ErrorHandlingConfig)
+    output_config: OutputConfig = field(default_factory=OutputConfig)
+    debug_config: DebugConfig = field(default_factory=DebugConfig)
     
-    # Content Filtering Configuration
-    excluded_extensions: Set[str] = field(default_factory=lambda: {
-        '.pyc', '.pyo', '.git', '__pycache__', 
-        '.DS_Store', '.env', '.log', '.tmp',
-        '.cache', '.pytest_cache', '.mypy_cache'
-    })
+    # Convenience Properties for Backward Compatibility Access
+    @property
+    def max_file_size(self) -> int:
+        return self.file_processing.max_file_size
     
-    excluded_directories: Set[str] = field(default_factory=lambda: {
-        '.git', '__pycache__', '.pytest_cache', 
-        '.mypy_cache', 'node_modules', '.venv', 'venv'
-    })
+    @property
+    def batch_size(self) -> int:
+        return self.file_processing.batch_size
     
-    # LLM Configuration (Claude 4 Sonnet)
-    llm_model: str = Claude4SonnetModel.CLAUDE_4_SONNET  # Official Claude 4 Sonnet model ID
-    temperature: float = 0.3  # Low temperature for consistent summarization
-    max_tokens: int = 20000  # Response length limit
+    @property
+    def max_concurrent_operations(self) -> int:
+        return self.file_processing.max_concurrent_operations
     
-    # Change Detection Configuration
-    indexing_mode: IndexingMode = IndexingMode.INCREMENTAL
-    timestamp_tolerance_seconds: int = 2  # Tolerance for filesystem timestamp comparison
+    @property
+    def excluded_extensions(self) -> Set[str]:
+        return self.content_filtering.excluded_extensions
     
-    # Special Handling Configuration
-    enable_git_clone_indexing: bool = True
-    enable_project_base_indexing: bool = True
-    respect_gitignore: bool = True  # Honor .gitignore patterns in project-base indexing
+    @property
+    def excluded_directories(self) -> Set[str]:
+        return self.content_filtering.excluded_directories
     
-    # Performance Configuration
-    enable_progress_reporting: bool = True
-    progress_update_interval: int = 5  # Seconds between progress updates
+    @property
+    def project_base_exclusions(self) -> Optional[Set[str]]:
+        return self.content_filtering.project_base_exclusions
     
-    # Error Handling Configuration
-    max_retries: int = 3
-    retry_delay_seconds: float = 1.0
-    continue_on_file_errors: bool = True  # Continue processing when individual files fail
+    @property
+    def llm_model(self) -> str:
+        return self.llm_config.llm_model
     
-    # Knowledge File Output Configuration
-    knowledge_output_directory: Optional[Path] = None  # Directory for generated knowledge files (if None, defaults to {PROJECT_ROOT}/.knowledge/)
+    @property
+    def temperature(self) -> float:
+        return self.llm_config.temperature
     
-    # Debug Configuration
-    debug_mode: bool = False  # Enable debug mode for LLM output persistence and replay
-    debug_output_directory: Optional[Path] = None  # Directory for debug artifacts (if None, uses temp directory)
-    enable_llm_replay: bool = False  # Use saved LLM outputs instead of making new calls
+    @property
+    def max_tokens(self) -> int:
+        return self.llm_config.max_tokens
+    
+    @property
+    def indexing_mode(self) -> IndexingMode:
+        return self.change_detection.indexing_mode
+    
+    @property
+    def timestamp_tolerance_seconds(self) -> int:
+        return self.change_detection.timestamp_tolerance_seconds
+    
+    @property
+    def max_retries(self) -> int:
+        return self.error_handling.max_retries
+    
+    @property
+    def retry_delay_seconds(self) -> float:
+        return self.error_handling.retry_delay_seconds
+    
+    @property
+    def continue_on_file_errors(self) -> bool:
+        return self.error_handling.continue_on_file_errors
+    
+    @property
+    def knowledge_output_directory(self) -> Optional[Path]:
+        return self.output_config.knowledge_output_directory
+    
+    @property
+    def debug_mode(self) -> bool:
+        return self.debug_config.debug_mode
+    
+    @property
+    def debug_output_directory(self) -> Optional[Path]:
+        return self.debug_config.debug_output_directory
+    
+    @property
+    def enable_llm_replay(self) -> bool:
+        return self.debug_config.enable_llm_replay
     
     def __post_init__(self):
         """
@@ -177,12 +332,14 @@ class IndexingConfig:
         Ensures LLM configuration is compatible with Claude 4 Sonnet constraints.
         """
         # Set default knowledge output directory to {PROJECT_ROOT}/.knowledge/
-        if self.knowledge_output_directory is None:
+        if self.output_config.knowledge_output_directory is None:
             try:
                 project_root = get_project_root()
                 if project_root:
+                    # Create new OutputConfig with the default knowledge directory
+                    new_output_config = OutputConfig(knowledge_output_directory=project_root / '.knowledge')
                     # Use object.__setattr__ to modify frozen dataclass
-                    object.__setattr__(self, 'knowledge_output_directory', project_root / '.knowledge')
+                    object.__setattr__(self, 'output_config', new_output_config)
                 # If project_root is None, keep knowledge_output_directory as None (fallback to old behavior)
             except Exception:
                 # If project root detection fails, keep knowledge_output_directory as None
@@ -191,12 +348,6 @@ class IndexingConfig:
         # Validate file processing parameters
         if self.max_file_size <= 0:
             raise ValueError(f"max_file_size must be positive, got {self.max_file_size}")
-        
-        if self.chunk_size <= 0:
-            raise ValueError(f"chunk_size must be positive, got {self.chunk_size}")
-        
-        if self.chunk_overlap >= self.chunk_size:
-            raise ValueError(f"chunk_overlap ({self.chunk_overlap}) must be less than chunk_size ({self.chunk_size})")
         
         # Validate batch processing parameters
         if self.batch_size <= 0:
@@ -212,10 +363,7 @@ class IndexingConfig:
         if self.max_tokens <= 0:
             raise ValueError(f"max_tokens must be positive, got {self.max_tokens}")
         
-        # Validate performance parameters
-        if self.progress_update_interval <= 0:
-            raise ValueError(f"progress_update_interval must be positive, got {self.progress_update_interval}")
-        
+        # Validate error handling parameters
         if self.max_retries < 0:
             raise ValueError(f"max_retries must be non-negative, got {self.max_retries}")
         
@@ -277,42 +425,209 @@ class IndexingConfig:
     def to_dict(self) -> Dict[str, Any]:
         """
         [Class method intent]
-        Serializes configuration to dictionary format for persistence, debugging,
+        Serializes hierarchical configuration to dictionary format for persistence, debugging,
         and integration with external systems requiring configuration data.
 
         [Design principles]
         Complete serialization preserving all configuration state for reproducible operations.
-        Dictionary format compatible with JSON serialization and configuration persistence.
+        Hierarchical dictionary format matching the new configuration structure.
         Handles complex types like sets and enums with appropriate conversion.
 
         [Implementation details]
         Converts sets to lists for JSON compatibility while preserving semantics.
         Enum values converted to string representation for serialization safety.
-        All primitive and collection types handled with explicit type conversion.
+        All nested configuration groups serialized with proper structure.
         """
         return {
-            'max_file_size': self.max_file_size,
-            'chunk_size': self.chunk_size,
-            'chunk_overlap': self.chunk_overlap,
-            'batch_size': self.batch_size,
-            'max_concurrent_operations': self.max_concurrent_operations,
-            'excluded_extensions': list(self.excluded_extensions),
-            'excluded_directories': list(self.excluded_directories),
-            'llm_model': self.llm_model,
-            'temperature': self.temperature,
-            'max_tokens': self.max_tokens,
-            'indexing_mode': self.indexing_mode.value,
-            'timestamp_tolerance_seconds': self.timestamp_tolerance_seconds,
-            'enable_git_clone_indexing': self.enable_git_clone_indexing,
-            'enable_project_base_indexing': self.enable_project_base_indexing,
-            'respect_gitignore': self.respect_gitignore,
-            'enable_progress_reporting': self.enable_progress_reporting,
-            'progress_update_interval': self.progress_update_interval,
-            'max_retries': self.max_retries,
-            'retry_delay_seconds': self.retry_delay_seconds,
-            'continue_on_file_errors': self.continue_on_file_errors,
-            'knowledge_output_directory': str(self.knowledge_output_directory) if self.knowledge_output_directory else None,
-            'debug_mode': self.debug_mode,
-            'debug_output_directory': str(self.debug_output_directory) if self.debug_output_directory else None,
-            'enable_llm_replay': self.enable_llm_replay
+            'handler_type': self.handler_type,
+            'description': self.description,
+            'file_processing': {
+                'max_file_size': self.file_processing.max_file_size,
+                'batch_size': self.file_processing.batch_size,
+                'max_concurrent_operations': self.file_processing.max_concurrent_operations
+            },
+            'content_filtering': {
+                'excluded_extensions': list(self.content_filtering.excluded_extensions),
+                'excluded_directories': list(self.content_filtering.excluded_directories),
+                'project_base_exclusions': list(self.content_filtering.project_base_exclusions) if self.content_filtering.project_base_exclusions else None
+            },
+            'llm_config': {
+                'llm_model': self.llm_config.llm_model,
+                'temperature': self.llm_config.temperature,
+                'max_tokens': self.llm_config.max_tokens
+            },
+            'change_detection': {
+                'indexing_mode': self.change_detection.indexing_mode.value,
+                'timestamp_tolerance_seconds': self.change_detection.timestamp_tolerance_seconds
+            },
+            'error_handling': {
+                'max_retries': self.error_handling.max_retries,
+                'retry_delay_seconds': self.error_handling.retry_delay_seconds,
+                'continue_on_file_errors': self.error_handling.continue_on_file_errors
+            },
+            'output_config': {
+                'knowledge_output_directory': str(self.output_config.knowledge_output_directory) if self.output_config.knowledge_output_directory else None
+            },
+            'debug_config': {
+                'debug_mode': self.debug_config.debug_mode,
+                'debug_output_directory': str(self.debug_config.debug_output_directory) if self.debug_config.debug_output_directory else None,
+                'enable_llm_replay': self.debug_config.enable_llm_replay
+            }
         }
+    
+    @classmethod
+    def from_dict(cls, config_dict: Dict[str, Any]) -> 'IndexingConfig':
+        """
+        [Class method intent]
+        Creates IndexingConfig instance from hierarchical validated dictionary.
+        Enables configuration loading from JSON files through configuration manager.
+
+        [Design principles]
+        Type-safe configuration creation from external hierarchical data sources.
+        Proper handling of complex types requiring conversion from JSON-compatible formats.
+        Validation through normal dataclass validation ensuring configuration consistency.
+
+        [Implementation details]
+        Processes hierarchical configuration groups into appropriate dataclass instances.
+        Converts list parameters back to sets for excluded_extensions and excluded_directories.
+        Handles optional parameters with proper None value processing.
+        Creates IndexingConfig using standard dataclass constructor with full validation.
+        """
+        # Create a copy to avoid modifying the original dictionary
+        config_data = config_dict.copy()
+        
+        # Extract handler identification
+        handler_type = config_data.get('handler_type', 'project-base')
+        description = config_data.get('description', 'Hierarchical indexing configuration')
+        
+        # Process file_processing configuration
+        file_processing_data = config_data.get('file_processing', {})
+        file_processing = FileProcessingConfig(
+            max_file_size=file_processing_data.get('max_file_size', 2 * 1024 * 1024),
+            batch_size=file_processing_data.get('batch_size', 7),
+            max_concurrent_operations=file_processing_data.get('max_concurrent_operations', 3)
+        )
+        
+        # Process content_filtering configuration
+        content_filtering_data = config_data.get('content_filtering', {})
+        excluded_extensions = content_filtering_data.get('excluded_extensions', [])
+        if excluded_extensions:
+            excluded_extensions = set(excluded_extensions)
+        else:
+            excluded_extensions = {
+                '.pyc', '.pyo', '.git', '__pycache__', 
+                '.DS_Store', '.env', '.log', '.tmp',
+                '.cache', '.pytest_cache', '.mypy_cache'
+            }
+        
+        excluded_directories = content_filtering_data.get('excluded_directories', [])
+        if excluded_directories:
+            excluded_directories = set(excluded_directories)
+        else:
+            excluded_directories = {
+                '.git', '__pycache__', '.pytest_cache', 
+                '.mypy_cache', 'node_modules', '.venv', 'venv'
+            }
+        
+        project_base_exclusions_list = content_filtering_data.get('project_base_exclusions')
+        project_base_exclusions = set(project_base_exclusions_list) if project_base_exclusions_list else None
+        
+        content_filtering = ContentFilteringConfig(
+            excluded_extensions=excluded_extensions,
+            excluded_directories=excluded_directories,
+            project_base_exclusions=project_base_exclusions
+        )
+        
+        # Process llm_config configuration
+        llm_config_data = config_data.get('llm_config', {})
+        llm_config = LLMConfig(
+            llm_model=llm_config_data.get('llm_model', Claude4SonnetModel.CLAUDE_4_SONNET),
+            temperature=llm_config_data.get('temperature', 0.3),
+            max_tokens=llm_config_data.get('max_tokens', 20000)
+        )
+        
+        # Process change_detection configuration
+        change_detection_data = config_data.get('change_detection', {})
+        indexing_mode_str = change_detection_data.get('indexing_mode', 'incremental')
+        if isinstance(indexing_mode_str, str):
+            indexing_mode = IndexingMode(indexing_mode_str)
+        else:
+            indexing_mode = indexing_mode_str
+        
+        change_detection = ChangeDetectionConfig(
+            indexing_mode=indexing_mode,
+            timestamp_tolerance_seconds=change_detection_data.get('timestamp_tolerance_seconds', 2)
+        )
+        
+        # Process error_handling configuration
+        error_handling_data = config_data.get('error_handling', {})
+        error_handling = ErrorHandlingConfig(
+            max_retries=error_handling_data.get('max_retries', 3),
+            retry_delay_seconds=error_handling_data.get('retry_delay_seconds', 1.0),
+            continue_on_file_errors=error_handling_data.get('continue_on_file_errors', True)
+        )
+        
+        # Process output_config configuration
+        output_config_data = config_data.get('output_config', {})
+        knowledge_output_directory_str = output_config_data.get('knowledge_output_directory')
+        knowledge_output_directory = Path(knowledge_output_directory_str) if knowledge_output_directory_str else None
+        
+        output_config = OutputConfig(
+            knowledge_output_directory=knowledge_output_directory
+        )
+        
+        # Process debug_config configuration
+        debug_config_data = config_data.get('debug_config', {})
+        debug_output_directory_str = debug_config_data.get('debug_output_directory')
+        debug_output_directory = Path(debug_output_directory_str) if debug_output_directory_str else None
+        
+        debug_config = DebugConfig(
+            debug_mode=debug_config_data.get('debug_mode', False),
+            debug_output_directory=debug_output_directory,
+            enable_llm_replay=debug_config_data.get('enable_llm_replay', False)
+        )
+        
+        # Create IndexingConfig instance with hierarchical configuration groups
+        return cls(
+            handler_type=handler_type,
+            description=description,
+            file_processing=file_processing,
+            content_filtering=content_filtering,
+            llm_config=llm_config,
+            change_detection=change_detection,
+            error_handling=error_handling,
+            output_config=output_config,
+            debug_config=debug_config
+        )
+    
+    @classmethod
+    def load_for_handler(cls, handler_type: str, knowledge_dir: Optional[Path] = None) -> 'IndexingConfig':
+        """
+        [Class method intent]
+        Convenience method to load configuration for specified handler type.
+        Integrates with IndexingConfigManager for auto-generation and validation.
+
+        [Design principles]
+        Simple interface for handler-specific configuration loading.
+        Auto-generation of missing configurations using centralized defaults.
+        Integration with project root detection for knowledge directory location.
+
+        [Implementation details]
+        Uses project root detection when knowledge_dir is not provided.
+        Creates IndexingConfigManager instance for configuration loading.
+        Returns validated IndexingConfig ready for indexing operations.
+        """
+        # Import here to avoid circular imports
+        from ..indexing.config_manager import IndexingConfigManager
+        
+        # Determine knowledge directory
+        if knowledge_dir is None:
+            project_root = get_project_root()
+            if project_root:
+                knowledge_dir = project_root / '.knowledge'
+            else:
+                raise ValueError("Could not determine knowledge directory - please provide knowledge_dir parameter")
+        
+        # Load configuration using manager
+        manager = IndexingConfigManager(knowledge_dir)
+        return manager.load_config(handler_type)

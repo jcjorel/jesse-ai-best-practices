@@ -50,9 +50,14 @@ async def test_cache_basic_functionality():
         test_file.write_text("print('Hello World')")
         
         # Create cache configuration
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True
+            handler_type="project-base",
+            description="Test configuration for cache integration",
+            output_config=output_config
         )
         
         cache = FileAnalysisCache(config)
@@ -126,9 +131,16 @@ async def test_cache_freshness_checking():
         test_file.parent.mkdir(parents=True)
         test_file.write_text("# Original content")
         
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig, ChangeDetectionConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        change_detection = ChangeDetectionConfig(timestamp_tolerance_seconds=1)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            timestamp_tolerance_seconds=1
+            handler_type="project-base",
+            description="Test configuration for cache freshness checking",
+            output_config=output_config,
+            change_detection=change_detection
         )
         cache = FileAnalysisCache(config)
         
@@ -212,14 +224,27 @@ export const Button: React.FC<ButtonProps> = ({
 """)
         
         # Create configuration with debug mode disabled for cleaner testing
-        config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True,
-            debug_mode=False,
-            enable_llm_replay=False,
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import (
+            OutputConfig, LLMConfig, DebugConfig
+        )
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        llm_config = LLMConfig(
             llm_model="claude-3-5-sonnet-20241022",
             temperature=0.1,
             max_tokens=4000
+        )
+        debug_config = DebugConfig(
+            debug_mode=False,
+            enable_llm_replay=False
+        )
+        
+        config = IndexingConfig(
+            handler_type="project-base",
+            description="Test configuration for KnowledgeBuilder integration",
+            output_config=output_config,
+            llm_config=llm_config,
+            debug_config=debug_config
         )
         
         # Mock KnowledgeBuilder to simulate LLM response without actual API calls
@@ -379,9 +404,14 @@ export const Component{i}: React.FC<Component{i}Props> = ({{ value, onChange }})
 """)
             test_files.append(test_file)
         
+        from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig
+        
+        output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
+        
         config = IndexingConfig(
-            knowledge_output_directory=knowledge_dir,
-            enable_project_base_indexing=True
+            handler_type="project-base",
+            description="Test configuration for cache performance simulation",
+            output_config=output_config
         )
         
         cache = FileAnalysisCache(config)

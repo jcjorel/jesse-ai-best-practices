@@ -32,19 +32,21 @@ def test_default_knowledge_directory():
             print("✅ Test 1 PASSED: Default correctly set to PROJECT_ROOT/.knowledge/")
         else:
             print("❌ Test 1 FAILED: Default not set correctly")
-            return False
+            assert False, "Default not set correctly"
     else:
         print("⚠️ Test 1 SKIPPED: Could not detect project root")
         if config.knowledge_output_directory is None:
             print("✅ Fallback behavior working correctly (None when project root not detected)")
         else:
             print("❌ Fallback behavior failed")
-            return False
+            assert False, "Fallback behavior failed"
     
     # Test 2: Explicit specification (should override default)
     print("\nTest 2: Explicit specification")
     custom_path = Path("/tmp/custom_knowledge")
-    config2 = IndexingConfig(knowledge_output_directory=custom_path)
+    from jesse_framework_mcp.knowledge_bases.models.indexing_config import OutputConfig
+    output_config = OutputConfig(knowledge_output_directory=custom_path)
+    config2 = IndexingConfig(output_config=output_config)
     
     print(f"Expected: {custom_path}")
     print(f"Actual: {config2.knowledge_output_directory}")
@@ -53,12 +55,12 @@ def test_default_knowledge_directory():
         print("✅ Test 2 PASSED: Explicit specification overrides default")
     else:
         print("❌ Test 2 FAILED: Explicit specification not working")
-        return False
+        assert False, "Explicit specification not working"
     
     # Test 3: Verify the configuration serializes correctly
     print("\nTest 3: Serialization")
     config_dict = config.to_dict()
-    knowledge_dir_str = config_dict.get('knowledge_output_directory')
+    knowledge_dir_str = config_dict.get('output_config', {}).get('knowledge_output_directory')
     
     if expected_project_root and knowledge_dir_str:
         expected_str = str(expected_project_root / '.knowledge')
@@ -69,12 +71,11 @@ def test_default_knowledge_directory():
             print("✅ Test 3 PASSED: Serialization working correctly")
         else:
             print("❌ Test 3 FAILED: Serialization not working")
-            return False
+            assert False, "Serialization not working"
     else:
         print("⚠️ Test 3 SKIPPED: No project root or serialization is None")
     
     print("\n🎉 All tests passed! Default knowledge directory is working correctly.")
-    return True
 
 
 def test_project_root_integration():
@@ -85,11 +86,10 @@ def test_project_root_integration():
     if project_root:
         print(f"✅ Project root detected: {project_root}")
         print(f"Expected knowledge directory: {project_root / '.knowledge'}")
-        return True
     else:
         print("❌ Project root detection failed")
         print("This may indicate an issue with the test environment")
-        return False
+        assert False, "Project root detection failed"
 
 
 if __name__ == "__main__":
