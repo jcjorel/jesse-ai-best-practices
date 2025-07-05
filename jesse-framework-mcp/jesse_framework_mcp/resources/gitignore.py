@@ -30,7 +30,7 @@ from enum import Enum
 
 from fastmcp import Context
 from ..main import server
-from ..helpers.http_formatter import format_http_section, format_multi_section_response, ContentCriticality, HttpPath
+from ..helpers.async_http_formatter import format_http_section, format_multi_section_response, XAsyncContentCriticality, XAsyncHttpPath
 from ..helpers.path_utils import get_project_root, ensure_project_root, get_project_relative_path
 
 
@@ -404,9 +404,9 @@ async def get_gitignore_compliance_status(ctx: Context) -> str:
         sections.append(format_http_section(
             status_code=241,
             status_message="Gitignore Compliance Issues Found",
-            location=HttpPath("jesse://project/gitignore-compliance"),
+            location=XAsyncHttpPath("jesse://project/gitignore-compliance"),
             content_type="text/markdown",
-            criticality=ContentCriticality.CRITICAL,
+            criticality=XAsyncContentCriticality.CRITICAL,
             description="Gitignore Compliance Issues Requiring Attention",
             section_type="gitignore-compliance",
             writable=False,
@@ -435,9 +435,9 @@ async def get_gitignore_compliance_status(ctx: Context) -> str:
         sections.append(format_http_section(
             status_code=500,
             status_message="Gitignore Compliance Check Failed",
-            location=HttpPath("jesse://project/gitignore-compliance"),
+            location=XAsyncHttpPath("jesse://project/gitignore-compliance"),
             content_type="text/markdown",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description="Error During Compliance Validation",
             section_type="gitignore-compliance-error",
             writable=False,
@@ -485,7 +485,7 @@ async def get_project_gitignore_files(ctx: Context) -> str:
             await ctx.info(f"Checking mandatory .gitignore at {location_path}")
             
             # Create HttpPath for this location
-            gitignore_path = HttpPath(location_path, writable=True)
+            gitignore_path = XAsyncHttpPath(location_path, writable=True)
             
             try:
                 if gitignore_path.exists() and gitignore_path.is_file():
@@ -496,7 +496,7 @@ async def get_project_gitignore_files(ctx: Context) -> str:
                         content = f"# Empty .gitignore file at {location_path}\n# Add patterns here to ignore files and directories"
                     
                     await ctx.info(f"Found mandatory .gitignore at {description}: {len(content)} characters")
-                    criticality = ContentCriticality.INFORMATIONAL
+                    criticality = XAsyncContentCriticality.INFORMATIONAL
                     file_status = "exists"
                 else:
                     # Mandatory file does not exist - CRITICAL warning
@@ -510,7 +510,7 @@ async def get_project_gitignore_files(ctx: Context) -> str:
 # Please create this file and add appropriate ignore patterns."""
                     
                     await ctx.info(f"Missing mandatory .gitignore at {description}")
-                    criticality = ContentCriticality.CRITICAL
+                    criticality = XAsyncContentCriticality.CRITICAL
                     file_status = "missing-critical"
                 
                 # Format as HTTP section with appropriate criticality
@@ -544,7 +544,7 @@ async def get_project_gitignore_files(ctx: Context) -> str:
                 section = format_http_section(
                     content=error_content,
                     content_type="text/plain",
-                    criticality=ContentCriticality.CRITICAL,
+                    criticality=XAsyncContentCriticality.CRITICAL,
                     description=f"Mandatory .gitignore File Error from {description}",
                     section_type="gitignore-error-critical",
                     location=gitignore_path,
@@ -564,7 +564,7 @@ async def get_project_gitignore_files(ctx: Context) -> str:
             await ctx.info(f"Checking optional .gitignore at {location_path}")
             
             # Create HttpPath for this location
-            gitignore_path = HttpPath(location_path, writable=True)
+            gitignore_path = XAsyncHttpPath(location_path, writable=True)
             
             try:
                 if gitignore_path.exists() and gitignore_path.is_file():
@@ -580,7 +580,7 @@ async def get_project_gitignore_files(ctx: Context) -> str:
                     section = format_http_section(
                         content=content,
                         content_type="text/plain",
-                        criticality=ContentCriticality.INFORMATIONAL,
+                        criticality=XAsyncContentCriticality.INFORMATIONAL,
                         description=f"Optional .gitignore File from {description}",
                         section_type="gitignore-optional",
                         location=gitignore_path,

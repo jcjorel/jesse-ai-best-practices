@@ -55,11 +55,11 @@ from typing import List, Dict, Any
 
 from fastmcp import Context
 from ..main import server
-from ..helpers.http_formatter import (
+from ..helpers.async_http_formatter import (
     format_multi_section_response, 
     format_http_section, 
-    ContentCriticality, 
-    HttpPath,
+    XAsyncContentCriticality, 
+    XAsyncHttpPath,
     extract_http_sections_from_multi_response
 )
 from ..helpers.path_utils import get_project_root
@@ -144,7 +144,7 @@ async def get_session_init_context(ctx: Context) -> str:
         except Exception as e:
             await ctx.error(f"Failed to load Framework Rules: {str(e)}")
             # Framework rules are CRITICAL - add error section but continue
-            error_section = create_error_section("JESSE Framework Rules", str(e), ContentCriticality.CRITICAL)
+            error_section = create_error_section("JESSE Framework Rules", str(e), XAsyncContentCriticality.CRITICAL)
             sections.append(error_section)
         
         # === SECTION 2: PROJECT CONTEXT SUMMARY ===
@@ -159,7 +159,7 @@ async def get_session_init_context(ctx: Context) -> str:
             await ctx.info("✓ Loaded Project Context Summary")
         except Exception as e:
             await ctx.error(f"Failed to load Project Context: {str(e)}")
-            error_section = create_error_section("Project Context Summary", str(e), ContentCriticality.INFORMATIONAL)
+            error_section = create_error_section("Project Context Summary", str(e), XAsyncContentCriticality.INFORMATIONAL)
             sections.append(error_section)
         
         # === SECTION 3: PROJECT KNOWLEDGE BASE ===
@@ -174,7 +174,7 @@ async def get_session_init_context(ctx: Context) -> str:
             await ctx.info("✓ Loaded Project Knowledge Base")
         except Exception as e:
             await ctx.error(f"Failed to load Project Knowledge: {str(e)}")
-            error_section = create_error_section("Project Knowledge Base", str(e), ContentCriticality.INFORMATIONAL)
+            error_section = create_error_section("Project Knowledge Base", str(e), XAsyncContentCriticality.INFORMATIONAL)
             sections.append(error_section)
         
         # === SECTION 4: WIP TASKS INVENTORY ===
@@ -189,7 +189,7 @@ async def get_session_init_context(ctx: Context) -> str:
             await ctx.info("✓ Loaded WIP Tasks Inventory")
         except Exception as e:
             await ctx.error(f"Failed to load WIP Tasks: {str(e)}")
-            error_section = create_error_section("WIP Tasks Inventory", str(e), ContentCriticality.INFORMATIONAL)
+            error_section = create_error_section("WIP Tasks Inventory", str(e), XAsyncContentCriticality.INFORMATIONAL)
             sections.append(error_section)
         
         # === SECTION 5: AVAILABLE WORKFLOWS INDEX ===
@@ -202,7 +202,7 @@ async def get_session_init_context(ctx: Context) -> str:
             await ctx.info("✓ Loaded Available Workflows Index")
         except Exception as e:
             await ctx.error(f"Failed to load Workflows Index: {str(e)}")
-            error_section = create_error_section("Available Workflows Index", str(e), ContentCriticality.INFORMATIONAL)
+            error_section = create_error_section("Available Workflows Index", str(e), XAsyncContentCriticality.INFORMATIONAL)
             sections.append(error_section)
         
         # === SECTION 6: KNOWLEDGE BASE INDEXES ===
@@ -215,7 +215,7 @@ async def get_session_init_context(ctx: Context) -> str:
             await ctx.info(f"✓ Loaded {len(knowledge_sections)} Knowledge Base Indexes")
         except Exception as e:
             await ctx.error(f"Failed to load Knowledge Indexes: {str(e)}")
-            error_section = create_error_section("Knowledge Base Indexes", str(e), ContentCriticality.INFORMATIONAL)
+            error_section = create_error_section("Knowledge Base Indexes", str(e), XAsyncContentCriticality.INFORMATIONAL)
             sections.append(error_section)
         
         # === SECTION 7: GITIGNORE COMPLIANCE (CONDITIONAL) ===
@@ -248,7 +248,7 @@ async def get_session_init_context(ctx: Context) -> str:
                 await ctx.info("✓ Fallback: Loaded Project Gitignore Files")
             except Exception as fallback_error:
                 await ctx.error(f"Fallback also failed: {str(fallback_error)}")
-                error_section = create_error_section("Gitignore Compliance & Files", f"Primary: {str(e)}, Fallback: {str(fallback_error)}", ContentCriticality.INFORMATIONAL)
+                error_section = create_error_section("Gitignore Compliance & Files", f"Primary: {str(e)}, Fallback: {str(fallback_error)}", XAsyncContentCriticality.INFORMATIONAL)
                 sections.append(error_section)
         
         # === FINALIZE MULTI-SECTION RESPONSE ===
@@ -335,7 +335,7 @@ async def load_framework_rules_sections(ctx: Context) -> List[str]:
         except Exception as e:
             await ctx.error(f"Failed to load JESSE rule {rule_name}: {str(e)}")
             # Add error section for failed rule
-            error_section = create_error_section(f"JESSE Rule: {rule_name}", str(e), ContentCriticality.CRITICAL)
+            error_section = create_error_section(f"JESSE Rule: {rule_name}", str(e), XAsyncContentCriticality.CRITICAL)
             rule_sections.append(error_section)
     
     if not rule_sections:
@@ -443,7 +443,7 @@ async def create_workflows_index_section(ctx: Context) -> str:
         return format_http_section(
             content=catalog_content,
             content_type="text/markdown",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description="JESSE Framework Workflows Index and Catalog",
             section_type="workflows-index",
             location="file://{CLINE_WORKFLOWS}/",
@@ -494,7 +494,7 @@ async def load_knowledge_indexes_sections(ctx: Context) -> List[str]:
         await ctx.info("✓ Loaded git clones README index")
     except Exception as e:
         await ctx.error(f"Failed to load git clones README: {str(e)}")
-        error_section = create_error_section("Git Clones Knowledge Index", str(e), ContentCriticality.INFORMATIONAL)
+        error_section = create_error_section("Git Clones Knowledge Index", str(e), XAsyncContentCriticality.INFORMATIONAL)
         knowledge_sections.append(error_section)
     
     # Load PDF knowledge README index
@@ -505,7 +505,7 @@ async def load_knowledge_indexes_sections(ctx: Context) -> List[str]:
         await ctx.info("✓ Loaded PDF knowledge README index")
     except Exception as e:
         await ctx.error(f"Failed to load PDF knowledge README: {str(e)}")
-        error_section = create_error_section("PDF Knowledge Index", str(e), ContentCriticality.INFORMATIONAL)
+        error_section = create_error_section("PDF Knowledge Index", str(e), XAsyncContentCriticality.INFORMATIONAL)
         knowledge_sections.append(error_section)
     
     if not knowledge_sections:
@@ -514,7 +514,7 @@ async def load_knowledge_indexes_sections(ctx: Context) -> List[str]:
     return knowledge_sections
 
 
-def create_error_section(section_name: str, error_message: str, criticality: ContentCriticality) -> str:
+def create_error_section(section_name: str, error_message: str, criticality: XAsyncContentCriticality) -> str:
     """
     [Function intent]
     Create error section for failed resource loading with appropriate metadata.

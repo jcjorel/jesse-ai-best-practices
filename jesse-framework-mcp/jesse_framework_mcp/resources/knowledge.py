@@ -58,7 +58,7 @@ from pathlib import Path
 from fastmcp import Context
 
 # Import dependencies at module level for function availability
-from ..helpers.http_formatter import format_http_section, ContentCriticality, HttpPath
+from ..helpers.async_http_formatter import format_http_section, XAsyncContentCriticality, XAsyncHttpPath
 from ..helpers.path_utils import get_project_root
 
 async def get_git_clones_readme(ctx: Context) -> str:
@@ -109,7 +109,7 @@ async def get_git_clones_readme(ctx: Context) -> str:
             formatted_readme = format_http_section(
                 content=readme_content,
                 content_type="text/markdown",
-                criticality=ContentCriticality.INFORMATIONAL,
+                criticality=XAsyncContentCriticality.INFORMATIONAL,
                 description="Git Clone Knowledge Bases Index",
                 section_type="knowledge-index",
                 location=f"file://{{PROJECT_ROOT}}/{readme_path}",
@@ -207,7 +207,7 @@ This workflow will:
                 formatted_readme = format_http_section(
                     content=empty_content,
                     content_type="text/markdown",
-                    criticality=ContentCriticality.INFORMATIONAL,
+                    criticality=XAsyncContentCriticality.INFORMATIONAL,
                     description="PDF Knowledge Bases Index (Directory Not Found)",
                     section_type="knowledge-index",
                     location=f"file://{{PROJECT_ROOT}}/{readme_path}",
@@ -234,7 +234,7 @@ This workflow will:
             formatted_readme = format_http_section(
                 content=readme_content,
                 content_type="text/markdown",
-                criticality=ContentCriticality.INFORMATIONAL,
+                criticality=XAsyncContentCriticality.INFORMATIONAL,
                 description="PDF Knowledge Bases Index",
                 section_type="knowledge-index",
                 location=f"file://{{PROJECT_ROOT}}/{readme_path}",
@@ -291,7 +291,7 @@ async def get_knowledge_base(kb_name: str, ctx: Context) -> str:
             formatted_kb = format_http_section(
                 content=kb_content,
                 content_type="text/markdown",
-                criticality=ContentCriticality.INFORMATIONAL,
+                criticality=XAsyncContentCriticality.INFORMATIONAL,
                 description=f"Knowledge Base: {kb_info['display_name']}",
                 section_type="knowledge-base",
                 location=f"file://{{PROJECT_ROOT}}/{kb_info['file_path']}",

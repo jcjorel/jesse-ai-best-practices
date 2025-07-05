@@ -129,7 +129,7 @@ class IndexingConfig:
     # LLM Configuration (Claude 4 Sonnet)
     llm_model: str = Claude4SonnetModel.CLAUDE_4_SONNET  # Official Claude 4 Sonnet model ID
     temperature: float = 0.3  # Low temperature for consistent summarization
-    max_tokens: int = 2000  # Response length limit
+    max_tokens: int = 20000  # Response length limit
     
     # Change Detection Configuration
     indexing_mode: IndexingMode = IndexingMode.INCREMENTAL

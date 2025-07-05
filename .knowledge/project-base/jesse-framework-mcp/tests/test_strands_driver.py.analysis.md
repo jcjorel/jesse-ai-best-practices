@@ -1,84 +1,97 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/tests/test_strands_driver.py -->
-<!-- Cached On: 2025-07-04T00:16:11.033253 -->
+<!-- Cached On: 2025-07-05T11:35:17.318544 -->
 <!-- Source Modified: 2025-07-03T12:13:45.504322 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-Provides comprehensive testing framework for the `StrandsClaude4Driver` within the JESSE Framework MCP Server, validating AWS Bedrock integration and conversation management capabilities. Enables independent verification of the `strands-agents` package integration through isolated test functions covering configuration validation, driver initialization, conversation lifecycle management, and caching system functionality. Delivers automated testing suite with detailed logging and error reporting for developers to validate Claude 4 Sonnet driver functionality before production deployment. Key semantic entities include `StrandsClaude4Driver` class, `Claude4SonnetConfig` configuration object, `ConversationMemoryStrategy` enum, `PromptCache` caching system, `asyncio` async execution framework, `logging` module for structured output, `strands-agents` external package, AWS Bedrock service integration, and environment variables `AWS_REGION`, `AWS_PROFILE`, `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY`.
+This test script validates the `StrandsClaude4Driver` functionality for AWS Bedrock Claude 4 Sonnet integration within the JESSE Framework MCP Server ecosystem. The script provides comprehensive testing of LLM driver initialization, conversation management, caching systems, and configuration validation for production readiness verification. Key semantic entities include `StrandsClaude4Driver`, `Claude4SonnetConfig`, `ConversationMemoryStrategy`, `StrandsDriverError`, `PromptCache`, `test_basic_configuration()`, `test_driver_initialization()`, `test_conversation_management()`, `test_mock_responses()`, `test_caching_system()`, `asyncio` async execution, `logging` framework, and `strands-agents` external package dependency. The testing framework enables developers to verify AWS Bedrock integration, conversation state management, prompt caching efficiency, and driver lifecycle management without requiring live API calls during development.
 
 ##### Main Components
 
-Contains five primary test functions: `test_basic_configuration` for validating configuration creation and optimization presets, `test_driver_initialization` for testing context manager usage and cleanup, `test_conversation_management` for verifying conversation lifecycle operations, `test_mock_responses` for structural validation without API calls, and `test_caching_system` for independent cache functionality testing. Includes `run_all_tests` orchestration function that executes sequential test execution with comprehensive result reporting and `main` entry point function that performs environment validation and dependency checking before test execution.
+The script contains five primary async test functions: `test_basic_configuration()` for validating configuration creation and optimization presets, `test_driver_initialization()` for testing driver lifecycle and context manager usage, `test_conversation_management()` for conversation state and statistics validation, `test_mock_responses()` for driver structure validation without API calls, and `test_caching_system()` for independent cache operations testing. The `run_all_tests()` function orchestrates sequential test execution with comprehensive result reporting, while `main()` provides entry point validation for dependencies and AWS credentials. Each test function implements detailed logging with emoji-based status indicators and structured error handling for debugging purposes.
 
 ###### Architecture & Design
 
-Implements sequential test execution pattern with isolated test functions that can run independently or as part of the complete suite. Uses context manager pattern for proper resource cleanup and async/await throughout for consistent execution flow. Employs comprehensive logging strategy with structured output formatting and emoji-based visual indicators for immediate status recognition. Follows defensive programming approach with graceful degradation for missing dependencies and environment configuration issues.
+The test architecture follows an isolation-first testing pattern where individual components are validated independently before integration testing. The design implements comprehensive configuration testing using factory methods (`create_optimized_for_conversations()`, `create_optimized_for_analysis()`, `create_optimized_for_performance()`) for different use case scenarios. The script uses async context manager patterns for proper resource cleanup and lifecycle management. Error handling is implemented at multiple levels with specific exception catching for `StrandsDriverError` and general exception handling for unexpected failures. The testing framework provides detailed logging with structured output formatting for debugging and CI/CD integration.
 
 ####### Implementation Approach
 
-Utilizes `asyncio.run()` for top-level async execution coordination and `async with` context managers for proper resource lifecycle management. Implements configuration testing through factory methods like `create_optimized_for_conversations()` and validation through exception handling for invalid parameters. Uses assertion-based validation for cache functionality testing and environment variable checking for AWS credential detection. Applies structured logging with timestamp formatting and hierarchical test result reporting with pass/fail statistics.
+The testing strategy employs async/await patterns throughout with `asyncio.run()` orchestration for proper async context management. Configuration validation uses boundary testing with invalid parameters to verify constraint enforcement. Driver testing implements context manager usage patterns to ensure proper initialization and cleanup sequences. Conversation management testing uses small token limits (`max_context_tokens=1000`) and summary thresholds for controlled testing environments. Cache testing employs TTL-based expiration validation and LRU eviction testing with controlled entry limits. The implementation includes comprehensive statistics collection and validation for both conversation-level and global metrics.
 
-######## Code Usage Examples
+######## External Dependencies & Integration Points
 
-Execute the complete test suite with environment validation and dependency checking. This approach provides comprehensive validation of all driver components with detailed reporting:
+**→ Inbound:**
+- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - primary LLM driver class
+- `jesse_framework_mcp.llm.strands_agent_driver:Claude4SonnetConfig` - configuration management
+- `jesse_framework_mcp.llm.strands_agent_driver:ConversationMemoryStrategy` - memory strategy enumeration
+- `jesse_framework_mcp.llm.strands_agent_driver:StrandsDriverError` - driver-specific exceptions
+- `jesse_framework_mcp.llm.strands_agent_driver.conversation:PromptCache` - caching system
+- `strands-agents` (external library) - Strands Agent SDK for AWS Bedrock integration
+- `asyncio` (stdlib) - async execution framework
+- `logging` (stdlib) - structured logging system
+- `pathlib.Path` (stdlib) - file system path operations
+- AWS credentials via environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_PROFILE`)
 
-```bash
-# Run all Strands driver tests with comprehensive reporting
-python test_strands_driver.py
-```
+**← Outbound:**
+- Test execution reports consumed by developers and CI/CD pipelines
+- Console output with structured logging for debugging and monitoring
+- Exit codes for automated testing pipeline integration
 
-Test driver initialization with proper context management and cleanup. This pattern ensures proper resource lifecycle management during testing:
+**⚡ System role and ecosystem integration:**
+- **System Role**: Critical validation component ensuring Strands Claude 4 driver integration functions correctly within JESSE Framework MCP Server
+- **Ecosystem Position**: Core testing infrastructure for LLM driver validation and AWS Bedrock integration verification
+- **Integration Pattern**: Executed by developers during development, CI/CD pipelines for automated validation, and deployment verification processes for production readiness
+
+######### Edge Cases & Error Handling
+
+The script handles multiple edge cases including missing `strands-agents` package installation (with specific pip install guidance), invalid configuration parameters (temperature bounds validation), missing AWS credentials (with environment variable setup instructions), and driver initialization failures in environments without proper AWS Bedrock access. Exception handling includes comprehensive error categorization with specific handling for `ImportError`, `StrandsDriverError`, and general exceptions. The testing framework provides graceful degradation for AWS credential issues, treating them as warnings rather than failures for structural validation. Individual test isolation ensures that failures in one test component do not prevent execution of subsequent tests.
+
+########## Internal Implementation Details
+
+The test functions implement emoji-based status reporting using Unicode characters (`✅`, `❌`, `⚠️`, `🚀`, `🎉`, `🛑`) for immediate visual feedback on test results. Configuration testing includes boundary validation with temperature limits and parameter constraint verification. Driver lifecycle testing validates `is_initialized` state management and proper cleanup sequences. Cache testing implements controlled TTL expiration with `asyncio.sleep(1.1)` delays and LRU eviction validation with entry count verification. The script uses structured logging with timestamp formatting and hierarchical logger naming for debugging and monitoring integration.
+
+########### Code Usage Examples
+
+**Basic driver configuration and initialization pattern:**
+
+This code demonstrates the standard pattern for configuring and initializing the Strands Claude 4 driver with proper resource management. It ensures proper cleanup and provides foundation for conversation management.
 
 ```python
-# Initialize driver with optimized configuration and test conversation creation
+# Configure and initialize Strands Claude 4 driver with context manager
 config = Claude4SonnetConfig.create_optimized_for_performance()
 async with StrandsClaude4Driver(config) as driver:
     conversation_id = "test_conversation_001"
     context = await driver.start_conversation(conversation_id)
-    print(f"Started conversation: {context.conversation_id}")
+    logger.info(f"Started conversation: {context.conversation_id}")
 ```
 
-Validate cache functionality with TTL expiration and eviction policies. This testing approach verifies cache behavior under various conditions:
+**Configuration optimization for different use cases:**
+
+This pattern shows how to create optimized configurations for specific scenarios. It provides pre-configured settings for conversations, analysis, and performance-critical applications.
 
 ```python
-# Test prompt cache with expiration and size limits
+# Create optimized configurations for different use cases
+conversation_config = Claude4SonnetConfig.create_optimized_for_conversations()
+analysis_config = Claude4SonnetConfig.create_optimized_for_analysis()
+performance_config = Claude4SonnetConfig.create_optimized_for_performance()
+
+logger.info(f"Conversation config - Memory strategy: {conversation_config.memory_strategy}")
+logger.info(f"Analysis config - Temperature: {analysis_config.temperature}")
+```
+
+**Cache system validation and statistics monitoring:**
+
+This approach demonstrates cache operations testing with TTL validation and eviction behavior verification. It provides foundation for monitoring cache performance and ensuring proper memory management.
+
+```python
+# Test cache operations with TTL and eviction validation
+from jesse_framework_mcp.llm.strands_agent_driver.conversation import PromptCache
 cache = PromptCache(max_entries=3, ttl_seconds=1)
 await cache.set("test prompt", "config_hash", "test response")
 cached_response = await cache.get("test prompt", "config_hash")
-assert cached_response == "test response"
+stats = cache.stats()
+logger.info(f"Cache stats: {stats}")
 ```
-
-######### External Dependencies & Integration Points
-
-**→ Inbound:** [dependencies this test file requires]
-- `asyncio` (external library) - async execution framework for test coordination
-- `logging` (external library) - structured logging with timestamp formatting
-- `sys` (external library) - Python path manipulation and exit code management
-- `os` (external library) - environment variable access for AWS configuration
-- `pathlib.Path` (external library) - cross-platform path handling for project root
-- `strands-agents` (external library) - Claude 4 Sonnet driver package integration
-- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - main driver class
-- `jesse_framework_mcp.llm.strands_agent_driver:Claude4SonnetConfig` - configuration management
-- `jesse_framework_mcp.llm.strands_agent_driver:ConversationMemoryStrategy` - memory strategy enum
-- `jesse_framework_mcp.llm.strands_agent_driver.conversation:PromptCache` - caching system
-
-**← Outbound:** [systems that depend on this test file]
-- `CI/CD pipelines` - automated testing systems that validate driver functionality
-- `development workflows` - developer validation processes before integration
-- `deployment scripts` - pre-deployment verification systems
-
-**⚡ Integration:** [connection mechanisms]
-- Protocol: Direct Python imports and AWS Bedrock API calls
-- Interface: Async function calls, context managers, and environment variables
-- Coupling: Loose coupling with graceful handling of missing dependencies
-
-########## Edge Cases & Error Handling
-
-Handles missing `strands-agents` package gracefully with installation instructions and immediate exit to prevent cascade failures. Manages AWS credential absence through warning messages while allowing structural tests to continue execution. Addresses configuration validation through exception catching for invalid temperature values and other parameter constraints. Implements comprehensive exception handling at each test function level with detailed error context and traceback information. Provides fallback behavior for cache expiration testing with sleep delays and assertion-based validation of TTL functionality.
-
-########### Internal Implementation Details
-
-Uses emoji-based status reporting system with ✅ for success, ❌ for failures, and ⚠️ for warnings to provide immediate visual feedback during test execution. Implements test result aggregation through tuple-based storage with pass/fail statistics calculation and summary reporting. Employs `sys.path.insert(0)` for local module import resolution from parent directory structure. Maintains consistent async function signatures across all test functions for uniform execution patterns. Uses formatted string output with separator lines and hierarchical indentation for clear test section delineation and progress tracking.

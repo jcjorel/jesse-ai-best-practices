@@ -58,7 +58,7 @@ except ImportError:
     import importlib_resources as resources
 
 from fastmcp import Context
-from ..helpers.http_formatter import format_http_section, ContentCriticality, HttpPath
+from ..helpers.async_http_formatter import format_http_section, XAsyncContentCriticality, XAsyncHttpPath
 
 async def get_embedded_workflow_files() -> list[str]:
     """
@@ -150,7 +150,7 @@ def register_workflows_resources():
             formatted_workflow = format_http_section(
                 content=workflow_content.strip(),
                 content_type="text/markdown",
-                criticality=ContentCriticality.CRITICAL,
+                criticality=XAsyncContentCriticality.CRITICAL,
                 description=description,
                 section_type="workflow",
                 location=f"file://{{CLINE_WORKFLOWS}}/{workflow_file}",

@@ -38,7 +38,7 @@
 # * Clean HTTP formatting with no circular dependencies
 ###############################################################################
 
-from ..helpers.http_formatter import format_http_section, ContentCriticality
+from ..helpers.async_http_formatter import format_http_section, XAsyncContentCriticality
 
 
 def get_project_setup_guidance() -> str:
@@ -109,7 +109,7 @@ The server will automatically detect your project root and enable all features o
     return format_http_section(
         content=guidance_content,
         content_type="text/markdown",
-        criticality=ContentCriticality.CRITICAL,
+        criticality=XAsyncContentCriticality.CRITICAL,
         description="JESSE Framework Setup Required",
         section_type="setup-guidance",
         location="setup://project-root-missing",

@@ -71,7 +71,7 @@ server = FastMCP("JESSE Framework")
 # Import resource modules (auto-registers via decorators)
 from . import resources  # Auto-registers all resource handlers
 from .helpers import knowledge_scanners  # Only what's needed for resource support
-from .helpers.http_formatter import format_http_section, ContentCriticality
+from .helpers.async_http_formatter import format_http_section, XAsyncContentCriticality
 from .knowledge_bases import register_knowledge_bases_tools, register_knowledge_bases_resources
 import json
 from datetime import datetime
@@ -161,7 +161,7 @@ async def framework_index(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="application/json",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description="JESSE Framework Resource Index",
             section_type="framework-index",
             location="jesse://index"

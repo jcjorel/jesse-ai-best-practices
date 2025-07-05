@@ -1,83 +1,119 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/tests/test_gitignore_resource.py -->
-<!-- Cached On: 2025-07-04T00:28:08.679103 -->
-<!-- Source Modified: 2025-07-01T08:59:29.265995 -->
+<!-- Cached On: 2025-07-05T12:15:23.065432 -->
+<!-- Source Modified: 2025-07-05T12:07:51.189896 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This test script validates the `jesse://project/gitignore-files` MCP resource functionality, providing comprehensive testing of gitignore file discovery and HTTP-formatted response generation within the JESSE Framework MCP Server. The script enables developers to verify proper resource behavior, boundary marker formatting, and writable content flag functionality through automated testing workflows that examine `get_project_gitignore_files()` resource function, `unwrap_fastmcp_function()` utility, and `MockContext` simulation patterns. Key semantic entities include `asyncio` event loop management, `pathlib.Path` operations, `project_resources` module integration, `JESSE_FRAMEWORK_BOUNDARY_2025` HTTP boundaries, `Content-Writable: true` headers, `Content-Section: gitignore-file` markers, and directory-specific gitignore validation for Project Root, Coding Assistant Artifacts, Knowledge Management System, and Project-Specific Rules sections.
+Test script for validating JESSE Framework MCP server gitignore files resource functionality through direct function testing and HTTP response validation. Provides comprehensive testing of `jesse://project/gitignore-files` resource endpoint with boundary marker verification, writable content validation, and multi-directory gitignore file detection. Features mock context implementation for isolated testing, `FastMCP` decorator unwrapping for direct function access, and detailed response structure analysis. Key semantic entities include `test_gitignore_resource()` function, `MockContext` class, `unwrap_fastmcp_function()` utility, `project_resources.get_project_gitignore_files` resource function, `--JESSE_FRAMEWORK_BOUNDARY_2025--` boundary markers, `X-ASYNC-Content-Writable: true` headers, `X-ASYNC-Content-Section: gitignore-file` section types, `asyncio.run()` execution pattern, and `sys.path.insert()` import configuration. Technical implementation focuses on FastMCP resource testing pattern ensuring boundary marker compliance and HTTP formatting validation.
 
 ##### Main Components
 
-The script contains two primary async test functions: `test_gitignore_resource()` which creates a `MockContext` class with `info()` and `error()` logging methods, unwraps the FastMCP decorated function, executes the gitignore resource, and validates response structure through boundary counting and section verification; and `main()` which handles test orchestration, working directory setup, and exit code management. Supporting components include the `MockContext` class providing async logging interface simulation with message collection capabilities, directory validation logic for specific gitignore categories, and comprehensive response verification mechanisms checking HTTP boundary markers, writable headers, and content sections.
+- `test_gitignore_resource()` async function implementing comprehensive gitignore resource validation testing
+- `MockContext` class providing test context with `info()` and `error()` message logging methods
+- `main()` async function handling test execution orchestration and working directory configuration
+- `unwrap_fastmcp_function()` utility integration for direct FastMCP decorated function testing
+- Response validation logic checking boundary markers, writable headers, and content sections
+- Directory presence verification for "Project Root Directory", "Coding Assistant Artifacts", "Knowledge Management System", "Project-Specific Rules"
+- Exit code handling with success/failure reporting and detailed test result output
 
 ###### Architecture & Design
 
-The script follows a mock-based testing architecture with clear separation between resource function testing and response validation logic. The design implements a lightweight context simulation pattern using `MockContext` class that mirrors the actual MCP server context interface without requiring full server initialization. The architecture supports comprehensive response structure validation through systematic counting of HTTP boundaries, content headers, and section markers, with working directory management ensuring tests execute from the correct project root context for accurate gitignore file discovery.
+Implements isolated testing architecture using mock context pattern to avoid external MCP server dependencies. Design separates test execution from validation logic through dedicated verification functions. Uses FastMCP decorator unwrapping strategy enabling direct function testing without MCP protocol overhead. Architecture implements comprehensive response analysis validating HTTP boundary markers, content headers, and section types. Test structure follows async/await patterns matching MCP resource function signatures. Design includes working directory management ensuring tests run from correct project context. Implements detailed logging and verification reporting for debugging and validation transparency.
 
 ####### Implementation Approach
 
-The implementation uses FastMCP function unwrapping through `unwrap_fastmcp_function()` utility to enable direct testing of decorated resource functions without MCP server overhead. The script employs systematic response validation using string counting methods for `JESSE_FRAMEWORK_BOUNDARY_2025` boundaries, `Content-Writable: true` headers, and `Content-Section` markers to verify proper HTTP formatting. Key technical strategies include working directory manipulation via `os.chdir()` for project root context, message collection through `MockContext.messages` list for debugging, and comprehensive section validation checking for specific directory categories within gitignore responses.
+Uses `sys.path.insert()` for dynamic import path configuration enabling test module imports. Implements `MockContext` class with async methods matching MCP context interface for isolated testing. Uses `unwrap_fastmcp_function()` utility to extract underlying function from FastMCP decorator for direct invocation. Implements string-based response analysis using `count()` method for boundary marker and header validation. Uses `os.chdir()` for working directory management ensuring tests execute from project root context. Implements comprehensive verification logic checking specific directory sections and content types. Uses `asyncio.run()` for async test execution with proper event loop management.
 
-######## Code Usage Examples
-
-Execute comprehensive gitignore resource testing with detailed validation output:
-
-```python
-# Run the complete gitignore resource test suite
-python test_gitignore_resource.py
-
-# Expected output includes boundary marker counting, writable header validation,
-# and directory-specific section verification for all gitignore categories
-```
-
-Test individual resource function behavior programmatically:
-
-```python
-from utils import unwrap_fastmcp_function
-from jesse_framework_mcp.resources import project_resources
-
-# Unwrap and test the gitignore resource function directly
-unwrapped_function = unwrap_fastmcp_function(project_resources.get_project_gitignore_files)
-result = await unwrapped_function(mock_context)
-```
-
-Validate response structure components for debugging:
-
-```python
-# Check HTTP boundary formatting and content sections
-boundary_count = result.count("--JESSE_FRAMEWORK_BOUNDARY_2025--")
-writable_count = result.count("Content-Writable: true")
-gitignore_sections = result.count("Content-Section: gitignore-file")
-```
-
-######### External Dependencies & Integration Points
+######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.resources.project_resources` - gitignore resource function (`get_project_gitignore_files`)
-- `utils.py` - FastMCP function unwrapping utility (`unwrap_fastmcp_function`)
-- `asyncio` (stdlib) - async test execution and event loop management
-- `pathlib.Path` (stdlib) - filesystem path operations and working directory resolution
-- `os` (stdlib) - working directory manipulation and environment access
-- `sys` (stdlib) - Python path modification for module imports
+- `utils:unwrap_fastmcp_function` - FastMCP decorator unwrapping utility for direct function testing
+- `jesse_framework_mcp.resources.project_resources:get_project_gitignore_files` - Target resource function under test
+- `asyncio` (external library) - Async execution framework for MCP resource testing
+- `pathlib.Path` (external library) - Cross-platform path manipulation for directory management
+- `sys` (external library) - Python path configuration for module imports
+- `os` (external library) - Working directory management for test context
 
 **← Outbound:**
-- `console/terminal` - formatted test output with emoji indicators and validation results
-- `exit codes` - process exit status (0 for success, 1 for failure)
-- `working directory` - project root context setup for accurate resource testing
-- `MockContext.messages` - collected logging messages for debugging and verification
+- `test_execution_reports/` - Test results consumed by CI/CD validation systems
+- `development_workflows/` - Manual test execution for gitignore resource validation
+- `mcp_server_validation/` - Integration testing for JESSE Framework MCP server functionality
 
-**⚡ Integration:**
-- Protocol: Direct function imports and async function calls with mock context simulation
-- Interface: Async test functions with FastMCP resource integration and HTTP response validation
-- Coupling: Tight coupling to JESSE Framework MCP resources, loose coupling to external environment
+**⚡ System role and ecosystem integration:**
+- **System Role**: Critical validation component for JESSE Framework MCP server gitignore resource endpoint ensuring proper HTTP formatting and content delivery
+- **Ecosystem Position**: Core testing infrastructure validating MCP resource protocol compliance and boundary marker functionality
+- **Integration Pattern**: Executed by developers for resource validation, CI/CD systems for automated testing, and MCP server integration verification workflows
 
-########## Edge Cases & Error Handling
+######### Edge Cases & Error Handling
 
-The script handles missing or inaccessible gitignore files through comprehensive error section counting using `Content-Section: gitignore-error` markers in response validation. Error handling includes exception catching in the main test execution flow with detailed error reporting and context message collection for debugging failed resource calls. The script addresses scenarios where FastMCP function unwrapping fails, working directory changes are unsuccessful, and resource responses contain malformed HTTP boundaries or missing content sections through systematic validation checks and clear failure reporting.
+Handles FastMCP decorator unwrapping failures through exception catching and error reporting. Tests missing gitignore file scenarios through error section counting and validation. Manages working directory changes with proper context switching for test isolation. Handles async function execution errors with comprehensive exception catching and detailed error messages. Tests boundary marker absence or malformation through count-based validation. Validates writable header presence ensuring content modification capabilities are properly indicated. Handles missing directory sections through presence verification and detailed reporting of absent components.
 
-########### Internal Implementation Details
+########## Internal Implementation Details
 
-The script uses `sys.path.insert(0, str(Path(__file__).parent))` for dynamic module path resolution, enabling test execution from various directory contexts without installation requirements. The `MockContext` class implements message collection through `self.messages` list with formatted logging output using emoji indicators for visual test result identification. Internal mechanics include working directory manipulation via `os.chdir(Path(__file__).parent.parent)` to ensure project root context, systematic string counting for HTTP response validation, and exit code management using `exit(0)` for success and `exit(1)` for failure states. The validation logic uses specific directory name matching for "Project Root Directory", "Coding Assistant Artifacts", "Knowledge Management System", and "Project-Specific Rules" sections to verify comprehensive gitignore coverage.
+Uses `MockContext` class with `messages` list for capturing info and error messages during testing. Implements `sys.path.insert(0, str(Path(__file__).parent))` for relative import configuration. Uses `os.chdir(Path(__file__).parent.parent)` for project root directory context establishment. Implements string counting validation with `result.count("--JESSE_FRAMEWORK_BOUNDARY_2025--")` for boundary marker verification. Uses `exit(0)` and `exit(1)` for process termination with appropriate success/failure codes. Implements detailed console output with emoji indicators for visual test progress tracking. Uses `len(ctx.messages)` for context message counting and test completion reporting.
+
+########### Code Usage Examples
+
+Essential patterns for MCP resource testing and FastMCP function validation. These examples demonstrate comprehensive testing approaches for gitignore resource functionality and HTTP response validation.
+
+```python
+# Mock context implementation for isolated MCP resource testing
+class MockContext:
+    def __init__(self):
+        self.messages = []
+    
+    async def info(self, message: str):
+        self.messages.append(f"INFO: {message}")
+        print(f"📝 {message}")
+    
+    async def error(self, message: str):
+        self.messages.append(f"ERROR: {message}")
+        print(f"❌ {message}")
+```
+
+FastMCP decorator unwrapping enables direct function testing without MCP protocol overhead. This approach allows comprehensive validation of resource function behavior and response formatting.
+
+```python
+# FastMCP function unwrapping for direct testing access
+print("🔧 Unwrapping FastMCP decorated function...")
+unwrapped_function = unwrap_fastmcp_function(project_resources.get_project_gitignore_files)
+print(f"✅ Successfully unwrapped function: {unwrapped_function.__name__}")
+
+result = await unwrapped_function(ctx)
+```
+
+HTTP response validation ensures proper boundary marker formatting and content section identification. This pattern validates MCP resource protocol compliance and content structure.
+
+```python
+# Comprehensive HTTP response validation for MCP resource testing
+boundary_count = result.count("--JESSE_FRAMEWORK_BOUNDARY_2025--")
+print(f"📌 Found {boundary_count} HTTP boundary markers")
+
+writable_count = result.count("X-ASYNC-Content-Writable: true")
+print(f"✏️  Found {writable_count} writable content sections")
+
+gitignore_sections = result.count("X-ASYNC-Content-Section: gitignore-file")
+error_sections = result.count("X-ASYNC-Content-Section: gitignore-error")
+print(f"📄 Found {gitignore_sections} gitignore file sections")
+print(f"🚨 Found {error_sections} error sections")
+```
+
+Working directory management ensures tests execute from proper project context for accurate resource validation. This approach handles path dependencies and file system access requirements.
+
+```python
+# Working directory configuration for proper test context
+os.chdir(Path(__file__).parent.parent)
+print(f"📂 Working directory: {os.getcwd()}")
+
+success = await test_gitignore_resource()
+
+if success:
+    print("\n🎉 All tests passed!")
+    exit(0)
+else:
+    print("\n💔 Tests failed!")
+    exit(1)
+```

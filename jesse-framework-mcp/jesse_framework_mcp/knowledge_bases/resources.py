@@ -59,7 +59,7 @@ from typing import Dict, Any
 from fastmcp import FastMCP
 
 from .models import IndexingConfig
-from ..helpers.http_formatter import format_http_response
+from ..helpers.async_http_formatter import format_http_response
 
 logger = logging.getLogger(__name__)
 

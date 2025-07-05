@@ -65,7 +65,7 @@ from typing import Optional, Dict, Any
 
 from fastmcp import Context
 from ..main import server
-from ..helpers.http_formatter import format_http_section, ContentCriticality, HttpPath, format_multi_section_response
+from ..helpers.async_http_formatter import format_http_section, XAsyncContentCriticality, XAsyncHttpPath, format_multi_section_response
 from ..helpers.session_management import get_current_wip_task_name_async
 from ..helpers.knowledge_scanners import scan_git_clone_knowledge_bases_async, scan_pdf_knowledge_bases_async
 
@@ -114,7 +114,7 @@ async def get_project_knowledge(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description="Project Knowledge Base Content",
             section_type="project-knowledge",
             location="file://{PROJECT_ROOT}/.knowledge/persistent-knowledge/KNOWLEDGE_BASE.md",
@@ -203,7 +203,7 @@ async def get_project_context_summary(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description="Project Context Summary and Overview",
             section_type="project-context",
             location="file://{PROJECT_ROOT}/",
@@ -302,7 +302,7 @@ async def get_wip_tasks_inventory(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="application/json",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description="WIP Tasks Inventory and Status",
             section_type="wip-inventory",
             location="file://{PROJECT_ROOT}/.knowledge/work-in-progress/",

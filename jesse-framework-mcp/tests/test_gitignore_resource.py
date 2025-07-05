@@ -71,12 +71,12 @@ async def test_gitignore_resource():
         print(f"📌 Found {boundary_count} HTTP boundary markers")
         
         # Check for writable headers
-        writable_count = result.count("Content-Writable: true")
+        writable_count = result.count("X-ASYNC-Content-Writable: true")
         print(f"✏️  Found {writable_count} writable content sections")
         
         # Check for gitignore file types
-        gitignore_sections = result.count("Content-Section: gitignore-file")
-        error_sections = result.count("Content-Section: gitignore-error")
+        gitignore_sections = result.count("X-ASYNC-Content-Section: gitignore-file")
+        error_sections = result.count("X-ASYNC-Content-Section: gitignore-error")
         print(f"📄 Found {gitignore_sections} gitignore file sections")
         print(f"🚨 Found {error_sections} error sections")
         

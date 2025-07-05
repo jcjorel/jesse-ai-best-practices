@@ -36,7 +36,7 @@ class Claude4SonnetConfig:
     # Model Configuration
     model_id: str = Claude4SonnetModel.CLAUDE_4_SONNET
     temperature: float = 0.7
-    max_tokens: int = 4096
+    max_tokens: int = 200000  # Conservative limit for 200K token context
     top_p: float = 0.9
     top_k: int = 250
     

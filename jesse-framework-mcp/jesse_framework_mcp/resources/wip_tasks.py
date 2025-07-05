@@ -54,10 +54,10 @@ from pathlib import Path
 
 from fastmcp import Context
 from ..main import server
-from ..helpers.http_formatter import (
+from ..helpers.async_http_formatter import (
     format_http_section,
-    ContentCriticality,
-    HttpPath
+    XAsyncContentCriticality,
+    XAsyncHttpPath
 )
 from ..helpers.path_utils import get_project_root
 from ..helpers.project_setup import get_project_setup_guidance
@@ -155,7 +155,7 @@ async def get_wip_tasks_inventory(ctx: Context) -> str:
         formatted_wip = format_http_section(
             content=wip_json,
             content_type="application/json",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description="WIP Tasks Inventory and Status",
             section_type="wip-inventory",
             location="file://{PROJECT_ROOT}/.knowledge/work-in-progress/",
@@ -250,7 +250,7 @@ async def get_specific_wip_task(task_name: str, ctx: Context) -> str:
         formatted_task = format_http_section(
             content=combined_content,
             content_type="text/markdown",
-            criticality=ContentCriticality.INFORMATIONAL,
+            criticality=XAsyncContentCriticality.INFORMATIONAL,
             description=f"WIP Task: {task_name}",
             section_type="wip-task",
             location=f"file://{{PROJECT_ROOT}}/.knowledge/work-in-progress/{task_name}/",

@@ -66,7 +66,7 @@ from typing import Dict, Optional, Union, Any
 from .path_utils import resolve_portable_path
 
 
-class HttpStatus:
+class XAsyncHttpStatus:
     """
     [Class intent]
     HTTP status code constants and utilities for standardized error handling.
@@ -115,7 +115,7 @@ class HttpStatus:
         }.get(code, "Unknown Status")
 
 
-class HttpErrorHandler:
+class XAsyncHttpErrorHandler:
     """
     [Class intent]
     Generate standard error content and handle error scenarios for HTTP responses.
@@ -184,14 +184,14 @@ class HttpErrorHandler:
             Tuple of (status_code, status_message, error_content)
         """
         if isinstance(exc, FileNotFoundError):
-            return 404, HttpStatus.get_default_message(404), cls.generate_error_content(404, location)
+            return 404, XAsyncHttpStatus.get_default_message(404), cls.generate_error_content(404, location)
         elif isinstance(exc, PermissionError):
-            return 403, HttpStatus.get_default_message(403), cls.generate_error_content(403, location)
+            return 403, XAsyncHttpStatus.get_default_message(403), cls.generate_error_content(403, location)
         else:
-            return 500, HttpStatus.get_default_message(500), cls.generate_error_content(500, location, str(exc))
+            return 500, XAsyncHttpStatus.get_default_message(500), cls.generate_error_content(500, location, str(exc))
 
 
-class ContentCriticality:
+class XAsyncContentCriticality:
     """
     [Class intent]
     Content criticality levels for AI assistant processing priority and enforcement.
@@ -238,7 +238,7 @@ class ContentCriticality:
         return criticality.upper()
 
 
-class HttpPath:
+class XAsyncHttpPath:
     """
     [Class intent]
     Path-like object that maintains both original portable path string and resolved filesystem path.
@@ -433,7 +433,7 @@ class HttpPath:
         """
         # Join original path for header display
         joined_original = f"{self._original_path}/{other}"
-        return HttpPath(joined_original)
+        return XAsyncHttpPath(joined_original)
     
     # Delegate common Path methods to internal resolved path (filesystem paths and file:// URLs)
     def exists(self) -> bool:
@@ -551,20 +551,20 @@ def _detect_status_and_content(
         ValueError: When content is empty string (only raised if no status override)
     """
     # Validate content type first - this always raises exception for invalid types
-    if not isinstance(content, (str, HttpPath)):
-        raise TypeError(f"content must be str or HttpPath, got {type(content).__name__}")
+    if not isinstance(content, (str, XAsyncHttpPath)):
+        raise TypeError(f"content must be str or XAsyncHttpPath, got {type(content).__name__}")
     
     # Handle manual overrides first
     if status_code is not None:
         final_status = status_code
-        final_message = status_message or HttpStatus.get_default_message(status_code)
+        final_message = status_message or XAsyncHttpStatus.get_default_message(status_code)
         
         if error_content is not None:
             return final_status, final_message, error_content
         elif status_code >= 400:
             # Generate default error content for error codes
-            location_str = location.get_original_path() if isinstance(location, HttpPath) else location
-            final_content = HttpErrorHandler.generate_error_content(status_code, location_str)
+            location_str = location.get_original_path() if isinstance(location, XAsyncHttpPath) else location
+            final_content = XAsyncHttpErrorHandler.generate_error_content(status_code, location_str)
             return final_status, final_message, final_content
     
     # Handle empty string content - always raise ValueError unless status override
@@ -575,14 +575,14 @@ def _detect_status_and_content(
     try:
         if isinstance(content, str):
             actual_content = content
-        elif isinstance(content, HttpPath):
+        elif isinstance(content, XAsyncHttpPath):
             actual_content = content.read_text(encoding='utf-8')
             if not actual_content and status_code is None:
                 raise ValueError("Content cannot be empty")
         
         # Success case
         final_status = status_code or 200
-        final_message = status_message or HttpStatus.get_default_message(final_status)
+        final_message = status_message or XAsyncHttpStatus.get_default_message(final_status)
         return final_status, final_message, actual_content
         
     except ValueError as validation_exc:
@@ -591,31 +591,31 @@ def _detect_status_and_content(
             raise validation_exc
         # With status override, treat as any other exception
         final_status = status_code
-        final_message = status_message or HttpStatus.get_default_message(status_code)
+        final_message = status_message or XAsyncHttpStatus.get_default_message(status_code)
         if error_content is not None:
             final_content = error_content
         else:
-            location_str = location.get_original_path() if isinstance(location, HttpPath) else location
-            final_content = HttpErrorHandler.generate_error_content(final_status, location_str, str(validation_exc))
+            location_str = location.get_original_path() if isinstance(location, XAsyncHttpPath) else location
+            final_content = XAsyncHttpErrorHandler.generate_error_content(final_status, location_str, str(validation_exc))
         return final_status, final_message, final_content
         
     except Exception as exc:
         # Auto-detect error status (only for non-validation errors when no status override)
         if status_code is None:
-            location_str = location.get_original_path() if isinstance(location, HttpPath) else location
-            auto_status, auto_message, auto_content = HttpErrorHandler.detect_error_from_exception(exc, location_str)
+            location_str = location.get_original_path() if isinstance(location, XAsyncHttpPath) else location
+            auto_status, auto_message, auto_content = XAsyncHttpErrorHandler.detect_error_from_exception(exc, location_str)
             final_status = auto_status
             final_message = status_message or auto_message
             final_content = error_content or auto_content
         else:
             # Manual status with auto error content
             final_status = status_code
-            final_message = status_message or HttpStatus.get_default_message(status_code)
+            final_message = status_message or XAsyncHttpStatus.get_default_message(status_code)
             if error_content is not None:
                 final_content = error_content
             else:
-                location_str = location.get_original_path() if isinstance(location, HttpPath) else location
-                final_content = HttpErrorHandler.generate_error_content(final_status, location_str, str(exc))
+                location_str = location.get_original_path() if isinstance(location, XAsyncHttpPath) else location
+                final_content = XAsyncHttpErrorHandler.generate_error_content(final_status, location_str, str(exc))
         
         return final_status, final_message, final_content
 
@@ -693,11 +693,11 @@ def format_http_section(
         raise ValueError("Content-Location must be specified")
     
     # 3. Validate and normalize criticality
-    validated_criticality = ContentCriticality.validate(criticality)
+    validated_criticality = XAsyncContentCriticality.validate(criticality)
     
     # 4. Handle location parameter for headers
-    if isinstance(location, HttpPath):
-        # HttpPath objects preserve variables for cross-platform portability
+    if isinstance(location, XAsyncHttpPath):
+        # XAsyncHttpPath objects preserve variables for cross-platform portability
         location_for_header = location.get_original_path()
     else:
         # String locations also preserve variables for cross-platform portability
@@ -707,8 +707,8 @@ def format_http_section(
     content_bytes = actual_content.encode('utf-8')
     content_length = len(content_bytes)
     
-    # 6. Determine writable flag (prioritize HttpPath if content was HttpPath)
-    if isinstance(content, HttpPath):
+    # 6. Determine writable flag (prioritize XAsyncHttpPath if content was XAsyncHttpPath)
+    if isinstance(content, XAsyncHttpPath):
         content_writable = content.is_writable()
     else:
         content_writable = writable
@@ -721,16 +721,16 @@ def format_http_section(
         f"Content-Location: {location_for_header}",
         f"Content-Length: {content_length}",
         f"Content-Type: {content_type}",
-        f"Content-Criticality: {validated_criticality}",
-        f"Content-Description: {description}",
-        f"Content-Section: {section_type}",
-        f"Content-Writable: {'true' if content_writable else 'false'}"
+        f"X-ASYNC-Content-Criticality: {validated_criticality}",
+        f"X-ASYNC-Content-Description: {description}",
+        f"X-ASYNC-Content-Section: {section_type}",
+        f"X-ASYNC-Content-Writable: {'true' if content_writable else 'false'}"
     ]
     
     # 8. Add Last-Modified header (preserve existing logic, but skip for error responses)
     effective_last_modified = last_modified
-    if isinstance(content, HttpPath) and last_modified is None and final_status < 400:
-        # Only auto-add Last-Modified from content HttpPath if this is a success response
+    if isinstance(content, XAsyncHttpPath) and last_modified is None and final_status < 400:
+        # Only auto-add Last-Modified from content XAsyncHttpPath if this is a success response
         effective_last_modified = content
     
     if effective_last_modified is not None:
@@ -738,7 +738,7 @@ def format_http_section(
             if not effective_last_modified or not effective_last_modified.strip():
                 raise ValueError("Last-Modified header cannot be empty or whitespace")
             timestamp_str = effective_last_modified
-        elif isinstance(effective_last_modified, HttpPath):
+        elif isinstance(effective_last_modified, XAsyncHttpPath):
             try:
                 timestamp_str = effective_last_modified.get_last_modified_rfc7231()
             except FileNotFoundError:
@@ -748,7 +748,7 @@ def format_http_section(
             except OSError as e:
                 raise OSError(f"Error accessing file for Last-Modified header '{effective_last_modified}': {str(e)}")
         else:
-            raise TypeError(f"last_modified must be str or HttpPath, got {type(effective_last_modified).__name__}")
+            raise TypeError(f"last_modified must be str or XAsyncHttpPath, got {type(effective_last_modified).__name__}")
         
         headers.append(f"Last-Modified: {timestamp_str}")
     
@@ -951,10 +951,10 @@ KEY HEADERS:
 - Content-Location: Portable path with {PROJECT_ROOT}, {HOME} variables
 - Content-Length: Exact UTF-8 byte count for precise parsing
 - Content-Type: MIME type (text/markdown, application/json, etc.)
-- Content-Criticality: CRITICAL (must follow) vs INFORMATIONAL (context only)
-- Content-Description: Human-readable content summary
-- Content-Section: Type classification (workflow, knowledge-base, etc.)
-- Content-Writable: true/false indicating if content should be editable
+- X-ASYNC-Content-Criticality: CRITICAL (must follow) vs INFORMATIONAL (context only)
+- X-ASYNC-Content-Description: Human-readable content summary
+- X-ASYNC-Content-Section: Type classification (workflow, knowledge-base, etc.)
+- X-ASYNC-Content-Writable: true/false indicating if content should be editable
 - Last-Modified: RFC 7231 timestamp when available
 
 STATUS CODES:

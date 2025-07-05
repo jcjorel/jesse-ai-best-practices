@@ -63,7 +63,7 @@ from fastmcp.server import FastMCP
 
 from .indexing import HierarchicalIndexer
 from .models import IndexingConfig, IndexingMode
-from ..helpers.http_formatter import format_http_response
+from ..helpers.async_http_formatter import format_http_response
 
 logger = logging.getLogger(__name__)
 

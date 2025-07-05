@@ -1,82 +1,91 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/markdown_template_engine.py -->
-<!-- Cached On: 2025-07-04T00:41:36.640852 -->
-<!-- Source Modified: 2025-07-03T23:01:30.470873 -->
+<!-- Cached On: 2025-07-04T16:31:03.967752 -->
+<!-- Source Modified: 2025-07-04T14:55:21.599859 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file implements a markdown template engine for the JESSE Framework MCP knowledge base system, providing 3-phase incremental markdown generation with standard Python markdown library compatibility. The engine orchestrates individual file analysis insertion, subdirectory assembly, and global summary generation while optimizing LLM token usage through selective content generation and programmatic structural formatting. Key semantic entities include `MarkdownTemplateEngine` class for template orchestration, `FileAnalysis` and `DirectorySummary` dataclasses for structured content containers, `MarkdownParser` integration for AST-based content manipulation, `MarkdownPreservingRenderer` for enhanced spacing preservation, `get_portable_path()` function for cross-platform path compatibility, `preserve_llm_spacing()` function for formatting enhancement, and 3-phase generation workflow evidenced by methods like `initialize_directory_knowledge_base()`, `insert_file_analyses()`, and `finalize_with_global_summary()`.
+This module implements an incremental markdown engine for the Jesse Framework MCP knowledge base system, providing selective section updates without full regeneration to enable efficient change-based updates with content extraction and insertion capabilities. It provides comprehensive markdown template management including warning header generation, metadata footer creation, section-specific content replacement, and subdirectory summary extraction from fourth-level headers. The system enables efficient knowledge base maintenance through targeted updates preserving document structure while supporting cross-platform portable path formatting and LLM content formatting preservation. Key semantic entities include `IncrementalMarkdownEngine`, `MarkdownParser`, `MarkdownPreservingRenderer`, `render_with_spacing_preservation`, `preserve_llm_spacing`, `get_portable_path`, `FileContext`, `mistletoe` parser integration, and `CommonMark` specification compliance. The implementation uses `mistletoe`-based AST manipulation for selective section identification and replacement operations while maintaining standard markdown library compatibility.
 
 ##### Main Components
 
-Contains `MarkdownTemplateEngine` class as the primary orchestrator with initialization, content assembly, and validation methods. Includes `FileAnalysis` dataclass with navigation-focused fields like `what_you_ll_find`, `main_components`, `how_its_organized`, `connections`, `context_you_need`, and `implementation_notes`. Provides `DirectorySummary` dataclass with hierarchical summary fields including `what_this_directory_contains`, `how_its_organized`, `common_patterns`, and `how_it_connects`. Implements helper methods for warning header generation, timestamp formatting, metadata footer creation, and content assembly operations supporting the 3-phase workflow.
+The module contains the primary `IncrementalMarkdownEngine` class with core functionality methods including base structure management (`load_or_create_base_structure`), content extraction (`extract_subdirectory_summary`), selective section replacement (`replace_file_section`, `replace_subdirectory_section`, `replace_global_summary_section`), and metadata management (`update_footer_metadata`). Supporting utility methods include warning header generation (`_generate_warning_header`), timestamp formatting (`_generate_jesse_timestamp`), metadata footer creation (`_generate_metadata_footer`), file section insertion (`_insert_file_section`), content extraction for LLM processing (`extract_assembled_content`), and markdown structure validation (`validate_markdown_structure`). The class integrates with `MarkdownParser` for AST-based document manipulation and `MarkdownPreservingRenderer` for enhanced spacing preservation in final output.
 
 ###### Architecture & Design
 
-Implements 3-phase incremental building architecture with programmatic content insertion points and AST-based content manipulation. Uses mistletoe parser integration through `MarkdownParser` class for robust document parsing and section replacement operations. Employs dataclass-based structured containers separating content from formatting concerns while maintaining immutable data structures. Integrates `MarkdownPreservingRenderer` for enhanced spacing preservation throughout the content pipeline. Follows template-based generation pattern with clear separation between LLM-generated content and programmatic structural formatting, enabling token efficiency optimization.
+The architecture follows an incremental update pattern with selective section replacement strategy avoiding full markdown regeneration for performance optimization. The design uses `mistletoe` parser for robust AST-based document manipulation enabling precise section identification and content replacement while preserving document structure. Content extraction employs fourth-level header targeting for hierarchical semantic context pattern extraction from subdirectory knowledge bases. The system implements immutable document processing where original content is preserved during selective updates, with new content inserted or replaced using AST manipulation. Cross-platform compatibility is achieved through portable path conversion using `get_portable_path` for consistent file and directory references across different operating systems.
 
 ####### Implementation Approach
 
-Uses AST-based content manipulation through mistletoe parser for reliable section identification and replacement operations. Implements direct content insertion strategy preserving original LLM formatting without parsing or transformation. Employs portable path utilities through `get_portable_path()` function ensuring cross-platform compatibility in markdown headers. Uses spacing preservation through `preserve_llm_spacing()` function maintaining consistent formatting across all content types. Implements defensive programming with comprehensive error handling and fallback mechanisms throughout the template rendering pipeline.
+The implementation uses a multi-phase approach starting with base structure loading or creation using minimal standardized templates, followed by selective content replacement using `mistletoe` AST manipulation for precise section targeting. Content extraction employs header-level parsing to identify fourth-level sections and extract content until the next same or higher level header while preserving original formatting. Section replacement uses path-based identification for reliable targeting with portable path conversion ensuring cross-platform compatibility. The system employs defensive programming with comprehensive error handling and fallback mechanisms, graceful degradation when parsing fails, and validation checks ensuring generated markdown meets standard library compatibility requirements.
 
-######## Code Usage Examples
-
-Initialize a new directory knowledge base structure with programmatic template generation. This creates the foundational markdown structure ready for incremental content insertion:
-
-```python
-engine = MarkdownTemplateEngine()
-base_markdown = engine.initialize_directory_knowledge_base(Path("/project/src"))
-```
-
-Insert individual file analyses into the markdown structure using AST-based content manipulation. This demonstrates Phase 2 file content integration with spacing preservation:
-
-```python
-file_contexts = [FileContext(file_path=Path("example.py"), knowledge_content="analysis...")]
-updated_markdown = engine.insert_file_analyses(base_markdown, file_contexts)
-```
-
-Finalize the knowledge base with LLM-generated global summary and metadata updates. This completes the 3-phase workflow with comprehensive directory synthesis:
-
-```python
-directory_summary = DirectorySummary(directory_path=Path("/project/src"), what_this_directory_contains="...")
-final_markdown = engine.finalize_with_global_summary(
-    updated_markdown, global_summary="LLM summary", directory_summary=directory_summary, 
-    file_count=5, subdirectory_count=2
-)
-```
-
-######### External Dependencies & Integration Points
+######## External Dependencies & Integration Points
 
 **→ Inbound:**
-
-- `markdown_parser.MarkdownParser` - AST-based markdown parsing and section manipulation capabilities
-- `helpers.path_utils.get_portable_path` - cross-platform path conversion for markdown headers
-- `helpers.mistletoe_spacing.MarkdownPreservingRenderer` - enhanced spacing preservation in final output
-- `helpers.mistletoe_spacing.preserve_llm_spacing` - LLM content formatting enhancement
-- `models.knowledge_context.FileContext` - structured file analysis container with processing status
+- `.markdown_parser:MarkdownParser` - AST-based document parsing and section manipulation
+- `...helpers.path_utils:get_portable_path` - cross-platform path conversion for consistent file references
+- `...helpers.mistletoe_spacing:MarkdownPreservingRenderer` - enhanced spacing preservation in final output
+- `...helpers.mistletoe_spacing:render_with_spacing_preservation` - spacing-aware markdown rendering
+- `...helpers.mistletoe_spacing:preserve_llm_spacing` - LLM content formatting preservation
+- `..models.knowledge_context:FileContext` - file metadata and processing context structures
 - `pathlib.Path` (standard library) - cross-platform path operations and metadata handling
 - `datetime` (standard library) - timestamp formatting for knowledge file metadata
-- `dataclasses` (standard library) - structured data containers for content organization
+- `typing` (standard library) - type hints for template parameters and content structures
 
 **← Outbound:**
+- `knowledge_builder.py:KnowledgeBuilder` - consumes incremental markdown updates for knowledge file generation
+- `.knowledge/` directory structure populated with selectively updated knowledge files
+- Jesse Framework MCP server consuming generated markdown files for knowledge base serving
+- Standard markdown processing tools consuming generated files for documentation workflows
 
-- `knowledge_builder.KnowledgeBuilder` - consumes template engine for markdown knowledge file generation
-- `hierarchical_indexer.HierarchicalIndexer` - uses template engine for directory knowledge assembly
-- Generated knowledge files - markdown output consumed by knowledge base system and external tools
-- Markdown processing tools - standard Python markdown libraries parse generated output
+**⚡ System role and ecosystem integration:**
+- **System Role**: Core template engine for the Jesse Framework MCP knowledge base system, providing incremental markdown generation and selective content updates for efficient knowledge file maintenance
+- **Ecosystem Position**: Central component serving as the primary markdown generation engine, integrating content extraction, section replacement, and formatting preservation into a unified template system
+- **Integration Pattern**: Used by knowledge builders and hierarchical indexers for generating and updating knowledge files, consuming file contexts and content while producing standard markdown files for MCP serving
 
-**⚡ Integration:**
+######### Edge Cases & Error Handling
 
-- Protocol: Direct Python imports and method calls with structured data containers
-- Interface: Class methods accepting Path objects, content strings, and dataclass containers
-- Coupling: Loose coupling through dataclass interfaces and defensive error handling with fallbacks
+The system handles file access errors during base structure loading by creating minimal standardized templates when existing files cannot be read, using comprehensive exception handling with detailed logging. Content extraction failures are managed gracefully by returning placeholder text when subdirectory knowledge bases cannot be parsed or fourth-level headers are not found. Section replacement operations include fallback mechanisms where missing sections trigger insertion of new content rather than failing the entire operation. Portable path conversion errors are handled with fallback to original paths while logging warnings for debugging purposes. The system provides comprehensive validation through `validate_markdown_structure` checking for essential elements, unresolved placeholders, and proper section organization while maintaining flexible metadata requirements.
 
-########## Edge Cases & Error Handling
+########## Internal Implementation Details
 
-Handles markdown parsing failures through comprehensive fallback mechanisms returning original content when AST manipulation fails. Addresses portable path conversion errors with graceful degradation using original paths and detailed logging. Manages missing or empty content scenarios through conditional rendering preventing empty section headers. Implements validation logic checking for essential markdown elements, unresolved placeholders, and structural requirements. Provides defensive programming throughout template rendering with try-catch blocks and error logging preventing cascade failures.
+The `MarkdownParser` integration provides AST-based document manipulation enabling precise section identification through header matching and content replacement while preserving document structure. Content extraction uses token-level iteration through `mistletoe` AST to identify fourth-level headers and collect subsequent content until the next same or higher level header. Section replacement employs `replace_section_content` method with header-based targeting and content insertion using AST manipulation rather than string replacement. The system maintains timestamp consistency using `_generate_jesse_timestamp` with UTC formatting following JESSE framework conventions. Metadata footer generation uses keyword argument processing for flexible metadata field inclusion with portable path conversion and error handling for cross-platform compatibility.
 
-########### Internal Implementation Details
+########### Code Usage Examples
 
-Uses mistletoe AST manipulation for section replacement operations with `replace_section_content()` method calls. Implements programmatic content generation avoiding complex template parsing through direct string assembly. Maintains spacing preservation pipeline applying `preserve_llm_spacing()` to all LLM-generated content before insertion. Uses portable path conversion with error handling and fallback logic for cross-platform compatibility. Implements metadata footer generation with flexible parameter handling supporting various content types and statistics. Provides validation logic checking markdown structure, placeholder resolution, and compatibility requirements for generated output.
+Basic incremental markdown engine initialization demonstrates the core workflow for setting up the engine and creating foundational knowledge base structure. This approach enables efficient knowledge base management by starting with existing content or minimal templates.
+
+```python
+# Initialize incremental markdown engine with mistletoe parser integration
+engine = IncrementalMarkdownEngine()
+
+# Load existing knowledge base or create minimal structure
+kb_path = Path(".knowledge/src/components_kb.md")
+base_content = engine.load_or_create_base_structure(kb_path)
+```
+
+Selective file section replacement showcases the targeted update capability that preserves document structure while updating specific content sections. This pattern enables efficient incremental updates without full document regeneration.
+
+```python
+# Replace specific file section without affecting other content
+file_path = Path("src/components/button.py")
+analysis_content = "## File Analysis\n\nButton component implementation..."
+updated_content = engine.replace_file_section(base_content, file_path, analysis_content)
+
+# Update footer metadata with current counts
+final_content = engine.update_footer_metadata(updated_content, file_count=5, subdirectory_count=2)
+```
+
+Content extraction from subdirectory knowledge bases demonstrates hierarchical integration capabilities for building comprehensive knowledge structures. This pattern enables bottom-up knowledge assembly from child directory summaries.
+
+```python
+# Extract fourth-level header content from subdirectory knowledge base
+subdir_kb_path = Path(".knowledge/src/utils/utils_kb.md")
+extracted_summary = engine.extract_subdirectory_summary(subdir_kb_path)
+
+# Replace subdirectory section with extracted content
+subdir_path = Path("src/utils/")
+updated_content = engine.replace_subdirectory_section(base_content, subdir_path, extracted_summary)
+```

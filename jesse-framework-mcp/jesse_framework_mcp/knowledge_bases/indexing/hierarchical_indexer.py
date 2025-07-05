@@ -41,6 +41,11 @@
 # <system>: logging - Structured logging and error reporting
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-04T16:49:00Z : Implemented complete truncation artifact prevention system by CodeAssistant
+# * Updated _process_single_file() to handle None return from KnowledgeBuilder indicating truncated files
+# * Modified _process_directory_files() to completely omit truncated files from DirectoryContext file_contexts
+# * Added proper logging and statistics tracking for truncated files with no artifact creation
+# * Enhanced type hints to Optional[FileContext] reflecting truncation handling behavior
 # 2025-07-03T17:57:00Z : Fixed systematic knowledge file rebuilding by integrating comprehensive change detection by CodeAssistant
 # * Replaced old _detect_changes() with comprehensive change detection using check_comprehensive_directory_change()
 # * Added _apply_comprehensive_change_detection() method for recursive directory evaluation with proper constituent dependency checking
@@ -602,6 +607,12 @@ class HierarchicalIndexer:
                     self._current_status.processing_stats.files_failed += 1
                     self._current_status.processing_stats.add_error(f"File processing failed: {result}")
                     # Keep original context for failed files
+                elif result is None:
+                    # Truncation detected - completely omit this file from processing
+                    self._current_status.processing_stats.files_completed += 1  # Count as completed (omitted)
+                    # Remove the original file context from the list
+                    updated_file_contexts = [fc for fc in updated_file_contexts if fc.file_path != file_context.file_path]
+                    await ctx.info(f"🚨 TRUNCATION: File {file_context.file_path.name} omitted from processing - no artifacts created")
                 else:
                     self._current_status.processing_stats.files_completed += 1
                     # Update the file context in the list
@@ -625,17 +636,19 @@ class HierarchicalIndexer:
             processing_end_time=directory_context.processing_end_time
         )
     
-    async def _process_single_file(self, file_context: FileContext, ctx: Context) -> FileContext:
+    async def _process_single_file(self, file_context: FileContext, ctx: Context) -> Optional[FileContext]:
         """
         [Class method intent]
         Processes a single file by delegating content analysis to KnowledgeBuilder with cache support.
         Passes source_root parameter enabling high-performance file analysis caching
         for significant performance improvements on unchanged files.
+        Handles truncation detection by returning None to completely omit files from processing.
 
         [Design principles]
         Single file processing delegation to specialized KnowledgeBuilder component.
         Cache-enabled processing for performance optimization on unchanged files.
         Comprehensive error handling enabling graceful degradation on individual file failures.
+        Truncation detection handling completely omitting files when LLM output is incomplete.
         Timing statistics collection for performance analysis and optimization.
         Processing status updates for accurate progress reporting and coordination.
         Semaphore usage for concurrency control without recursive deadlocks.
@@ -644,9 +657,10 @@ class HierarchicalIndexer:
         Uses semaphore to control concurrent file processing operations.
         Delegates content analysis to KnowledgeBuilder.build_file_knowledge method with source_root.
         Passes source_root parameter enabling FileAnalysisCache for performance optimization.
+        Handles None return from KnowledgeBuilder indicating truncated files should be omitted.
         Tracks processing timing for performance analysis and optimization insights.
         Handles errors gracefully with detailed logging and statistics updates.
-        Returns updated FileContext with processing results for hierarchy assembly.
+        Returns updated FileContext with processing results or None for omitted files.
         """
         async with self._processing_semaphore:
             try:
@@ -656,6 +670,11 @@ class HierarchicalIndexer:
                 updated_context = await self.knowledge_builder.build_file_knowledge(
                     file_context, ctx, source_root=getattr(self, '_source_root', None)
                 )
+                
+                # Handle truncation detection - None means file should be completely omitted
+                if updated_context is None:
+                    await ctx.debug(f"File omitted due to truncation: {file_context.file_path}")
+                    return None
                 
                 return updated_context
                 

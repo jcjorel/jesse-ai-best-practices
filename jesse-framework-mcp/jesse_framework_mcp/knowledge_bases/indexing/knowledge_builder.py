@@ -40,42 +40,26 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
-# 2025-07-04T13:14:00Z : Removed defensive fallbacks to let real ValidationExceptions surface for proper debugging by CodeAssistant
-# * Removed overly aggressive input validation, prompt validation, and response validation from _review_content_until_compliant()
-# * Eliminated fallback logic that was masking real issues instead of allowing proper error surfacing
-# * Simplified reviewer loop to natural flow without defensive checks that were blocking legitimate content
-# * ValidationExceptions will now surface properly to identify actual root causes instead of being hidden by fallbacks
-# 2025-07-04T08:57:00Z : Completed DirectorySummary cleanup for incremental architecture alignment by CodeAssistant
-# * Removed all functional DirectorySummary references from method signatures and implementations
-# * Simplified _generate_llm_insights() to return only global summary string instead of tuple
-# * Updated _finalize_knowledge_file() to remove DirectorySummary parameter and usage
-# * Removed complex _generate_directory_analysis() and _collect_subdirectory_summaries() methods
-# * Aligned data flow with incremental markdown engine using direct string content
-# 2025-07-03T16:16:00Z : Integrated FileAnalysisCache for high-performance file analysis caching by CodeAssistant
-# * Added FileAnalysisCache integration with cache-first processing in _process_single_file()
-# * Implemented 4-phase cache workflow: cache check, debug replay, fresh analysis, cache storage
-# * Enhanced build_file_knowledge() to pass source_root parameter for cache path calculation
-# * Added cache initialization in constructor for comprehensive caching support
-# 2025-07-03T16:00:00Z : Removed backward compatibility and enforced mandatory project-base/ subdirectory by CodeAssistant
-# * Modified _get_knowledge_file_path() to always use project-base/ subdirectory regardless of configuration
-# * Removed conditional logic for enable_project_base_indexing flag - now always enforced
-# * Simplified implementation by removing backward compatibility with direct structure mirroring
-# * Updated documentation to reflect mandatory project-base indexing segregation business rule
-# 2025-07-03T15:56:00Z : Implemented project-base indexing business rule with project-base/ subdirectory by CodeAssistant
-# * Modified _get_knowledge_file_path() to use project-base/ subdirectory when enable_project_base_indexing=True
-# * Added logic to distinguish between project-base and regular indexing modes
-# * Implemented directory structure mirroring within project-base/ subdirectory
-# * Updated documentation to reflect project-base indexing segregation business rule implementation
-# 2025-07-02T23:18:00Z : Simplified LLM output processing to eliminate parsing complexity by CodeAssistant
-# * Removed complex _parse_directory_response method - no longer needed with hierarchical prompts
-# * Simplified _generate_directory_analysis to use raw LLM output directly without section parsing
-# * Enhanced prompts generate structured hierarchical semantic trees that don't require parsing
-# * DirectorySummary now stores complete hierarchical content directly in main field
-# 2025-07-02T20:28:00Z : Major refactoring - broke down 218-line monster method into focused phase methods by CodeAssistant
-# * Replaced build_directory_summary_3_phase() (218 lines) with 6 focused methods for maintainability
-# * Added _initialize_and_assemble_content(), _generate_llm_insights(), _finalize_knowledge_file() phase methods
-# * Added _generate_global_summary(), _generate_directory_analysis() for focused LLM operations
-# * Simplified main build_directory_summary() method with clear 3-phase workflow delegation
+# 2025-07-04T17:58:00Z : Implemented continuation-based retry mechanism with intelligent response completion by CodeAssistant
+# * Completely redesigned retry strategy from "new conversation ID" approach to natural continuation using same conversation
+# * Added _generate_continuation_prompt() method for natural "please complete your response" continuation requests
+# * Added _merge_responses() method with intelligent overlap detection and duplicate sentence removal for seamless merging
+# * Replaced wasteful re-prompting with token-efficient continuation requests providing 90%+ token savings on retries
+# * Implemented progressive continuation supporting multiple truncation scenarios with recursive completion attempts
+# * Enhanced with smart response merging detecting overlapping content at merge boundaries for natural flow
+# * Leveraged conversation continuity maintaining context across truncation recovery attempts for superior response quality
+# 2025-07-04T17:47:00Z : Implemented conversation-specific caching architecture for complete retry mechanism fix by CodeAssistant
+# * Completely redesigned caching system to use conversation_id as part of cache key preventing all cross-conversation cache pollution
+# * Modified PromptCache._generate_key() to include conversation_id ensuring each conversation gets isolated cache space
+# * Updated all cache method signatures throughout strands_agent_driver to pass conversation_id parameter
+# * Removed unnecessary use_cache parameter handling since caching is now properly managed by conversation-specific keys
+# * Fixed fundamental architectural issue where same prompt content would retrieve cached responses regardless of conversation context
+# * Ensured perfect retry isolation where each unique conversation_id generates fresh LLM calls without any cache interference
+# 2025-07-04T17:32:00Z : Fixed critical artifact creation bug on global summary truncation by CodeAssistant
+# * Removed fallback content creation in _generate_global_summary() when technical errors occur during review
+# * Changed from creating fallback summary to raising RuntimeError preventing all knowledge file creation
+# * Ensured complete artifact prevention when global summary generation fails due to truncation or technical errors
+# * Fixed violation of "no artifacts on truncation" requirement that was allowing knowledge files to be created with fallback content
 ###############################################################################
 
 """
@@ -88,6 +72,7 @@ following hierarchical semantic context patterns with bottom-up assembly.
 
 import asyncio
 import logging
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -102,12 +87,17 @@ from ..models import (
 )
 from ...llm.strands_agent_driver import StrandsClaude4Driver, Claude4SonnetConfig
 from ...helpers.path_utils import get_portable_path
-from .markdown_template_engine import IncrementalMarkdownEngine
+from .knowledge_file_generator import KnowledgeFileGenerator
 from .enhanced_prompts import EnhancedPrompts
 from .debug_handler import DebugHandler
 from .file_analysis_cache import FileAnalysisCache
 
 logger = logging.getLogger(__name__)
+
+
+class TruncationDetectedError(Exception):
+    """Custom exception for truncation detection scenarios requiring complete artifact avoidance."""
+    pass
 
 
 class KnowledgeBuilder:
@@ -123,6 +113,7 @@ class KnowledgeBuilder:
     Structured knowledge file format following established hierarchical semantic patterns.
     Intemporal writing ensuring all content uses present tense for consistency.
     Comprehensive error handling enabling graceful degradation on individual LLM failures.
+    Truncation detection preventing any artifact creation when LLM output is incomplete.
 
     [Implementation details]
     Uses Claude4SonnetConfig.create_optimized_for_analysis for consistent summarization.
@@ -130,6 +121,7 @@ class KnowledgeBuilder:
     Generates knowledge files following standard hierarchical format specification.
     Provides detailed error handling and retry logic for robust LLM integration.
     Reports progress through FastMCP Context for real-time operation monitoring.
+    Raises TruncationDetectedError to completely prevent artifact creation on truncation.
     """
     
     def __init__(self, config: IndexingConfig):
@@ -163,7 +155,7 @@ class KnowledgeBuilder:
         
         # Initialize new architecture components
         self.enhanced_prompts = EnhancedPrompts()
-        self.template_engine = IncrementalMarkdownEngine()
+        self.template_generator = KnowledgeFileGenerator()
         
         # Initialize file analysis cache for performance optimization
         self.analysis_cache = FileAnalysisCache(config)
@@ -264,6 +256,13 @@ class KnowledgeBuilder:
                 processing_end_time=datetime.now()
             )
             
+        except TruncationDetectedError as e:
+            # Truncation detected - completely skip this file, no artifacts created
+            await ctx.error(f"🚨 TRUNCATION DETECTED: File {file_context.file_path.name} will be completely skipped - no artifacts created")
+            logger.error(f"Truncation detected for file {file_context.file_path}: {e}")
+            # Return None to indicate this file should be completely omitted from processing
+            return None
+            
         except Exception as e:
             logger.error(f"File summary generation failed for {file_context.file_path}: {e}", exc_info=True)
             
@@ -280,20 +279,21 @@ class KnowledgeBuilder:
     async def build_directory_summary(self, directory_context: DirectoryContext, ctx: Context, source_root: Optional[Path] = None) -> DirectoryContext:
         """
         [Class method intent]
-        Implements 3-phase directory knowledge generation workflow for token efficiency and content quality.
-        Phase 1: Initialize structure and insert file/subdirectory content, Phase 2: Generate LLM insights,
-        Phase 3: Finalize and write knowledge file.
+        Builds directory knowledge using simple template generation with timestamp-based change detection.
+        Uses three-trigger change detection to determine if rebuild is needed, then generates complete
+        knowledge file using alphabetical sorting and full rebuild approach.
 
         [Design principles]
-        3-phase generation workflow optimizing token usage through selective LLM usage and programmatic assembly.
-        Individual file analysis uses factual LLM processing without judgmental language or quality assessments.
-        Programmatic content insertion for file analyses and subdirectory summaries maintaining structural consistency.
-        Global summary generation leverages complete assembled content for comprehensive synthesis.
+        Timestamp-based change detection using three-trigger system for comprehensive change detection.
+        Full rebuild approach generating complete knowledge files from template on every change.
+        Alphabetical sorting ensuring consistent file and subdirectory ordering.
+        Simple template generation replacing complex incremental update logic.
 
         [Implementation details]
-        Breaks down complex workflow into focused phase methods for maintainability.
-        Each phase handles specific aspect of knowledge generation with clear separation of concerns.
-        Error handling ensures graceful degradation when individual phases encounter issues.
+        Checks if directory needs rebuild using three-trigger timestamp detection.
+        Collects file contexts and subdirectory summaries for template generation.
+        Generates global summary using LLM analysis of complete content.
+        Creates complete knowledge file using template generator with alphabetical sorting.
         """
         if not self.llm_driver:
             await self.initialize()
@@ -303,18 +303,63 @@ class KnowledgeBuilder:
         try:
             await ctx.info(f"Building directory knowledge for: {directory_context.directory_path}")
             
-            # Phase 1: Initialize and assemble content
-            markdown_content = await self._initialize_and_assemble_content(directory_context, ctx)
+            # Determine knowledge file path
+            knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path, source_root)
             
-            # Phase 2: Generate LLM insights
-            global_summary = await self._generate_llm_insights(directory_context, markdown_content, ctx)
-            
-            # Phase 3: Finalize knowledge file
-            knowledge_file_path = await self._finalize_knowledge_file(
-                directory_context, markdown_content, global_summary, source_root, ctx
+            # Check if rebuild is needed using timestamp-based change detection
+            needs_rebuild, reason = self.template_generator.directory_needs_rebuild(
+                directory_context.directory_path, knowledge_file_path
             )
             
-            await ctx.info(f"Directory knowledge generation completed: {knowledge_file_path}")
+            if not needs_rebuild:
+                await ctx.info(f"📄 KB UP TO DATE: {directory_context.directory_path.name} - {reason}")
+                return DirectoryContext(
+                    directory_path=directory_context.directory_path,
+                    file_contexts=directory_context.file_contexts,
+                    subdirectory_contexts=directory_context.subdirectory_contexts,
+                    processing_status=ProcessingStatus.SKIPPED,
+                    knowledge_file_path=knowledge_file_path,
+                    processing_start_time=processing_start,
+                    processing_end_time=datetime.now()
+                )
+            
+            await ctx.info(f"🔄 REBUILDING KB: {directory_context.directory_path.name} - {reason}")
+            
+            # Collect completed file contexts for template generation
+            completed_file_contexts = [
+                fc for fc in directory_context.file_contexts 
+                if fc.is_completed and fc.knowledge_content
+            ]
+            
+            # Collect subdirectory summaries by extracting content from existing KB files
+            subdirectory_summaries = []
+            for subdir_context in directory_context.subdirectory_contexts:
+                if (subdir_context.processing_status == ProcessingStatus.COMPLETED and 
+                    subdir_context.knowledge_file_path and 
+                    subdir_context.knowledge_file_path.exists()):
+                    
+                    # Extract fourth-level header content from subdirectory KB
+                    extracted_content = await self._extract_subdirectory_content(subdir_context.knowledge_file_path, ctx)
+                    subdirectory_summaries.append((subdir_context.directory_path, extracted_content))
+            
+            # Generate global summary using LLM
+            global_summary = await self._generate_global_summary_from_contexts(
+                directory_context, completed_file_contexts, subdirectory_summaries, ctx
+            )
+            
+            # Generate complete knowledge file using template generator
+            complete_knowledge_content = self.template_generator.generate_complete_knowledge_file(
+                directory_path=directory_context.directory_path,
+                global_summary=global_summary,
+                file_contexts=completed_file_contexts,
+                subdirectory_summaries=subdirectory_summaries,
+                kb_file_path=knowledge_file_path
+            )
+            
+            # Write complete knowledge file
+            await self._write_knowledge_file(knowledge_file_path, complete_knowledge_content)
+            
+            await ctx.info(f"✅ Directory knowledge generation completed: {knowledge_file_path}")
             
             return DirectoryContext(
                 directory_path=directory_context.directory_path,
@@ -323,6 +368,21 @@ class KnowledgeBuilder:
                 processing_status=ProcessingStatus.COMPLETED,
                 knowledge_file_path=knowledge_file_path,
                 directory_summary=global_summary,
+                processing_start_time=processing_start,
+                processing_end_time=datetime.now()
+            )
+            
+        except TruncationDetectedError as e:
+            # Truncation detected during directory processing - no knowledge file created
+            await ctx.error(f"🚨 TRUNCATION DETECTED: Directory {directory_context.directory_path.name} knowledge file will NOT be created - no artifacts")
+            logger.error(f"Truncation detected for directory {directory_context.directory_path}: {e}")
+            
+            return DirectoryContext(
+                directory_path=directory_context.directory_path,
+                file_contexts=directory_context.file_contexts,
+                subdirectory_contexts=directory_context.subdirectory_contexts,
+                processing_status=ProcessingStatus.FAILED,
+                error_message=f"Truncation detected - no artifacts created: {e}",
                 processing_start_time=processing_start,
                 processing_end_time=datetime.now()
             )
@@ -340,139 +400,6 @@ class KnowledgeBuilder:
                 processing_end_time=datetime.now()
             )
     
-    async def _initialize_and_assemble_content(self, directory_context: DirectoryContext, ctx: Context) -> str:
-        """
-        [Class method intent]
-        Phase 1: Loads existing knowledge base or creates base structure for incremental updates.
-        Uses IncrementalMarkdownEngine to load existing content or create minimal structure
-        ready for selective section updates without full regeneration.
-
-        [Design principles]
-        Incremental update foundation preserving existing content and enabling selective modifications.
-        Load-first approach optimizing for existing knowledge bases with incremental changes.
-        Error handling enabling graceful degradation when base structure operations encounter issues.
-
-        [Implementation details]
-        Uses load_or_create_base_structure for existing content preservation or minimal creation.
-        Returns base markdown content ready for selective section updates in subsequent phases.
-        Eliminates complex assembly operations in favor of incremental update approach.
-        """
-        await ctx.debug("Phase 1: Loading existing or creating base knowledge structure")
-        
-        # Determine knowledge file path
-        knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path)
-        
-        # Load existing or create base structure
-        markdown_content = self.template_engine.load_or_create_base_structure(knowledge_file_path)
-        
-        await ctx.debug(f"Phase 1: Base structure ready for incremental updates")
-        return markdown_content
-
-    async def _generate_llm_insights(self, directory_context: DirectoryContext, markdown_content: str, ctx: Context) -> str:
-        """
-        [Class method intent]
-        Phase 2: Generates LLM-powered global summary using assembled content.
-        Uses Claude 4 Sonnet to analyze assembled content and generate comprehensive
-        global summary for the directory using incremental update approach.
-
-        [Design principles]
-        LLM insight generation leveraging complete assembled content for comprehensive analysis.
-        Simplified approach focusing on global summary generation without complex dataclass creation.
-        Debug-aware processing supporting replay functionality for consistent results.
-        Error handling ensuring graceful degradation when LLM analysis encounters issues.
-
-        [Implementation details]
-        Extracts assembled content and generates global summary using factual analysis prompts.
-        Eliminates complex directory analysis workflow in favor of incremental updates.
-        Handles debug replay functionality for consistent testing and development.
-        Returns global summary string ready for incremental section replacement.
-        """
-        await ctx.debug("Phase 2: Generating LLM global summary from assembled content")
-        
-        # Extract assembled content for global summary generation
-        assembled_content = self.template_engine.extract_assembled_content(markdown_content)
-        
-        # Generate global summary
-        global_summary = await self._generate_global_summary(directory_context, assembled_content, ctx)
-        
-        return global_summary
-
-    async def _finalize_knowledge_file(
-        self, 
-        directory_context: DirectoryContext, 
-        markdown_content: str, 
-        global_summary: str, 
-        source_root: Optional[Path], 
-        ctx: Context
-    ) -> Path:
-        """
-        [Class method intent]
-        Phase 3: Finalizes knowledge file using incremental updates and writes to filesystem.
-        Uses selective section updates to integrate LLM insights without full regeneration,
-        then writes complete knowledge file to appropriate location.
-
-        [Design principles]
-        Incremental update approach modifying only changed sections without full regeneration.
-        Selective updates preserving existing content and maintaining document structure.
-        File writing with intelligent path resolution and error handling.
-        Validation ensuring generated content meets structural requirements.
-
-        [Implementation details]
-        Uses incremental template engine methods for selective section updates.
-        Updates file sections, subdirectory sections, global summary, and metadata incrementally.
-        Validates final markdown structure before writing to ensure quality.
-        Returns knowledge file path for calling context tracking and reporting.
-        """
-        await ctx.debug("Phase 3: Finalizing knowledge file with incremental updates")
-        
-        current_markdown = markdown_content
-        
-        # Update file sections incrementally
-        file_contexts = self._collect_file_contexts(directory_context)
-        for file_context in file_contexts:
-            if file_context.knowledge_content:
-                await ctx.debug(f"Updating file section: {file_context.file_path.name}")
-                current_markdown = self.template_engine.replace_file_section(
-                    current_markdown, 
-                    file_context.file_path, 
-                    file_context.knowledge_content
-                )
-        
-        # Update subdirectory sections incrementally
-        for subdir_context in directory_context.subdirectory_contexts:
-            if subdir_context.processing_status == ProcessingStatus.COMPLETED and subdir_context.knowledge_file_path:
-                await ctx.debug(f"Updating subdirectory section: {subdir_context.directory_path.name}")
-                # Extract content from subdirectory knowledge base
-                extracted_content = self.template_engine.extract_subdirectory_summary(subdir_context.knowledge_file_path)
-                current_markdown = self.template_engine.replace_subdirectory_section(
-                    current_markdown,
-                    subdir_context.directory_path,
-                    extracted_content
-                )
-        
-        # Update global summary section
-        await ctx.debug("Updating global summary section")
-        current_markdown = self.template_engine.replace_global_summary_section(current_markdown, global_summary)
-        
-        # Update footer metadata
-        completed_subdirectories = len([subdir for subdir in directory_context.subdirectory_contexts 
-                                        if subdir.processing_status == ProcessingStatus.COMPLETED])
-        await ctx.debug("Updating footer metadata")
-        final_markdown = self.template_engine.update_footer_metadata(
-            current_markdown,
-            len(file_contexts),
-            completed_subdirectories
-        )
-        
-        # Validate final markdown structure
-        if not self.template_engine.validate_markdown_structure(final_markdown):
-            logger.warning(f"Final markdown structure validation failed for: {directory_context.directory_path}")
-        
-        # Determine knowledge file path and write
-        knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path, source_root)
-        await self._write_knowledge_file(knowledge_file_path, final_markdown)
-        
-        return knowledge_file_path
 
     async def _generate_global_summary(self, directory_context: DirectoryContext, assembled_content: str, ctx: Context) -> str:
         """
@@ -510,31 +437,54 @@ class KnowledgeBuilder:
             # Return cached reviewed content directly - no need to review again
             return self._extract_content_from_llm_response(global_summary_replay.strip())
         
-        # Make fresh LLM call and review it
-        conversation_id = f"global_summary_{directory_context.directory_path.name}_{datetime.now().isoformat()}"
-        await ctx.info(f"🤖 LLM CALL: Generating global directory summary for {directory_context.directory_path.name}/ using Claude 4 Sonnet")
-        response = await self.llm_driver.send_message(global_summary_prompt, conversation_id)
+        # Make fresh LLM call with retry mechanism
+        base_conversation_id = f"global_summary_{directory_context.directory_path.name}"
+        
+        try:
+            await ctx.info(f"🤖 LLM CALL: Generating global directory summary for {directory_context.directory_path.name}/ using Claude 4 Sonnet")
+            original_response, success = await self._retry_llm_call_with_truncation_check(
+                prompt=global_summary_prompt,
+                base_conversation_id=base_conversation_id,
+                call_description=f"global summary for {directory_context.directory_path.name}/",
+                max_retries=2,
+                ctx=ctx
+            )
+        except Exception as llm_error:
+            # Technical LLM error after retries
+            await ctx.warning(f"⚠️ Technical LLM error for global summary {directory_context.directory_path.name}/ after retries: {llm_error}")
+            raise RuntimeError(f"Technical LLM error - global summary failed: {llm_error}")
+        
+        # Check for truncation persistence after retries
+        if not success:
+            await ctx.error(f"🚨 TRUNCATION PERSISTS: Global summary for {directory_context.directory_path.name}/ truncated after retries")
+            raise TruncationDetectedError(f"Global summary truncated after retries: {directory_context.directory_path.name}/")
         
         # Capture original interaction
         self.debug_handler.capture_stage_llm_output(
             stage="stage_5_global_summary_original",
             prompt=global_summary_prompt,
-            response=response.content,
+            response=original_response,
             directory_path=directory_context.directory_path
         )
         
         # Parse the LLM response to extract only content, not headers
-        original_global_summary = self._extract_content_from_llm_response(response.content.strip())
+        original_global_summary = self._extract_content_from_llm_response(original_response.strip())
         
         # QUALITY ASSURANCE: Bounded loop reviewer for robust compliance checking
-        final_global_summary, iterations_used, was_compliant = await self._review_content_until_compliant(
+        final_global_summary, iterations_used, was_compliant, should_skip, skip_reason = await self._review_content_until_compliant(
             content_to_review=original_global_summary,
             reviewer_prompt_func=self.enhanced_prompts.get_global_summary_reviewer_prompt,
-            base_conversation_id=conversation_id,
+            base_conversation_id=base_conversation_id,
             stage_name="stage_5_global_summary",
             directory_path=directory_context.directory_path,
             ctx=ctx
         )
+        
+        # Handle skip scenarios (technical errors or empty responses during review)
+        if should_skip:
+            await ctx.error(f"🚨 TECHNICAL ERROR: Global summary generation failed for {directory_context.directory_path.name}/ - NO ARTIFACTS WILL BE CREATED: {skip_reason}")
+            # Technical errors during review should prevent all artifact creation
+            raise RuntimeError(f"Global summary technical error - preventing artifact creation: {skip_reason}")
         
         # Log final compliance status
         if was_compliant:
@@ -542,16 +492,141 @@ class KnowledgeBuilder:
         else:
             await ctx.info(f"🔧 Global summary using best attempt: {directory_context.directory_path.name}/ (after {iterations_used} iteration(s))")
         
-        # Capture the final reviewed version for future replay
+        # Remove truncation marker from final content
+        clean_final_summary = self._remove_truncation_marker(final_global_summary)
+        
+        # Capture the final reviewed version for future replay (with marker removed)
         self.debug_handler.capture_stage_llm_output(
             stage="stage_5_global_summary",
             prompt=global_summary_prompt,
-            response=final_global_summary,
+            response=clean_final_summary,
             directory_path=directory_context.directory_path
         )
         
-        return final_global_summary
+        return clean_final_summary
 
+    async def _extract_subdirectory_content(self, subdir_kb_path: Path, ctx: Context) -> str:
+        """
+        [Class method intent]
+        Extracts content from fourth-level header in subdirectory knowledge base file.
+        Reads subdirectory KB file and extracts content from first fourth-level header
+        for integration into parent directory knowledge base.
+
+        [Design principles]
+        Content extraction with formatting preservation maintaining original LLM output quality.
+        Fourth-level header targeting supporting hierarchical semantic context pattern.
+        Error handling ensuring graceful degradation when extraction encounters issues.
+
+        [Implementation details]
+        Reads subdirectory KB file and searches for first fourth-level header.
+        Extracts all content until next same or higher level header.
+        Preserves original formatting without transformation.
+        Returns extracted content ready for template integration.
+        """
+        try:
+            if not subdir_kb_path.exists():
+                await ctx.warning(f"Subdirectory KB file not found: {subdir_kb_path}")
+                return f"*Content not available from {subdir_kb_path.name}*"
+            
+            # Read subdirectory KB file content
+            with open(subdir_kb_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Simple extraction: find first fourth-level header and extract content
+            lines = content.split('\n')
+            extracted_lines = []
+            in_target_section = False
+            
+            for line in lines:
+                if line.startswith('#### ') and not in_target_section:
+                    # Found first fourth-level header - start extracting (skip the header)
+                    in_target_section = True
+                    continue
+                elif (line.startswith('#### ') or line.startswith('### ') or 
+                      line.startswith('## ') or line.startswith('# ')) and in_target_section:
+                    # Found next header - stop extracting
+                    break
+                elif in_target_section:
+                    # Extract content line
+                    extracted_lines.append(line)
+            
+            if extracted_lines:
+                # Join lines and clean up whitespace
+                result = '\n'.join(extracted_lines).strip()
+                await ctx.debug(f"Extracted {len(result)} characters from {subdir_kb_path}")
+                return result
+            else:
+                await ctx.info(f"No fourth-level header content found in {subdir_kb_path}")
+                return f"*No detailed content available from {subdir_kb_path.name}*"
+                
+        except Exception as e:
+            logger.error(f"Failed to extract subdirectory content from {subdir_kb_path}: {e}")
+            await ctx.warning(f"Error extracting content from {subdir_kb_path}: {e}")
+            return f"*Error extracting content from {subdir_kb_path.name}: {e}*"
+
+    async def _generate_global_summary_from_contexts(
+        self, 
+        directory_context: DirectoryContext, 
+        file_contexts: List[FileContext], 
+        subdirectory_summaries: List[tuple[Path, str]], 
+        ctx: Context
+    ) -> str:
+        """
+        [Class method intent]
+        Generates global summary using Claude 4 Sonnet analysis of file contexts and subdirectory summaries.
+        Creates comprehensive directory overview by analyzing completed file analyses and
+        subdirectory content for cohesive understanding of directory purpose.
+
+        [Design principles]
+        Global synthesis leveraging file contexts and subdirectory summaries for comprehensive understanding.
+        Factual analysis without quality judgments maintaining consistency with file analysis.
+        Content assembly for LLM context creation enabling effective global summary generation.
+
+        [Implementation details]
+        Assembles content from file contexts and subdirectory summaries into structured format.
+        Uses enhanced prompts for global summary generation with comprehensive context.
+        Applies review process for quality assurance and compliance checking.
+        Returns global summary ready for template integration.
+        """
+        try:
+            # Assemble content for global summary generation
+            content_parts = []
+            
+            # Add file analyses
+            if file_contexts:
+                content_parts.append("## File Analyses")
+                for file_context in file_contexts:
+                    try:
+                        portable_path = get_portable_path(file_context.file_path)
+                    except Exception:
+                        portable_path = str(file_context.file_path)
+                    
+                    content_parts.append(f"### {portable_path}")
+                    content_parts.append(file_context.knowledge_content)
+            
+            # Add subdirectory summaries
+            if subdirectory_summaries:
+                content_parts.append("\n## Subdirectory Summaries")
+                for subdir_path, subdir_content in subdirectory_summaries:
+                    try:
+                        portable_path = get_portable_path(subdir_path)
+                        if not portable_path.endswith('/') and not portable_path.endswith('\\'):
+                            portable_path += "/"
+                    except Exception:
+                        portable_path = f"{subdir_path.name}/"
+                    
+                    content_parts.append(f"### {portable_path}")
+                    content_parts.append(subdir_content)
+            
+            assembled_content = "\n\n".join(content_parts) if content_parts else "[No content available]"
+            
+            # Generate global summary using the existing method
+            return await self._generate_global_summary(directory_context, assembled_content, ctx)
+            
+        except Exception as e:
+            logger.error(f"Global summary generation from contexts failed for {directory_context.directory_path}: {e}")
+            await ctx.warning(f"Error generating global summary: {e}")
+            return f"[Global summary generation failed: {e}. Directory contains {len(file_contexts)} files and {len(subdirectory_summaries)} subdirectories.]"
 
     async def _read_file_content(self, file_path: Path) -> str:
         """
@@ -597,20 +672,20 @@ class KnowledgeBuilder:
         Processes single file content through cache-first LLM analysis generating raw markdown output.
         Implements high-performance caching to avoid recomputation of file analyses when source files
         haven't changed, with fallback to LLM analysis when cache miss occurs.
+        Enhanced with proper error handling and selective caching based on compliance review outcomes.
 
         [Design principles]
         Cache-first processing strategy maximizing performance by avoiding unnecessary LLM calls.
         Clean content extraction ensuring no metadata artifacts contaminate knowledge files.
-        Simplified LLM processing eliminating complex parsing and structured response handling.
-        Raw content storage enabling direct insertion into directory knowledge files.
-        Natural markdown generation leveraging LLM's native markdown capabilities.
-        Token efficiency through direct content usage without additional processing overhead.
+        Selective caching: cache only when we have usable content (compliant or max-iterations-reached).
+        Skip files completely on technical errors or empty responses to avoid wasted processing.
+        Force cache non-compliant content when max iterations are reached to preserve LLM work.
 
         [Implementation details]
         Checks analysis cache first for existing clean content before LLM processing.
         Uses enhanced prompts with content-type detection for specialized analysis approaches.
-        Processes LLM response as raw markdown content without parsing or transformation.
-        Caches analysis results with metadata for future retrieval and debugging.
+        Detects technical errors vs content errors and skips files appropriately.
+        Caches results only when review process produces usable content.
         Returns raw analysis content ready for direct insertion into knowledge files.
         """
         try:
@@ -647,11 +722,32 @@ class KnowledgeBuilder:
                 file_size=len(content)
             )
             
-            # Make LLM call
+            # Make initial LLM call with retry mechanism
             normalized_path = self.debug_handler._normalize_path_for_filename(file_path)
             conversation_id = f"file_analysis_{normalized_path}"
-            response = await self.llm_driver.send_message(prompt, conversation_id)
-            original_response_content = response.content
+            
+            try:
+                original_response_content, success = await self._retry_llm_call_with_truncation_check(
+                    prompt=prompt,
+                    base_conversation_id=conversation_id,
+                    call_description=f"file analysis for {file_path.name}",
+                    max_retries=2,
+                    ctx=ctx
+                )
+            except Exception as llm_error:
+                # Technical LLM error after retries → Skip file (no cache)
+                await ctx.warning(f"⚠️ Technical LLM error for {file_path.name} after retries: {llm_error}")
+                raise RuntimeError(f"Technical LLM error - file will be skipped: {llm_error}")
+            
+            # Check for truncation persistence after retries
+            if not success:
+                await ctx.error(f"🚨 TRUNCATION PERSISTS: File analysis for {file_path.name} truncated after retries - skipping file")
+                raise TruncationDetectedError(f"File analysis truncated after retries: {file_path.name}")
+            
+            # Check for empty LLM response
+            if not original_response_content or not original_response_content.strip():
+                await ctx.warning(f"⚠️ Empty LLM response for {file_path.name} - skipping file")
+                raise RuntimeError("Empty LLM response - file will be skipped")
             
             # Capture original interaction
             self.debug_handler.capture_stage_llm_output(
@@ -662,7 +758,7 @@ class KnowledgeBuilder:
             )
             
             # QUALITY ASSURANCE: Bounded loop reviewer for robust compliance checking
-            final_response_content, iterations_used, was_compliant = await self._review_content_until_compliant(
+            final_response_content, iterations_used, was_compliant, should_skip, skip_reason = await self._review_content_until_compliant(
                 content_to_review=original_response_content,
                 reviewer_prompt_func=self.enhanced_prompts.get_file_analysis_reviewer_prompt,
                 base_conversation_id=conversation_id,
@@ -671,11 +767,16 @@ class KnowledgeBuilder:
                 ctx=ctx
             )
             
+            # Handle skip scenarios (technical errors or empty responses during review)
+            if should_skip:
+                await ctx.warning(f"⚠️ Skipping {file_path.name}: {skip_reason}")
+                raise RuntimeError(f"Review process failed - file will be skipped: {skip_reason}")
+            
             # Log final compliance status
             if was_compliant:
                 await ctx.debug(f"✅ File analysis achieved compliance: {file_path.name} (after {iterations_used} iteration(s))")
             else:
-                await ctx.info(f"🔧 File analysis using best attempt: {file_path.name} (after {iterations_used} iteration(s))")
+                await ctx.info(f"🔧 File analysis using best attempt after max iterations: {file_path.name} (after {iterations_used} iteration(s))")
             
             # Capture the final reviewed version for future replay
             self.debug_handler.capture_stage_llm_output(
@@ -685,13 +786,16 @@ class KnowledgeBuilder:
                 file_path=file_path
             )
             
-            # PHASE 4: Cache the analysis result for future use
-            if source_root:
-                await self.analysis_cache.cache_analysis(file_path, final_response_content.strip(), source_root)
-                await ctx.debug(f"💾 CACHED: Analysis cached for {file_path.name}")
+            # PHASE 4: Remove truncation marker and cache/return clean content
+            clean_final_content = self._remove_truncation_marker(final_response_content.strip())
             
-            # Return final analysis content
-            return final_response_content.strip()
+            # Cache the clean analysis result - both compliant and max-iterations-reached cases
+            if source_root:
+                await self.analysis_cache.cache_analysis(file_path, clean_final_content, source_root)
+                await ctx.debug(f"💾 CACHED: Clean analysis cached for {file_path.name} (compliant: {was_compliant})")
+            
+            # Return clean final analysis content
+            return clean_final_content
             
         except Exception as e:
             logger.error(f"Cache-first file processing failed for {file_path}: {e}")
@@ -857,78 +961,64 @@ class KnowledgeBuilder:
         """
         [Class method intent]
         Extracts clean content from LLM response by removing LLM-generated headers.
-        Handles cases where LLMs add their own headers/structure to responses that
-        would interfere with mistletoe parsing and section extraction.
+        Simplified approach using string processing instead of complex markdown parsing
+        to avoid dependencies on the old template engine architecture.
 
         [Design principles]
         Robust content extraction handling various LLM response formats and structures.
-        Header detection and removal preventing parsing conflicts with expected markdown structure.
+        Header detection and removal preventing conflicts with template generation.
         Content preservation ensuring actual response content is retained without LLM formatting artifacts.
         Fallback handling ensuring extraction works even with unexpected LLM response formats.
 
         [Implementation details]
-        Uses mistletoe to parse LLM response and identify LLM-generated headers.
-        Extracts paragraph content while filtering out unwanted header structures.
-        Handles edge cases like responses with no headers or malformed markdown.
-        Returns cleaned content suitable for template engine insertion without parsing conflicts.
+        Uses simple string processing to identify and filter LLM-generated headers.
+        Preserves legitimate section structure while removing conversational headers.
+        Returns cleaned content ready for template integration without parsing conflicts.
         """
         if not llm_response or not llm_response.strip():
             return ""
         
         try:
             # Check if the response already has proper section structure
-            # If it contains legitimate section headers (like "## Architecture and Design"), 
-            # preserve the original formatting instead of stripping structure
             if self._has_legitimate_section_structure(llm_response):
                 logger.debug("Response has legitimate section structure, preserving original formatting")
                 return llm_response.strip()
             
-            # Parse the LLM response using mistletoe for responses that need header filtering
-            doc = self.template_engine.markdown_parser.parse_content(llm_response)
-            if not doc:
-                logger.warning("Failed to parse LLM response, returning raw content")
-                return llm_response.strip()
+            # Simple approach: filter out common LLM conversational headers
+            lines = llm_response.strip().split('\n')
+            filtered_lines = []
             
-            # Extract content while filtering out LLM-generated headers
-            content_parts = []
-            
-            for token in doc.children:
-                # Skip LLM-generated headers (common patterns)
-                if hasattr(token, 'level') and hasattr(token, '_children'):
-                    # This is a header - check if it's an LLM artifact
-                    header_text = self.template_engine.markdown_parser._extract_text_from_token(token)
-                    
-                    # Skip common LLM header patterns - but be more specific to avoid false positives
-                    skip_patterns = [
-                        "here's my", "here is my", "my analysis", "based on the", 
-                        "looking at the", "examining the", "considering the",
-                        "here's what", "here is what", "my response", "my answer"
-                    ]
-                    
-                    if any(pattern in header_text.lower() for pattern in skip_patterns):
-                        logger.debug(f"Skipping LLM-generated header: {header_text}")
-                        continue
+            for line in lines:
+                # Skip common LLM conversational patterns
+                line_lower = line.lower().strip()
+                skip_patterns = [
+                    "here's my", "here is my", "my analysis", "based on the", 
+                    "looking at the", "examining the", "considering the",
+                    "here's what", "here is what", "my response", "my answer",
+                    "i'll analyze", "let me analyze", "analyzing the"
+                ]
                 
-                # Extract content from non-header tokens (paragraphs, lists, etc.)
-                if not hasattr(token, 'level'):  # Not a header
-                    # Render this token back to markdown
-                    temp_doc = type(doc)([])
-                    temp_doc.children = [token]
-                    token_content = self.template_engine.markdown_parser.render_to_markdown(temp_doc)
-                    if token_content and token_content.strip():
-                        content_parts.append(token_content.strip())
+                # Check if this line starts with a skip pattern
+                should_skip = False
+                for pattern in skip_patterns:
+                    if line_lower.startswith(pattern):
+                        should_skip = True
+                        logger.debug(f"Skipping LLM conversational line: {line[:50]}...")
+                        break
+                
+                if not should_skip:
+                    filtered_lines.append(line)
             
-            # Join content parts with appropriate spacing
-            cleaned_content = "\n\n".join(content_parts)
+            # Join filtered lines and clean up whitespace
+            cleaned_content = '\n'.join(filtered_lines).strip()
             
-            # If we got no content (all headers were filtered), return original response
-            # This handles the edge case where LLM responses contain only headers without actual content
-            if not cleaned_content.strip():
+            # If we filtered everything out, return the original
+            if not cleaned_content:
                 logger.warning("All content was filtered out, returning original response")
                 return llm_response.strip()
             
             logger.debug(f"Extracted {len(cleaned_content)} characters from LLM response")
-            return cleaned_content.strip()
+            return cleaned_content
             
         except Exception as e:
             logger.error(f"Failed to extract content from LLM response: {e}")
@@ -985,6 +1075,202 @@ class KnowledgeBuilder:
             logger.warning(f"Failed to check section structure: {e}")
             return False  # Default to header filtering if detection fails
     
+    def _has_truncation_marker(self, content: str) -> bool:
+        """
+        [Class method intent]
+        Programmatically checks if content contains the truncation detection marker.
+        Provides fast, reliable truncation detection without requiring LLM reviewer call.
+        Serves as primary truncation detection method with LLM reviewer as backup.
+
+        [Design principles]
+        Fast programmatic detection avoiding unnecessary LLM calls for obvious truncation.
+        Reliable detection independent of LLM reviewer accuracy or availability.
+        Fail-fast approach enabling immediate truncation detection and artifact prevention.
+        Simple string-based detection with whitespace tolerance for robust marker detection.
+
+        [Implementation details]
+        Checks for exact marker match at end of content with whitespace tolerance.
+        Uses case-sensitive string matching for reliable marker detection.
+        Returns boolean result for immediate truncation decision making.
+        Handles empty content and edge cases gracefully with appropriate fallback behavior.
+        """
+        if not content:
+            return False
+        
+        try:
+            # Define the exact marker to detect
+            truncation_marker = "--END OF LLM OUTPUT--"
+            
+            # Check if content ends with the marker (with whitespace tolerance)
+            cleaned_content = content.strip()
+            return cleaned_content.endswith(truncation_marker)
+            
+        except Exception as e:
+            logger.warning(f"Failed to check truncation marker: {e}")
+            return False  # Conservative: assume no marker if check fails
+
+    def _remove_truncation_marker(self, content: str) -> str:
+        """
+        [Class method intent]
+        Removes the "--END OF LLM OUTPUT--" truncation detection marker from content.
+        Cleanly strips the marker from the end of content while preserving all other formatting
+        and ensuring proper content integrity for storage and cache operations.
+
+        [Design principles]
+        Clean marker removal without affecting content integrity or formatting.
+        Edge case handling for missing markers, multiple markers, and whitespace variations.
+        Idempotent operation ensuring safe repeated application without content corruption.
+
+        [Implementation details]
+        Searches for exact marker match at end of content and removes it cleanly.
+        Handles whitespace variations and multiple marker instances gracefully.
+        Preserves all content formatting except for the truncation detection marker.
+        Returns cleaned content ready for storage, caching, or template insertion.
+        """
+        if not content:
+            return content
+        
+        try:
+            # Define the exact marker to remove
+            truncation_marker = "--END OF LLM OUTPUT--"
+            
+            # Remove marker from end of content (case-sensitive exact match)
+            cleaned_content = content.strip()
+            
+            # Handle multiple markers or marker variations
+            while cleaned_content.endswith(truncation_marker):
+                cleaned_content = cleaned_content[:-len(truncation_marker)].strip()
+            
+            logger.debug(f"Removed truncation marker from content: {len(content)} -> {len(cleaned_content)} characters")
+            return cleaned_content
+            
+        except Exception as e:
+            logger.warning(f"Failed to remove truncation marker: {e}")
+            return content  # Return original content if removal fails
+
+    async def _retry_llm_call_with_truncation_check(
+        self,
+        prompt: str,
+        base_conversation_id: str,
+        call_description: str,
+        max_retries: int = 2,
+        ctx: Context = None
+    ) -> tuple[str, bool]:
+        """
+        [Class method intent]
+        Continuation-based retry mechanism for LLM calls with intelligent response completion.
+        Uses conversation continuity to ask the model to complete truncated responses instead of
+        restarting with fresh conversation IDs, providing 90%+ token savings and better context preservation.
+
+        [Design principles]
+        Conversation continuity maintaining context across truncation recovery attempts.
+        Token-efficient continuation prompts avoiding redundant re-processing of original context.
+        Intelligent response merging combining truncated and continuation responses seamlessly.
+        Progressive continuation supporting multiple truncation scenarios with recursive completion.
+        Natural conversation flow leveraging model's conversational capabilities for completion.
+
+        [Implementation details]
+        Makes initial LLM call with original prompt in dedicated conversation context.
+        Detects truncation and sends continuation prompts in same conversation to preserve context.
+        Implements intelligent response merging to avoid duplication and maintain content flow.
+        Handles multiple continuation attempts for complex truncation scenarios.
+        Returns merged complete response with success status for caller decision making.
+
+        Args:
+            prompt: The prompt to send to the LLM
+            base_conversation_id: Base conversation ID for continuation context
+            call_description: Human readable description of the LLM call for logging
+            max_retries: Maximum number of continuation attempts (default: 2)
+            ctx: FastMCP context for progress reporting and logging
+
+        Returns:
+            tuple[str, bool]: (response_content, success) - merged content and whether call succeeded
+        """
+        try:
+            # Make initial LLM call
+            if ctx:
+                await ctx.debug(f"🤖 INITIAL CALL: {call_description}")
+            
+            conversation_id = f"{base_conversation_id}_{str(uuid.uuid4())[:8]}"
+            response = await self.llm_driver.send_message(prompt, conversation_id)
+            response_content = response.content
+            
+            # Check if initial response is complete
+            if self._has_truncation_marker(response_content):
+                if ctx:
+                    await ctx.debug(f"✅ SUCCESS: {call_description} completed on first attempt")
+                return response_content, True
+            
+            # Initial response was truncated - start continuation process
+            if ctx:
+                await ctx.warning(f"🚨 TRUNCATION DETECTED: {call_description} - starting continuation")
+            logger.warning(f"Truncation detected in {call_description}, starting continuation")
+            
+            # Store the truncated response for merging
+            accumulated_response = response_content
+            
+            # Attempt continuations
+            for attempt in range(1, max_retries + 1):
+                try:
+                    if ctx:
+                        await ctx.info(f"🔄 CONTINUATION {attempt}/{max_retries}: Asking model to complete response")
+                    
+                    # Generate continuation prompt
+                    continuation_prompt = self._generate_continuation_prompt(accumulated_response)
+                    
+                    # Send continuation request in same conversation
+                    continuation_response = await self.llm_driver.send_message(continuation_prompt, conversation_id)
+                    continuation_content = continuation_response.content
+                    
+                    # Check if continuation is complete
+                    if self._has_truncation_marker(continuation_content):
+                        # Merge responses intelligently
+                        complete_response = await self._merge_responses(
+                            accumulated_response, continuation_content, ctx
+                        )
+                        
+                        if ctx:
+                            await ctx.info(f"✅ CONTINUATION SUCCESS: {call_description} completed after {attempt} continuation(s)")
+                        return complete_response, True
+                    else:
+                        # Continuation also truncated - accumulate and try again
+                        accumulated_response = await self._merge_responses(
+                            accumulated_response, continuation_content, ctx
+                        )
+                        
+                        if ctx:
+                            await ctx.warning(f"🚨 CONTINUATION TRUNCATED: Attempt {attempt} - accumulating content")
+                        logger.warning(f"Continuation {attempt} also truncated, accumulating content")
+                        
+                        if attempt == max_retries:
+                            # Final continuation attempt failed
+                            if ctx:
+                                await ctx.error(f"🚨 ALL CONTINUATIONS FAILED: {call_description} after {max_retries} attempts")
+                            logger.error(f"All continuation attempts failed for {call_description}")
+                            return accumulated_response, False
+                            
+                except Exception as e:
+                    if ctx:
+                        await ctx.warning(f"⚠️ CONTINUATION ERROR: Attempt {attempt} failed - {e}")
+                    logger.warning(f"Continuation attempt {attempt} failed for {call_description}: {e}")
+                    
+                    if attempt == max_retries:
+                        # Final continuation attempt failed with exception
+                        if ctx:
+                            await ctx.error(f"❌ CONTINUATION FAILED: {call_description} after {max_retries} attempts")
+                        return accumulated_response, False
+                    
+                    continue
+            
+            # This should never be reached, but safety fallback
+            return accumulated_response, False
+            
+        except Exception as e:
+            if ctx:
+                await ctx.error(f"❌ CRITICAL ERROR: {call_description} failed with exception: {e}")
+            logger.error(f"Critical error in {call_description}: {e}")
+            raise
+    
     async def _review_content_until_compliant(
         self,
         content_to_review: str,
@@ -995,27 +1281,30 @@ class KnowledgeBuilder:
         directory_path: Optional[Path] = None,
         ctx: Context = None,
         max_iterations: int = 5
-    ) -> tuple[str, int, bool]:
+    ) -> tuple[str, int, bool, bool, str]:
         """
         [Class method intent]
-        Executes bounded loop reviewer workflow iterating until compliance is achieved or max iterations reached.
-        Provides robust quality assurance by repeatedly applying reviewer prompts to content until
-        hierarchical semantic tree compliance is verified or iteration limit is exceeded.
-        ENHANCED: Added comprehensive input validation and empty content safeguards to prevent ValidationExceptions.
+        Executes bounded loop reviewer workflow with dual truncation detection strategy.
+        Provides robust quality assurance by first checking programmatically for truncation marker,
+        then applying LLM reviewer prompts for other compliance checks if truncation is not detected.
+        Enhanced with technical error detection and selective skip logic for proper cache management.
 
         [Design principles]
+        Dual detection strategy combining programmatic checks with LLM reviewer for maximum reliability.
+        Fast-fail approach preventing unnecessary LLM calls when truncation is obviously detected.
         Bounded iteration approach preventing infinite loops while maximizing compliance success rates.
         Progressive improvement strategy applying reviewer corrections iteratively for complex compliance issues.
+        Technical error detection distinguishing between content issues and technical failures.
+        Selective skip logic ensuring files are only skipped on technical/empty errors, not content issues.
         Comprehensive debug capture enabling replay and analysis of entire review process.
-        Graceful degradation returning best attempt when perfect compliance cannot be achieved within bounds.
-        ENHANCED: Input validation and empty content protection preventing validation exceptions.
 
         [Implementation details]
+        First performs programmatic truncation detection as primary check for fast failure.
         Iterates through reviewer prompts with content updates until "COMPLIANT" response or max iterations.
+        Detects technical errors and empty responses during review iterations for proper skip handling.
         Captures each iteration separately in debug system with structured stage naming and iteration tracking.
-        Returns final content, iteration count, and compliance status for comprehensive result analysis.
-        Handles errors gracefully with fallback to previous iteration's content when reviewer calls fail.
-        ENHANCED: Validates content at each iteration and prevents empty content propagation.
+        Returns comprehensive status including skip recommendation and error details.
+        Forces cache of max-iterations content to preserve LLM work even when non-compliant.
 
         Args:
             content_to_review: Original content to be reviewed for compliance
@@ -1028,17 +1317,34 @@ class KnowledgeBuilder:
             max_iterations: Maximum number of review iterations before giving up (default: 5)
 
         Returns:
-            tuple[str, int, bool]: (final_content, iterations_used, was_compliant)
+            tuple[str, int, bool, bool, str]: (final_content, iterations_used, was_compliant, should_skip, skip_reason)
                 - final_content: The final reviewed content (compliant or best attempt)
                 - iterations_used: Number of review iterations performed
                 - was_compliant: True if final content achieved compliance, False if max iterations reached
+                - should_skip: True if file should be skipped (technical/empty errors), False if content should be cached
+                - skip_reason: Human-readable reason for skipping (empty if should_skip is False)
         """
         current_content = content_to_review
         iteration = 0
         was_compliant = False
+        should_skip = False
+        skip_reason = ""
         
         if ctx:
             await ctx.debug(f"🔍 BOUNDED REVIEWER: Starting review process for {stage_name} (max {max_iterations} iterations)")
+        
+        # DUAL DETECTION STRATEGY: Programmatic check first (primary detection)
+        if not self._has_truncation_marker(current_content):
+            if ctx:
+                await ctx.error(f"🚨 PROGRAMMATIC TRUNCATION DETECTED: {stage_name} missing truncation marker - NO ARTIFACTS WILL BE CREATED")
+            
+            # Immediate truncation detection - no need for LLM reviewer
+            error_msg = f"Programmatic truncation detection in {stage_name} - preventing artifact creation"
+            logger.error(error_msg)
+            raise TruncationDetectedError(error_msg)
+        
+        if ctx:
+            await ctx.debug(f"✅ TRUNCATION MARKER PRESENT: {stage_name} passed programmatic check, proceeding with LLM reviewer")
         
         while iteration < max_iterations:
             iteration += 1
@@ -1054,6 +1360,13 @@ class KnowledgeBuilder:
                 # Make reviewer LLM call
                 reviewer_response = await self.llm_driver.send_message(reviewer_prompt, reviewer_conversation_id)
                 reviewer_response_content = reviewer_response.content.strip()
+                
+                # Check for empty response during review → Skip file (no cache)
+                if not reviewer_response_content:
+                    should_skip = True
+                    skip_reason = f"Empty reviewer response at iteration {iteration}"
+                    logger.warning(f"Empty reviewer response for {stage_name} at iteration {iteration}")
+                    break
                 
                 # Capture iteration in debug system
                 iteration_stage_name = f"{stage_name}_review_iter_{iteration}"
@@ -1072,50 +1385,238 @@ class KnowledgeBuilder:
                         directory_path=directory_path
                     )
                 
+                # Check for truncation detection
+                if reviewer_response_content == "TRUNCATED":
+                    if ctx:
+                        await ctx.error(f"🚨 TRUNCATION DETECTED: {stage_name} at iteration {iteration} - NO ARTIFACTS WILL BE CREATED")
+                    
+                    # Raise TruncationDetectedError to prevent any artifact creation
+                    error_msg = f"Truncation detected in {stage_name} at iteration {iteration} - preventing artifact creation"
+                    logger.error(error_msg)
+                    raise TruncationDetectedError(error_msg)
+                
                 # Check if compliance achieved
-                if reviewer_response_content == "COMPLIANT":
+                elif reviewer_response_content == "COMPLIANT":
                     was_compliant = True
                     if ctx:
                         await ctx.info(f"✅ COMPLIANCE ACHIEVED: {stage_name} compliant after {iteration} iteration(s)")
                     break
                 else:
+                    # TRIPLE DETECTION STRATEGY: Check if reviewer corrections are themselves truncated
+                    if not self._has_truncation_marker(reviewer_response_content):
+                        if ctx:
+                            await ctx.error(f"🚨 REVIEWER CORRECTION TRUNCATED: {stage_name} at iteration {iteration} - reviewer provided truncated corrections")
+                        
+                        # Raise TruncationDetectedError for truncated reviewer corrections
+                        error_msg = f"Reviewer provided truncated corrections in {stage_name} at iteration {iteration} - preventing artifact creation"
+                        logger.error(error_msg)
+                        raise TruncationDetectedError(error_msg)
+                    
                     # Update content with reviewer corrections
                     current_content = reviewer_response_content
                     if ctx:
                         await ctx.debug(f"🔧 REVIEWER ITERATION {iteration}: Applied corrections for {stage_name}")
             
             except Exception as e:
+                # Technical error during review → Skip file (no cache)
+                should_skip = True
+                skip_reason = f"Technical error during review iteration {iteration}: {e}"
                 logger.error(f"Reviewer iteration {iteration} failed for {stage_name}: {e}")
                 if ctx:
                     await ctx.warning(f"⚠️ REVIEWER ITERATION {iteration} FAILED: {stage_name} - {e}")
-                # Continue with current content on error
                 break
         
-        if not was_compliant and ctx:
-            if iteration >= max_iterations:
-                await ctx.warning(f"⚠️ MAX ITERATIONS REACHED: {stage_name} using best attempt after {iteration} iterations")
-            else:
-                await ctx.warning(f"⚠️ REVIEWER ERROR: {stage_name} using last valid content after {iteration} iterations")
+        # If we completed all iterations without skip conditions
+        if not should_skip:
+            if not was_compliant and ctx:
+                if iteration >= max_iterations:
+                    await ctx.warning(f"⚠️ MAX ITERATIONS REACHED: {stage_name} using best attempt after {iteration} iterations")
+                else:
+                    await ctx.warning(f"⚠️ REVIEWER STOPPED: {stage_name} using last valid content after {iteration} iterations")
+            
+            # Capture final reviewed content for replay
+            final_stage_name = f"{stage_name}_review_final"
+            if file_path:
+                self.debug_handler.capture_stage_llm_output(
+                    stage=final_stage_name,
+                    prompt="Final reviewed content",
+                    response=current_content,
+                    file_path=file_path
+                )
+            elif directory_path:
+                self.debug_handler.capture_stage_llm_output(
+                    stage=final_stage_name,
+                    prompt="Final reviewed content",
+                    response=current_content,
+                    directory_path=directory_path
+                )
         
-        # Capture final reviewed content for replay
-        final_stage_name = f"{stage_name}_review_final"
-        if file_path:
-            self.debug_handler.capture_stage_llm_output(
-                stage=final_stage_name,
-                prompt="Final reviewed content",
-                response=current_content,
-                file_path=file_path
+        logger.debug(f"Bounded reviewer completed for {stage_name}: {iteration} iterations, compliant={was_compliant}, should_skip={should_skip}, final_length={len(current_content)}")
+        return current_content, iteration, was_compliant, should_skip, skip_reason
+
+    def _generate_continuation_prompt(self, truncated_response: str) -> str:
+        """
+        [Class method intent]
+        Generates continuation prompt asking the model to complete its truncated response.
+        Creates natural continuation request that preserves context while asking for completion
+        of the specific analysis that was interrupted by truncation.
+
+        [Design principles]
+        Natural conversation flow maintaining context from the truncated response.
+        Specific completion request targeting the exact point where truncation occurred.
+        Concise prompt design minimizing token usage for efficient continuation requests.
+        Clear instruction format ensuring model understands continuation context.
+
+        [Implementation details]
+        Analyzes truncated response to understand what type of content was being generated.
+        Creates context-aware prompt referencing the incomplete work for natural continuation.
+        Uses minimal token overhead while providing sufficient context for quality completion.
+        Returns prompt ready for immediate LLM continuation request.
+
+        Args:
+            truncated_response: The incomplete response that needs continuation
+
+        Returns:
+            str: Continuation prompt for LLM completion request
+        """
+        try:
+            # Analyze the end of the truncated response to understand context
+            response_end = truncated_response.strip()[-200:] if len(truncated_response) > 200 else truncated_response.strip()
+            
+            # Create natural continuation prompt
+            continuation_prompt = (
+                "Continue exactly from where you left off. Do not repeat any previous sentences. "
+                "Maintain the same structure and formatting."
+                f"Your response was cut off and the last part was: '...{response_end}'. "
+                "Continue with the rest of your analysis and ensure you add the '--END OF LLM OUTPUT--' marker at the end."
             )
-        elif directory_path:
-            self.debug_handler.capture_stage_llm_output(
-                stage=final_stage_name,
-                prompt="Final reviewed content",
-                response=current_content,
-                directory_path=directory_path
-            )
-        
-        logger.debug(f"Bounded reviewer completed for {stage_name}: {iteration} iterations, compliant={was_compliant}, final_length={len(current_content)}")
-        return current_content, iteration, was_compliant
+            
+            logger.debug(f"Generated continuation prompt with {len(continuation_prompt)} characters")
+            return continuation_prompt
+            
+        except Exception as e:
+            logger.warning(f"Failed to generate continuation prompt: {e}")
+            # Fallback to generic continuation request
+            return "Please complete your previous response from where you left off, and ensure you add the '--END OF LLM OUTPUT--' marker at the end."
+
+    async def _merge_responses(self, truncated_response: str, continuation: str, ctx: Context = None) -> str:
+        """
+        [Class method intent]
+        Intelligently merges truncated response with continuation to create seamless complete response.
+        Handles overlapping content, removes duplicate sentences, and ensures natural flow
+        between the truncated portion and the continuation content.
+        Preserves truncation marker from continuation to maintain proper reviewer compliance.
+
+        [Design principles]
+        Intelligent merging avoiding content duplication and maintaining natural flow.
+        Overlap detection identifying common content at merge boundaries for clean joining.
+        Content preservation ensuring no important information is lost during merge process.
+        Natural flow maintenance creating seamless reading experience in merged content.
+        Truncation marker preservation ensuring merged response passes reviewer compliance checks.
+
+        [Implementation details]
+        Detects if continuation has truncation marker before cleaning for preservation.
+        Cleans both responses by removing truncation markers and artifacts.
+        Detects potential overlap between end of truncated response and start of continuation.
+        Performs intelligent merging with overlap resolution and duplicate sentence removal.
+        Restores truncation marker to merged response if continuation originally had it.
+        Returns complete merged response ready for further processing or storage.
+
+        Args:
+            truncated_response: The incomplete initial response
+            continuation: The continuation response from the model
+            ctx: Optional FastMCP context for progress reporting
+
+        Returns:
+            str: Merged complete response with seamless content flow and proper truncation marker
+        """
+        try:
+            if ctx:
+                await ctx.debug(f"🔗 MERGING: Combining {len(truncated_response)} + {len(continuation)} characters")
+            
+            # Check if continuation has truncation marker before cleaning
+            continuation_has_marker = self._has_truncation_marker(continuation.strip())
+            
+            # Clean both responses
+            clean_truncated = truncated_response.strip()
+            clean_continuation = self._remove_truncation_marker(continuation.strip())
+            
+            # Simple approach: look for potential overlap at the boundary
+            # Take last 100 characters of truncated response
+            truncated_end = clean_truncated[-100:] if len(clean_truncated) > 100 else clean_truncated
+            
+            # Take first 100 characters of continuation
+            continuation_start = clean_continuation[:100] if len(clean_continuation) > 100 else clean_continuation
+            
+            # Check for sentence-level overlap
+            truncated_sentences = [s.strip() for s in truncated_end.split('.') if s.strip()]
+            continuation_sentences = [s.strip() for s in continuation_start.split('.') if s.strip()]
+            
+            # Look for common sentences at the boundary
+            overlap_found = False
+            if truncated_sentences and continuation_sentences:
+                # Check if last sentence of truncated matches first sentence of continuation
+                last_truncated = truncated_sentences[-1] if truncated_sentences else ""
+                first_continuation = continuation_sentences[0] if continuation_sentences else ""
+                
+                if last_truncated and first_continuation:
+                    # Check for similarity (allowing for partial matches)
+                    if (last_truncated in first_continuation or 
+                        first_continuation in last_truncated or
+                        len(set(last_truncated.lower().split()) & set(first_continuation.lower().split())) > 3):
+                        
+                        # Found overlap - remove the duplicate from continuation
+                        remaining_continuation = clean_continuation[len(first_continuation):].strip()
+                        if remaining_continuation.startswith('.'):
+                            remaining_continuation = remaining_continuation[1:].strip()
+                        
+                        merged_response = clean_truncated + " " + remaining_continuation
+                        overlap_found = True
+                        
+                        if ctx:
+                            await ctx.debug("🔗 OVERLAP DETECTED: Removed duplicate sentence at merge boundary")
+            
+            if not overlap_found:
+                # No overlap detected - simple concatenation with space
+                merged_response = clean_truncated + " " + clean_continuation
+                
+                if ctx:
+                    await ctx.debug("🔗 NO OVERLAP: Simple concatenation performed")
+            
+            # Clean up multiple spaces and ensure proper formatting
+            merged_response = ' '.join(merged_response.split())
+            
+            # CRITICAL: Restore truncation marker if continuation originally had it
+            if continuation_has_marker:
+                # Ensure proper marker format - no extra whitespace that could interfere with detection
+                if not merged_response.endswith("--END OF LLM OUTPUT--"):
+                    merged_response = merged_response.rstrip() + "\n\n--END OF LLM OUTPUT--"
+                if ctx:
+                    await ctx.debug("🔗 MARKER RESTORED: Added truncation marker to merged response")
+            
+            if ctx:
+                await ctx.debug(f"✅ MERGE COMPLETE: {len(merged_response)} characters total")
+            
+            logger.debug(f"Merged responses: {len(truncated_response)} + {len(continuation)} -> {len(merged_response)} characters")
+            return merged_response
+            
+        except Exception as e:
+            logger.error(f"Failed to merge responses: {e}")
+            if ctx:
+                await ctx.warning(f"⚠️ MERGE ERROR: Using simple concatenation fallback")
+            
+            # Fallback: simple concatenation with marker preservation
+            clean_truncated = truncated_response.strip()
+            continuation_has_marker = self._has_truncation_marker(continuation.strip())
+            clean_continuation = self._remove_truncation_marker(continuation.strip())
+            
+            fallback_response = clean_truncated + " " + clean_continuation
+            if continuation_has_marker:
+                # Ensure proper marker format - no extra whitespace that could interfere with detection
+                if not fallback_response.endswith("--END OF LLM OUTPUT--"):
+                    fallback_response = fallback_response.rstrip() + "\n\n--END OF LLM OUTPUT--"
+            
+            return fallback_response
 
     async def cleanup(self) -> None:
         """

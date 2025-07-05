@@ -50,7 +50,7 @@
 from fastmcp import Context
 from ..main import server
 from ..helpers.content_loaders import load_embedded_content
-from ..helpers.http_formatter import format_http_section, ContentCriticality, HttpPath
+from ..helpers.async_http_formatter import format_http_section, XAsyncContentCriticality, XAsyncHttpPath
 from ..constants import get_jesse_rule_files, get_jesse_rule_mapping
 
 
@@ -87,7 +87,7 @@ async def get_knowledge_management_rule(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.CRITICAL,
+            criticality=XAsyncContentCriticality.CRITICAL,
             description="Knowledge Management System Rules and Directives",
             section_type="framework-rule",
             location="file://{CLINE_RULES}/JESSE_KNOWLEDGE_MANAGEMENT.md",
@@ -130,7 +130,7 @@ async def get_hints_rule(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.CRITICAL,
+            criticality=XAsyncContentCriticality.CRITICAL,
             description="AI Assistant Enforcement Rules and Directives",
             section_type="framework-rule",
             location="file://{CLINE_RULES}/JESSE_HINTS.md",
@@ -173,7 +173,7 @@ async def get_code_comments_rule(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.CRITICAL,
+            criticality=XAsyncContentCriticality.CRITICAL,
             description="Code Documentation Standards and Requirements",
             section_type="framework-rule",
             location="file://{CLINE_RULES}/JESSE_CODE_COMMENTS.md",
@@ -216,7 +216,7 @@ async def get_code_generation_rule(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.CRITICAL,
+            criticality=XAsyncContentCriticality.CRITICAL,
             description="Code Generation Standards and Best Practices",
             section_type="framework-rule",
             location="file://{CLINE_RULES}/JESSE_CODE_GENERATION.md",
@@ -259,7 +259,7 @@ async def get_markdown_rule(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.CRITICAL,
+            criticality=XAsyncContentCriticality.CRITICAL,
             description="Markdown File Management Standards",
             section_type="framework-rule",
             location="file://{CLINE_RULES}/JESSE_MARKDOWN.md",
@@ -302,7 +302,7 @@ async def get_scratchpad_rule(ctx: Context) -> str:
         return format_http_section(
             content=content,
             content_type="text/markdown",
-            criticality=ContentCriticality.CRITICAL,
+            criticality=XAsyncContentCriticality.CRITICAL,
             description="Scratchpad Directory Management Standards",
             section_type="framework-rule",
             location="file://{CLINE_RULES}/JESSE_SCRATCHPAD.md",

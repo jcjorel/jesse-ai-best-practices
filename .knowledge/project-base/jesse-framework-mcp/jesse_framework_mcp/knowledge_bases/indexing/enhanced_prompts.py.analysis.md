@@ -1,91 +1,101 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/enhanced_prompts.py -->
-<!-- Cached On: 2025-07-04T00:47:02.021854 -->
-<!-- Source Modified: 2025-07-04T00:13:35.334281 -->
+<!-- Cached On: 2025-07-05T13:04:05.657682 -->
+<!-- Source Modified: 2025-07-05T11:28:34.701108 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file implements a comprehensive debug handler for LLM interaction persistence and replay within the JESSE Framework MCP knowledge base system, providing capture and reuse capabilities for debugging markdown formatting issues and template generation problems. The system delivers complete LLM interaction capture with structured file organization, replay functionality for deterministic output reuse, and pipeline stage organization for clear debugging workflows. Key semantic entities include `DebugHandler` class for debug orchestration, `LLMInteraction` dataclass for structured interaction data, `PIPELINE_STAGES` dictionary defining stage organization, `capture_stage_llm_output()` method for stage-specific capture, `get_stage_replay_response()` method for predictable replay, `_normalize_path_for_filename()` method for deterministic filename generation, memory cache system for performance optimization, and comprehensive error handling throughout all operations evidenced by methods like `capture_llm_interaction()`, `get_replay_response()`, and debug artifact management capabilities.
+This file provides specialized LLM prompt templates for generating hierarchical semantic trees within the JESSE Framework Knowledge Bases Hierarchical Indexing System, focusing on architectural analysis and design pattern extraction. The file enables structured knowledge base generation through the `EnhancedPrompts` class which contains prompt templates for file analysis, directory analysis, global summaries, and structural compliance review. Key semantic entities include `EnhancedPrompts` class for prompt management, `file_analysis_prompt` template for individual file processing, `directory_analysis_prompt` template for module organization analysis, `global_summary_prompt` template for system-wide synthesis, reviewer prompt templates for quality assurance, `get_portable_path()` function for cross-platform path compatibility, `logging` module for operational tracking, and `pathlib.Path` for modern path handling. The technical architecture implements a hierarchical semantic tree specification with 8 levels (headers 4-11) ensuring progressive knowledge loading from high-level purpose to detailed implementation specifics.
 
 ##### Main Components
 
-Contains `DebugHandler` class as the primary debug orchestrator with initialization, capture, replay, and management methods. Includes `LLMInteraction` dataclass with structured fields for `interaction_id`, `conversation_id`, `prompt`, `response`, `timestamp`, `processing_type`, and optional context fields. Implements `PIPELINE_STAGES` class variable defining five-stage processing organization from file analysis through global summary. Provides core methods including `capture_stage_llm_output()`, `get_stage_replay_response()`, `capture_llm_interaction()`, `get_replay_response()`, and utility methods for filename normalization, directory management, and debug artifact organization. Implements memory cache system and file system persistence with comprehensive error handling throughout all operations.
+The file contains the `EnhancedPrompts` class with six primary prompt template attributes: `file_analysis_prompt` for individual file architectural analysis, `directory_analysis_prompt` for module organization and design relationships, `global_summary_prompt` for system-wide architectural synthesis, `file_analysis_reviewer_prompt` for structural compliance checking, `directory_analysis_reviewer_prompt` for directory analysis validation, and `global_summary_reviewer_prompt` for global summary compliance verification. The class includes two shared specification constants: `SEMANTIC_ENTITY_USAGE_SPEC` defining technical entity naming requirements and `LEVEL_8_FORMATTING_SPEC` standardizing external dependency documentation format. Six public methods provide formatted prompt generation: `get_file_analysis_prompt()`, `get_directory_analysis_prompt()`, `get_global_summary_prompt()`, and three corresponding reviewer prompt methods for quality assurance validation.
 
 ###### Architecture & Design
 
-Implements stage-based debug architecture with pipeline phase separation and predictable filename generation for deterministic debugging workflows. Uses dual-mode operation supporting both memory-only mode for performance and file system persistence for comprehensive debugging. Employs lazy initialization minimizing overhead when debug mode is disabled and automatic directory structure creation for stage-based organization. Integrates memory cache system for optimal performance with file system fallback for persistent debugging sessions. Follows separation of concerns with distinct capture and replay functionality, comprehensive error handling preventing debug failures from impacting main operations.
+The architecture follows a template-based prompt generation pattern with shared specification components ensuring consistency across all prompt types. The design implements a hierarchical semantic tree specification with strict level organization (4-11) and no-redundancy rules between levels, enabling progressive knowledge loading based on developer needs. The class uses composition over inheritance with shared specification constants (`SEMANTIC_ENTITY_USAGE_SPEC`, `LEVEL_8_FORMATTING_SPEC`) applied across all prompt templates through string formatting. The reviewer pattern implements structural compliance checking with binary output (COMPLIANT/corrected version) for automated quality assurance. The portable path integration ensures cross-platform compatibility through `get_portable_path()` function usage in all path-related prompt generation.
 
 ####### Implementation Approach
 
-Uses predictable filename generation through path normalization enabling deterministic debug file locations and reliable replay functionality. Implements stage-based directory organization with five distinct pipeline stages for clear debugging workflow understanding. Employs hash-based interaction identification using MD5 prompt hashing combined with timestamps for unique interaction tracking. Uses comprehensive metadata preservation including processing context, file paths, and timing information for complete debugging context. Implements dual caching strategy with memory cache for performance and file system persistence for cross-session debugging continuity.
+The implementation uses Python string formatting with template placeholders (`{file_path}`, `{file_content}`, `{directory_path}`, `{assembled_content}`) for dynamic prompt generation. Error handling employs try-catch blocks with fallback to original paths when portable path conversion fails, ensuring robust operation across different environments. The prompt templates include comprehensive formatting specifications with markdown header requirements (####-###########), code snippet formatting rules with language identifiers, and directory name trailing slash requirements. The class initialization logs successful setup and each method logs debug information for operational tracking. The reviewer prompts implement structural-only validation with explicit scope limitations preventing semantic assessment while ensuring formatting compliance.
 
-######## Code Usage Examples
-
-Initialize the debug handler with stage-based organization and configure capture and replay modes. This establishes the foundation for comprehensive LLM interaction debugging:
-
-```python
-debug_handler = DebugHandler(
-    debug_enabled=True,
-    debug_output_directory=Path("/project/debug/"),
-    enable_replay=True
-)
-```
-
-Capture LLM output with stage-specific organization and predictable filename generation. This demonstrates stage-aware capture enabling deterministic replay debugging:
-
-```python
-debug_handler.capture_stage_llm_output(
-    stage="stage_1_file_analysis",
-    prompt="Analyze this file...",
-    response="File analysis response...",
-    file_path=Path("/project/src/module.py")
-)
-```
-
-Retrieve saved LLM responses for replay functionality using predictable filename lookup. This enables deterministic debugging without redundant LLM calls:
-
-```python
-replay_response = debug_handler.get_stage_replay_response(
-    stage="stage_1_file_analysis",
-    file_path=Path("/project/src/module.py")
-)
-if replay_response:
-    # Use saved response instead of calling LLM
-    return replay_response
-```
-
-######### External Dependencies & Integration Points
+######## External Dependencies & Integration Points
 
 **→ Inbound:**
-
-- `json` (standard library) - debug metadata serialization and structured data persistence
-- `pathlib.Path` (standard library) - debug file organization and cross-platform path handling
-- `datetime` (standard library) - timestamp generation for debug artifact organization
-- `hashlib` (standard library) - content hashing for duplicate detection and interaction identification
-- `typing.Dict, Any, Optional, NamedTuple` (standard library) - type annotations for debug data structures
-- `dataclasses.dataclass, asdict` (standard library) - structured data containers and serialization
-- `logging` (standard library) - structured logging for debug operations and error reporting
-- `tempfile` (standard library) - temporary directory creation for debug artifact storage
+- `jesse_framework_mcp.helpers.path_utils:get_portable_path` - cross-platform path conversion for prompt compatibility
+- `logging` (external library) - operational tracking and debug information for prompt generation
+- `typing.Dict` (external library) - type hints for method parameters and return values
+- `typing.Any` (external library) - flexible type annotations for prompt template parameters
+- `typing.List` (external library) - type annotations for collection parameters
+- `pathlib.Path` (external library) - modern path handling for file and directory operations
 
 **← Outbound:**
+- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder:KnowledgeBuilder` - consumes generated prompts for LLM processing
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - uses prompts for directory structure analysis
+- `LLM processing systems` - consume formatted prompts for hierarchical semantic tree generation
+- `knowledge base files` - generated content follows prompt specifications for structured knowledge storage
 
-- `knowledge_builder.KnowledgeBuilder` - consumes debug handler for LLM interaction capture and replay
-- `hierarchical_indexer.HierarchicalIndexer` - uses debug handler for debugging indexing operations
-- Debug artifact consumers - systems that process generated debug files and interaction data
-- Manual debugging workflows - human processes that inspect and modify debug artifacts
+**⚡ System role and ecosystem integration:**
+- **System Role**: Core prompt template provider for JESSE Framework Knowledge Bases Hierarchical Indexing System, defining the structured analysis approach for all knowledge generation
+- **Ecosystem Position**: Central component that standardizes knowledge extraction methodology across file analysis, directory analysis, and global summary generation workflows
+- **Integration Pattern**: Used by knowledge building components during indexing operations, LLM processing systems for structured analysis, and quality assurance systems for compliance validation
 
-**⚡ Integration:**
+######### Edge Cases & Error Handling
 
-- Protocol: Direct Python imports and method calls with structured debug data containers
-- Interface: Class methods for capture and replay operations with file system persistence
-- Coupling: Loose coupling through optional debug mode and graceful degradation on failures
+Error handling includes portable path conversion failures with graceful fallback to original paths and warning logging, ensuring prompt generation continues even when cross-platform path conversion encounters issues. The implementation handles missing or invalid file content through template parameter validation and comprehensive error logging with specific failure context. Prompt generation failures raise `RuntimeError` with detailed error context for debugging and operational monitoring. The reviewer prompts handle truncation detection through mandatory end-of-output markers, returning "TRUNCATED" when output is incomplete. Template formatting errors are caught and re-raised with enhanced context information including the specific prompt type and parameters that caused the failure.
 
-########## Edge Cases & Error Handling
+########## Internal Implementation Details
 
-Handles debug directory creation failures through comprehensive error handling with graceful degradation to memory-only mode when file system operations fail. Addresses file system permission issues by disabling debug persistence while maintaining memory cache functionality for continued operation. Manages corrupted debug files through individual file error handling preventing partial loading failures from breaking entire debug session restoration. Handles concurrent access scenarios through atomic file operations and proper error logging when debug artifacts are inaccessible. Provides comprehensive fallback mechanisms ensuring debug failures never impact main knowledge base processing operations.
+The class uses class-level constants for shared specifications to implement DRY principles and ensure consistency across all prompt templates. String formatting employs Python's `str.format()` method with named placeholders for clear parameter mapping and maintainable template structure. The logging implementation uses module-level logger with debug-level messages for operational tracking without performance impact in production. Error handling uses chained exceptions (`raise ... from e`) to preserve original error context while providing enhanced debugging information. The portable path integration includes exception handling with fallback behavior, ensuring robust operation when path conversion utilities encounter filesystem or permission issues. Template validation occurs during formatting with immediate error reporting for missing or invalid parameters.
 
-########### Internal Implementation Details
+########### Code Usage Examples
 
-Uses MD5 hash-based interaction identification combining prompt content hash with timestamp for unique interaction tracking across debugging sessions. Implements normalized path conversion replacing path separators and special characters with underscores for cross-platform filename compatibility. Maintains dual cache system with memory cache for immediate access and file system persistence for cross-session debugging continuity. Uses JSON serialization for metadata persistence with human-readable debug artifact organization supporting manual inspection and modification. Implements incremental debug index updates rather than full rebuilds for performance optimization during active debugging sessions.
+Basic file analysis prompt generation demonstrates the standard workflow for creating structured analysis prompts. This pattern provides the foundation for all file-based knowledge extraction in the indexing system.
+
+```python
+# Generate file analysis prompt with portable path support
+enhanced_prompts = EnhancedPrompts()
+file_path = Path("src/components/Button.tsx")
+file_content = "export default function Button() { return <button>Click</button>; }"
+file_size = len(file_content.encode('utf-8'))
+
+prompt = enhanced_prompts.get_file_analysis_prompt(
+    file_path=file_path,
+    file_content=file_content,
+    file_size=file_size
+)
+# Returns formatted prompt ready for LLM processing with hierarchical structure requirements
+```
+
+Directory analysis prompt generation enables module-level architectural analysis with child content integration. This approach supports bottom-up knowledge building from individual files to complete system understanding.
+
+```python
+# Generate directory analysis prompt with child content summary
+directory_path = Path("src/components/")
+file_count = 15
+subdirectory_count = 3
+child_content_summary = "React components with TypeScript definitions and styling"
+
+prompt = enhanced_prompts.get_directory_analysis_prompt(
+    directory_path=directory_path,
+    file_count=file_count,
+    subdirectory_count=subdirectory_count,
+    child_content_summary=child_content_summary
+)
+# Returns structured prompt for hierarchical directory analysis
+```
+
+Quality assurance workflow demonstrates the reviewer pattern for ensuring structural compliance. This pattern enables automated validation and correction of generated content without manual intervention.
+
+```python
+# Quality assurance workflow with automatic compliance checking
+generated_analysis = "#### Functional Intent & Features\nFile analysis content..."
+reviewer_prompt = enhanced_prompts.get_file_analysis_reviewer_prompt(generated_analysis)
+
+# LLM processes reviewer prompt and returns either "COMPLIANT" or corrected version
+review_result = llm_process(reviewer_prompt)
+if review_result != "COMPLIANT":
+    corrected_content = review_result  # Use corrected version
+```

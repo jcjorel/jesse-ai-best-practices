@@ -163,7 +163,7 @@ class StrandsClaude4Driver:
         # Check cache first if enabled
         cached_response = None
         if use_cache and self.config.enable_prompt_caching:
-            cached_response = await self.conversation_manager.check_cached_response(message)
+            cached_response = await self.conversation_manager.check_cached_response(message, conversation_id)
             if cached_response:
                 logger.info(f"Retrieved cached response for conversation: {conversation_id}")
                 return ConversationResponse(
@@ -195,7 +195,7 @@ class StrandsClaude4Driver:
         
         # Cache the response if caching is enabled
         if use_cache and self.config.enable_prompt_caching and not cached_response:
-            await self.conversation_manager.cache_response(message, response_content)
+            await self.conversation_manager.cache_response(message, conversation_id, response_content)
         
         return ConversationResponse(
             content=response_content,
@@ -212,7 +212,7 @@ class StrandsClaude4Driver:
         
         # Check cache first if enabled
         if use_cache and self.config.enable_prompt_caching:
-            cached_response = await self.conversation_manager.check_cached_response(message)
+            cached_response = await self.conversation_manager.check_cached_response(message, conversation_id)
             if cached_response:
                 logger.info(f"Streaming cached response for conversation: {conversation_id}")
                 # Return cached response as single chunk
@@ -249,7 +249,7 @@ class StrandsClaude4Driver:
         
         # Cache the response if caching is enabled
         if use_cache and self.config.enable_prompt_caching:
-            await self.conversation_manager.cache_response(message, full_response)
+            await self.conversation_manager.cache_response(message, conversation_id, full_response)
     
     def _build_conversation_prompt(self, messages: List[Dict[str, Any]], new_message: str) -> str:
         """Build a prompt from conversation history."""

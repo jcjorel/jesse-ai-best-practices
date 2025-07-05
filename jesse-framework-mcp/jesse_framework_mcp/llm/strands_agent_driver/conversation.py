@@ -32,9 +32,9 @@ class PromptCache:
         self._cache: Dict[str, Dict[str, Any]] = {}
         self._access_times: Dict[str, float] = {}
     
-    def _generate_key(self, prompt: str, config_hash: str) -> str:
-        """Generate cache key from prompt and configuration."""
-        combined = f"{prompt}:{config_hash}"
+    def _generate_key(self, prompt: str, conversation_id: str, config_hash: str) -> str:
+        """Generate cache key from prompt, conversation_id, and configuration."""
+        combined = f"{prompt}:{conversation_id}:{config_hash}"
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
     
     def _is_expired(self, key: str) -> bool:
@@ -67,9 +67,9 @@ class PromptCache:
             self._cache.pop(key, None)
             self._access_times.pop(key, None)
     
-    async def get(self, prompt: str, config_hash: str) -> Optional[str]:
+    async def get(self, prompt: str, conversation_id: str, config_hash: str) -> Optional[str]:
         """Get cached response for prompt."""
-        key = self._generate_key(prompt, config_hash)
+        key = self._generate_key(prompt, conversation_id, config_hash)
         
         if key not in self._cache or self._is_expired(key):
             return None
@@ -77,12 +77,12 @@ class PromptCache:
         self._access_times[key] = time.time()
         return self._cache[key].get("response")
     
-    async def set(self, prompt: str, config_hash: str, response: str):
+    async def set(self, prompt: str, conversation_id: str, config_hash: str, response: str):
         """Cache response for prompt."""
         self._evict_expired()
         self._evict_lru()
         
-        key = self._generate_key(prompt, config_hash)
+        key = self._generate_key(prompt, conversation_id, config_hash)
         current_time = time.time()
         
         self._cache[key] = {
@@ -303,24 +303,24 @@ class ConversationManager:
         
         return self.conversations[conversation_id]
     
-    async def check_cached_response(self, prompt: str) -> Optional[str]:
+    async def check_cached_response(self, prompt: str, conversation_id: str) -> Optional[str]:
         """Check if there's a cached response for the prompt."""
         if not self.cache:
             return None
         
         try:
-            return await self.cache.get(prompt, self.config_hash)
+            return await self.cache.get(prompt, conversation_id, self.config_hash)
         except Exception as e:
             logger.warning(f"Cache retrieval error: {e}")
             return None
     
-    async def cache_response(self, prompt: str, response: str) -> None:
+    async def cache_response(self, prompt: str, conversation_id: str, response: str) -> None:
         """Cache a response for the prompt."""
         if not self.cache:
             return
         
         try:
-            await self.cache.set(prompt, self.config_hash, response)
+            await self.cache.set(prompt, conversation_id, self.config_hash, response)
         except Exception as e:
             logger.warning(f"Cache storage error: {e}")
     

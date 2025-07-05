@@ -1,94 +1,114 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/tests/test_http_formatting.py -->
-<!-- Cached On: 2025-07-04T00:19:57.647034 -->
-<!-- Source Modified: 2025-07-03T10:08:53.224026 -->
+<!-- Cached On: 2025-07-05T12:13:33.127803 -->
+<!-- Source Modified: 2025-07-05T12:00:15.065944 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-Provides comprehensive test coverage for HTTP formatting infrastructure within the JESSE Framework MCP Server, validating HTTP section generation, multi-section response assembly, and cross-platform path resolution capabilities. Delivers extensive validation of `format_http_section()` and `format_multi_section_response()` functions with byte-perfect content-length calculation, criticality classification, and portable path variable substitution. Enables developers to verify HTTP formatting correctness before deployment through automated testing of edge cases, error conditions, and integration scenarios. Key semantic entities include `format_http_section()` function, `format_multi_section_response()` function, `ContentCriticality` enum with `validate()` method, `HttpPath` class with dual-path functionality, `resolve_portable_path()` utility, `pytest` testing framework, `HTTP_BOUNDARY_MARKER` constant, `CONTENT_TYPES` mapping, `SECTION_TYPES` classification, `RULE_CRITICALITY_MAP` configuration, and environment variables `{PROJECT_ROOT}`, `{HOME}`, `{CLINE_RULES}`, `{CLINE_WORKFLOWS}` for portable path resolution.
+Test suite organization and backward compatibility reference file for JESSE Framework MCP server HTTP formatting infrastructure. Provides centralized import aggregation from three specialized test modules (`test_http_core_functionality.py`, `test_http_section_formatting.py`, `test_http_path_integration.py`) maintaining existing test runner compatibility after large test file refactoring. Features graceful import error handling with placeholder classes and comprehensive re-export functionality. Key semantic entities include `TestHttpStatus`, `TestHttpErrorHandler`, `TestContentCriticality`, `TestHTTPSectionFormatting`, `TestMultiSectionResponse`, `TestHttpPath`, `TestPortablePathResolution`, `__all__` export list, `ImportError` exception handling, `warnings.warn()` for diagnostic messaging, and relative import patterns using dot notation. Technical implementation focuses on backward compatibility preservation through import aggregation and fallback mechanisms.
 
 ##### Main Components
 
-Contains eight primary test classes: `TestContentCriticality` for enum validation and case normalization, `TestPortablePathResolution` for cross-platform path variable substitution, `TestHttpStatusLines` for HTTP/1.1 status line functionality with automatic error detection, `TestHTTPSectionFormatting` for comprehensive section formatting validation, `TestMultiSectionResponse` for multi-section response assembly, `TestHttpPath` for dual-path storage and filesystem operations, `TestIntegrationWithConstants` for framework constant integration, and `TestPerformanceAndEdgeCases` for large content and special character handling. Each test class provides focused validation of specific HTTP formatting aspects with comprehensive parameter testing and error condition coverage.
+- Import aggregation from `test_http_core_functionality` module containing `TestHttpStatus`, `TestHttpErrorHandler`, `TestContentCriticality` classes
+- Import aggregation from `test_http_section_formatting` module containing `TestHttpStatusLines`, `TestHTTPSectionFormatting`, `TestMultiSectionResponse`, `TestExtractHttpSections`, `TestFormatHttpResponse`, `TestIntegrationWithConstants` classes
+- Import aggregation from `test_http_path_integration` module containing `TestPortablePathResolution`, `TestHttpPath`, `TestPathContentHandling`, `TestPerformanceAndEdgeCases` classes
+- `__all__` export list defining public API for backward compatibility
+- Exception handling block with `ImportError` catching and `warnings.warn()` messaging
+- Placeholder class definitions providing empty test classes when imports fail
 
 ###### Architecture & Design
 
-Implements comprehensive test architecture using `pytest` framework with class-based test organization for logical grouping of related functionality. Uses temporary file creation through `tempfile.NamedTemporaryFile` for filesystem-based testing without permanent side effects. Employs parametric testing patterns for validating multiple input combinations and edge cases systematically. Separates unit testing of individual components from integration testing with framework constants and real-world scenarios. Follows defensive testing principles with explicit validation of error conditions, type checking, and boundary value analysis.
+Implements aggregator pattern consolidating distributed test modules into single import point. Design uses try-catch import strategy with graceful degradation to placeholder classes preventing import failures. Architecture separates concerns through specialized test modules while maintaining unified access interface. Uses relative import syntax with dot notation for module-relative imports. Implements comprehensive re-export strategy through `__all__` list ensuring all test classes remain discoverable. Error handling architecture provides diagnostic warnings without breaking test discovery mechanisms. Placeholder class design maintains class structure with docstring references to actual implementation locations.
 
 ####### Implementation Approach
 
-Testing strategy employs direct function invocation with comprehensive parameter validation and output inspection through string pattern matching and header parsing. Uses temporary file manipulation with permission modification for testing access control scenarios and error handling paths. Implements cross-platform compatibility testing through environment variable resolution and path normalization validation. Applies systematic testing of all supported content types, section types, and criticality levels from framework constants. Utilizes byte-level content length validation for UTF-8 encoded international content and special character handling.
+Uses Python relative import mechanism with `from .module_name import` syntax for sibling module access. Implements comprehensive exception handling wrapping all imports in single try-catch block. Uses `warnings.warn()` with `ImportWarning` category for non-fatal diagnostic messaging. Implements placeholder class generation with descriptive docstrings indicating actual test locations. Uses `__all__` list for explicit public API definition enabling controlled re-export. Implements graceful fallback strategy creating empty classes with pass statements when imports fail. Documentation string provides comprehensive module organization explanation and usage guidance for developers.
 
-######## Code Usage Examples
-
-Execute comprehensive HTTP formatting validation with all parameter combinations. This demonstrates complete test coverage for section formatting functionality:
-
-```python
-# Run complete test suite for HTTP formatting validation
-pytest test_http_formatting.py -v
-```
-
-Test basic HTTP section formatting with required parameters. This validates fundamental formatting produces correct headers and content structure:
-
-```python
-# Test basic HTTP section formatting functionality
-result = format_http_section(
-    content="# Test Content\nThis is a test.",
-    content_type="text/markdown",
-    criticality="CRITICAL",
-    description="Test Content",
-    section_type="framework-rule",
-    location="file://{HOME}/test.md"
-)
-assert "X-ASYNC-HTTP/1.1 200 OK" in result
-assert "Content-Location: file://{HOME}/test.md" in result
-```
-
-Validate HttpPath dual-path functionality with variable resolution. This tests portable path storage while maintaining filesystem operation compatibility:
-
-```python
-# Test HttpPath dual-path functionality
-original_path = "file://{PROJECT_ROOT}/.knowledge/test.md"
-http_path = HttpPath(original_path)
-assert http_path.get_original_path() == original_path
-assert "{PROJECT_ROOT}" not in str(http_path)
-assert str(Path.cwd()) in str(http_path)
-```
-
-######### External Dependencies & Integration Points
+######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `pytest` (external library) - testing framework for test execution and assertion validation
-- `pathlib.Path` (standard library) - cross-platform path manipulation and filesystem operations
-- `tempfile` (standard library) - temporary file creation for filesystem testing scenarios
-- `stat` (standard library) - file permission manipulation for access control testing
-- `re` (standard library) - regular expression pattern matching for timestamp format validation
-- `jesse_framework_mcp.helpers.http_formatter:format_http_section` - primary HTTP section formatting function
-- `jesse_framework_mcp.helpers.http_formatter:format_multi_section_response` - multi-section response assembly
-- `jesse_framework_mcp.helpers.http_formatter:ContentCriticality` - criticality validation enum
-- `jesse_framework_mcp.helpers.http_formatter:HttpPath` - dual-path storage class
-- `jesse_framework_mcp.helpers.path_utils:resolve_portable_path` - portable path variable resolution
-- `jesse_framework_mcp.constants:HTTP_BOUNDARY_MARKER` - section boundary delimiter
-- `jesse_framework_mcp.constants:CONTENT_TYPES` - content type mapping
-- `jesse_framework_mcp.constants:SECTION_TYPES` - section classification mapping
-- `jesse_framework_mcp.constants:RULE_CRITICALITY_MAP` - rule file criticality configuration
+- `tests/test_http_core_functionality.py:TestHttpStatus` - HTTP status code and utility test classes
+- `tests/test_http_core_functionality.py:TestHttpErrorHandler` - Error handling and exception mapping tests
+- `tests/test_http_section_formatting.py:TestHTTPSectionFormatting` - HTTP section formatting functionality tests
+- `tests/test_http_path_integration.py:TestHttpPath` - HttpPath dual-path functionality tests
+- `warnings` (external library) - Warning system for import failure diagnostics
+- `ImportError` (external library) - Exception handling for failed module imports
 
 **← Outbound:**
-- `CI/CD pipelines` - automated test execution for deployment validation
-- `development workflows/` - pre-commit testing and code quality assurance
-- `HTTP formatting validation/` - production readiness verification for MCP server responses
+- `pytest` test discovery systems - Discovers and executes aggregated test classes
+- `test_runners/` - CI/CD systems consuming unified test interface
+- `coverage_tools/` - Code coverage analysis tools accessing test classes
+- `ide_integrations/` - Development environment test discovery mechanisms
 
-**⚡ Integration:**
-- Protocol: Direct Python imports with function invocation and assertion-based validation
-- Interface: Function calls, class instantiation, and property access with exception handling
-- Coupling: Tight coupling with HTTP formatter modules and loose coupling with external testing infrastructure
+**⚡ System role and ecosystem integration:**
+- **System Role**: Central test aggregation point maintaining backward compatibility after test suite refactoring while enabling modular test organization
+- **Ecosystem Position**: Core testing infrastructure component bridging legacy test runners with new modular test architecture
+- **Integration Pattern**: Used by pytest discovery, CI/CD pipelines, and development tools requiring unified test class access without modification to existing test execution workflows
 
-########## Edge Cases & Error Handling
+######### Edge Cases & Error Handling
 
-Handles empty content validation with descriptive `ValueError` messages and parameter validation for all required fields. Manages file system permission testing across different operating systems with graceful test skipping when permissions cannot be reliably tested. Addresses Unicode content handling with byte-perfect content length calculation for international characters and emoji. Provides comprehensive error testing for missing files, permission denied scenarios, and invalid parameter types with specific error message validation. Implements cross-platform path resolution testing with environment variable substitution and handles temporary file cleanup with permission restoration for robust test isolation.
+Handles `ImportError` exceptions when specialized test modules are missing or corrupted through comprehensive try-catch wrapping. Provides diagnostic `warnings.warn()` messaging with specific module names and helpful resolution guidance. Creates placeholder classes with descriptive docstrings preventing test discovery failures when imports fail. Handles partial import failures where some modules succeed and others fail through individual class imports. Manages circular import scenarios through relative import syntax avoiding absolute path dependencies. Provides graceful degradation maintaining test runner compatibility even with missing test modules. Handles module path resolution issues in different execution contexts through dot notation relative imports.
 
-########### Internal Implementation Details
+########## Internal Implementation Details
 
-Uses `pytest.raises()` context manager for exception testing with specific error message validation and exception type verification. Implements temporary file creation with explicit encoding specification and cleanup through `unlink(missing_ok=True)` for robust test isolation. Employs string pattern matching for HTTP header validation and content verification with line-by-line parsing for header ordering validation. Maintains test data isolation through class-based organization and temporary directory usage with automatic cleanup. Uses RFC 7231 timestamp format validation through regular expression patterns and implements byte-level content length verification for UTF-8 encoded content accuracy.
+Uses `try-except ImportError` block wrapping all relative imports with specific error message construction including failed module names. Implements `warnings.warn()` with `ImportWarning` category and detailed diagnostic message including resolution steps. Creates placeholder classes using `class ClassName: pass` pattern with docstring references to actual implementation files. Uses `__all__` list containing 14 test class names organized by functional categories (core, formatting, integration). Implements relative import syntax `from .module_name import` requiring package context execution. Placeholder classes maintain identical names to imported classes ensuring test discovery compatibility. Documentation string uses triple-quote format with detailed module organization explanation and developer guidance.
+
+########### Code Usage Examples
+
+Essential patterns for test aggregation and backward compatibility maintenance. These examples demonstrate import aggregation strategies and error handling mechanisms for maintaining test suite organization.
+
+```python
+# Comprehensive import aggregation with error handling for test module organization
+try:
+    from .test_http_core_functionality import (
+        TestHttpStatus,
+        TestHttpErrorHandler,
+        TestContentCriticality
+    )
+    from .test_http_section_formatting import (
+        TestHttpStatusLines,
+        TestHTTPSectionFormatting
+    )
+except ImportError as e:
+    warnings.warn(f"Could not import split test modules: {e}")
+```
+
+Backward compatibility export list configuration ensures test discovery systems continue working without modification. This pattern maintains API stability while enabling internal reorganization.
+
+```python
+# Backward compatibility export list ensuring test discovery works unchanged
+__all__ = [
+    'TestHttpStatus',
+    'TestHttpErrorHandler', 
+    'TestContentCriticality',
+    'TestHttpStatusLines',
+    'TestHTTPSectionFormatting'
+]
+```
+
+Placeholder class creation prevents import failures while providing clear guidance to developers. This fallback mechanism maintains test runner compatibility even when specialized modules are missing.
+
+```python
+# Placeholder class creation preventing import failures while providing guidance
+class TestHttpStatus:
+    """Placeholder - actual tests in test_http_core_functionality.py"""
+    pass
+
+class TestHttpErrorHandler:
+    """Placeholder - actual tests in test_http_core_functionality.py"""
+    pass
+```
+
+Diagnostic warning system provides specific resolution guidance for missing test modules. This approach helps developers quickly identify and resolve import issues during development.
+
+```python
+# Diagnostic warning with specific resolution guidance for missing modules
+warnings.warn(
+    f"Could not import split test modules: {e}. "
+    "Ensure test_http_core_functionality.py, test_http_section_formatting.py, "
+    "and test_http_path_integration.py are present in the tests/ directory.",
+    ImportWarning
+)
+```

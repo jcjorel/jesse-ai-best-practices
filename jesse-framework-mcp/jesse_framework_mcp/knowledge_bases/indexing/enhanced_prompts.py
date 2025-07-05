@@ -31,10 +31,15 @@
 # - Analysis depth must be comprehensive enough for technical decision-making and code understanding
 ###############################################################################
 # [Dependencies]
-# <codebase>: .markdown_template_engine - Incremental markdown engine for template operations
+# <codebase>: .knowledge_file_generator - Knowledge file generator for template operations
 # <system>: typing - Type hints for prompt template parameters and response structures
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-04T13:26:00Z : Reordered hierarchical levels moving code snippets from Level 8 to Level 11 and shifting other levels by CodeAssistant
+# * Moved current Level 8 (Code snippets and usage examples) to new Level 11 for better knowledge progression
+# * Shifted Level 9 (External dependencies) to Level 8, Level 10 (Edge cases) to Level 9, Level 11 (Internal implementation) to Level 10
+# * Updated all prompt templates, specifications, and references to reflect new level ordering
+# * Renamed LEVEL_9_FORMATTING_SPEC to LEVEL_8_FORMATTING_SPEC to match new external dependencies level
 # 2025-07-04T08:36:00Z : Renamed Integration section to "System role and ecosystem integration" with enhanced consumer analysis by CodeAssistant
 # * Updated Level 9 section header from "Integration" to "System role and ecosystem integration" for clearer positioning context
 # * Enhanced Integration Pattern to focus on "Who is using this file and how" including humans, external processes, and codebase parts
@@ -79,10 +84,10 @@ HIERARCHY DESIGN PRINCIPLES:
    - Level 5: Main components and responsibilities  
    - Level 6: Architecture and design patterns
    - Level 7: Implementation approach, usage patterns and key algorithms
-   - Level 8: Code snippets and usage examples (for code files)
-   - Level 9: External dependencies and integration points (both inbound and outbound)
-   - Level 10: Edge cases, error handling, and debugging
-   - Level 11: Internal implementation details and maintenance notes
+   - Level 8: External dependencies and integration points (both inbound and outbound)
+   - Level 9: Edge cases, error handling, and debugging
+   - Level 10: Internal implementation details and maintenance notes
+   - Level 11: Code snippets and usage examples (for code files)
 
 3. **Content-Type Differentiation**:
    - **Code Files**: Hierarchy based on developer needs from "why exists" to "code snippets 
@@ -124,11 +129,20 @@ HIERARCHY DESIGN PRINCIPLES:
     are **ALWAYS** properly enclosed in markdown code blocks to prevent structural parsing conflicts with 
     hierarchical semantic tree headers.
 
-14. **Level 9 External Dependencies Formatting Specification**: Level 9 must follow a standardized format
+14. **Truncation Detection**: All LLM prompt generated outputs (main and reviewer) must finish with exactly 
+    this single line to detect LLM output truncation:
+    ```
+    --END OF LLM OUTPUT--
+    ```
+    Reviewer prompts will return "TRUNCATED" if this line is not detected. When LLM output truncation is 
+    detected, the system will retry the LLM call once before failing the analysis completely. This marker 
+    line will be removed when inserting content into the final knowledge base file.
+
+15. **Level 8 External Dependencies Formatting Specification**: Level 8 must follow a standardized format
     for external dependencies and integration points. This specification ensures consistent, actionable
     dependency information across all generated knowledge bases.
 
-**LEVEL 9 REQUIRED FORMAT STRUCTURE:**
+**LEVEL 8 REQUIRED FORMAT STRUCTURE:**
 
 **For Code Files:**
 ```
@@ -215,7 +229,7 @@ USAGE PATTERN:
 LLM tools can programmatically select appropriate detail levels:
 - Level 4-5: Quick file understanding and navigation
 - Level 4-7: Architecture comprehension and design decisions  
-- Level 4-9: Implementation understanding and usage patterns
+- Level 4-10: Implementation understanding and usage patterns
 - Level 4-11: Complete technical knowledge for maintenance and modification
 
 This approach optimizes context window usage while providing comprehensive knowledge depth
@@ -298,9 +312,9 @@ allow clear identification**.
 - **VISUAL FORMATTING**: Surround all entities with backquotes for clear identification
 """
 
-    # Level 9 External Dependencies formatting specification (DRY principle)
-    LEVEL_9_FORMATTING_SPEC = """
-**LEVEL 9 EXTERNAL DEPENDENCIES FORMATTING SPECIFICATION:**
+    # Level 8 External Dependencies formatting specification (DRY principle)
+    LEVEL_8_FORMATTING_SPEC = """
+**LEVEL 8 EXTERNAL DEPENDENCIES FORMATTING SPECIFICATION:**
 
 **🚨 INTEGRATION SECTION REQUIREMENTS:**
 **CONTEXT-SPECIFIC CONTENT**: Integration section must explain the **specific role** of this file/component within the broader system. Avoid generic descriptions that could apply to any file.
@@ -433,18 +447,18 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 ####### Implementation Approach
 *Key algorithms, data structures, usage patterns, and technical implementation strategies*
 
-######## Code Usage Examples
-*Essential code snippets and usage patterns for this file's main features*
-*Note: For non-code files, use this level for practical usage or integration examples*
-
-######### External Dependencies & Integration Points
+######## External Dependencies & Integration Points
 *External dependencies (inbound and outbound) and integration mechanisms*
 
-########## Edge Cases & Error Handling
+######### Edge Cases & Error Handling
 *Error conditions, edge cases, debugging approaches, and failure scenarios*
 
-########### Internal Implementation Details
+########## Internal Implementation Details
 *Low-level implementation specifics, maintenance notes, and internal mechanisms*
+
+########### Code Usage Examples
+*Essential code snippets and usage patterns for this file's main features*
+*Note: For non-code files, use this level for practical usage or integration examples*
 
 **CONTENT-TYPE SPECIFIC GUIDELINES:**
 
@@ -453,10 +467,10 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 - Level 5: What components/functions/classes it contains
 - Level 6: How it's architecturally designed
 - Level 7: Key implementation strategies, usage patterns, and algorithms  
-- Level 8: Essential code snippets developers need
-- Level 9: External dependencies (inbound/outbound) and integration points with location-aware identifiers
-- Level 10: Error handling and debugging guidance
-- Level 11: Internal maintenance and implementation specifics
+- Level 8: External dependencies (inbound/outbound) and integration points with location-aware identifiers
+- Level 9: Error handling and debugging guidance
+- Level 10: Internal maintenance and implementation specifics
+- Level 11: Essential code snippets developers need
 
 **For Non-Code Files:**
 - Structure based on logical information depth and contextual relevance
@@ -464,14 +478,14 @@ Use this EXACT structure with these EXACT header levels and do not generate any 
 - Level 5: Main content sections or information types
 - Level 6: Organization and structure patterns
 - Level 7: Key concepts, usage patterns, and information details
-- Level 8: Practical usage and application examples
-- Level 9: External dependencies (references/referenced by) and integration points with location-aware identifiers
-- Level 10: Edge cases, limitations, and troubleshooting
-- Level 11: Detailed specifications and technical minutiae
+- Level 8: External dependencies (references/referenced by) and integration points with location-aware identifiers
+- Level 9: Edge cases, limitations, and troubleshooting
+- Level 10: Detailed specifications and technical minutiae
+- Level 11: Practical usage and application examples
 
 {self.SEMANTIC_ENTITY_USAGE_SPEC}
 
-{self.LEVEL_9_FORMATTING_SPEC}
+{self.LEVEL_8_FORMATTING_SPEC}
 
 **FORMATTING REQUIREMENTS:**
 - Write in present tense for intemporal knowledge representation
@@ -492,6 +506,14 @@ Before submitting, verify:
 - Each level provides unique, complete context
 - Content follows the hierarchical semantic specification
 - Headers use exact markdown formatting (####, #####, etc.)
+
+**🚨 MANDATORY TRUNCATION DETECTION:**
+**CRITICAL**: Your response MUST end with exactly this line to detect truncation:
+```
+--END OF LLM OUTPUT--
+```
+
+**FAILURE TO INCLUDE THIS LINE WILL RESULT IN TRUNCATION DETECTION AND RETRY.**
 
 Generate the hierarchical semantic tree analysis now.
 """
@@ -532,17 +554,17 @@ Use this EXACT structure with these EXACT header levels:
 ####### Implementation Patterns
 *Common implementation approaches, usage patterns, coding patterns, and technical strategies used throughout*
 
-######## Usage Examples
-*Practical examples of how to work with this directory, common workflows, and integration patterns*
-
-######### External Dependencies & Integration Points
+######## External Dependencies & Integration Points
 *External dependencies (inbound and outbound) and integration mechanisms*
 
-########## Edge Cases & Dependencies
+######### Edge Cases & Dependencies
 *Error conditions, edge cases, external dependencies, and troubleshooting guidance*
 
-########### Internal Organization Details
+########## Internal Organization Details
 *Low-level organization specifics, maintenance notes, and internal directory mechanisms*
+
+########### Usage Examples
+*Practical examples of how to work with this directory, common workflows, and integration patterns*
 
 **DIRECTORY-SPECIFIC GUIDELINES:**
 
@@ -551,14 +573,14 @@ Use this EXACT structure with these EXACT header levels:
 - Level 5: What components, files, and subdirectories it contains
 - Level 6: How it's organized and structured architecturally
 - Level 7: Common implementation patterns and approaches used
-- Level 8: Practical usage examples and workflow guidance
-- Level 9: External dependencies (inbound/outbound) and integration points with location-aware identifiers
-- Level 10: Dependencies, edge cases, and troubleshooting
-- Level 11: Internal organization details and maintenance specifics
+- Level 8: External dependencies (inbound/outbound) and integration points with location-aware identifiers
+- Level 9: Dependencies, edge cases, and troubleshooting
+- Level 10: Internal organization details and maintenance specifics
+- Level 11: Practical usage examples and workflow guidance
 
 {self.SEMANTIC_ENTITY_USAGE_SPEC}
 
-{self.LEVEL_9_FORMATTING_SPEC}
+{self.LEVEL_8_FORMATTING_SPEC}
 
 **FORMATTING REQUIREMENTS:**
 - Write in present tense for intemporal knowledge representation
@@ -581,6 +603,14 @@ Before submitting, verify:
 - Content follows the hierarchical semantic specification
 - Headers use exact markdown formatting (####, #####, etc.)
 - Directory names include trailing slashes
+
+**🚨 MANDATORY TRUNCATION DETECTION:**
+**CRITICAL**: Your response MUST end with exactly this line to detect truncation:
+```
+--END OF LLM OUTPUT--
+```
+
+**FAILURE TO INCLUDE THIS LINE WILL RESULT IN TRUNCATION DETECTION AND RETRY.**
 
 Generate the hierarchical semantic tree analysis now.
 """
@@ -619,21 +649,21 @@ Use this EXACT structure with these EXACT header levels:
 ####### Implementation Approach
 *Key algorithms, data structures, usage patterns, and technical implementation strategies*
 
-######## Usage Examples
-*Essential usage patterns and workflow examples for working with this directory*
-
-######### External Dependencies & Integration Points
+######## External Dependencies & Integration Points
 *External dependencies (inbound and outbound) and integration mechanisms*
 
-########## Edge Cases & Error Handling
+######### Edge Cases & Error Handling
 *Error conditions, edge cases, debugging approaches, and failure scenarios*
 
-########### Internal Implementation Details
+########## Internal Implementation Details
 *Low-level implementation specifics, maintenance notes, and internal mechanisms*
+
+########### Usage Examples
+*Essential usage patterns and workflow examples for working with this directory*
 
 {self.SEMANTIC_ENTITY_USAGE_SPEC}
 
-{self.LEVEL_9_FORMATTING_SPEC}
+{self.LEVEL_8_FORMATTING_SPEC}
 
 **FORMATTING REQUIREMENTS:**
 - Present FACTUAL TECHNICAL INFORMATION only - no quality judgments, no enhancement proposals
@@ -659,6 +689,14 @@ Before submitting, verify:
 - Content follows the hierarchical semantic specification
 - Headers use exact markdown formatting (####, #####, etc.)
 
+**🚨 MANDATORY TRUNCATION DETECTION:**
+**CRITICAL**: Your response MUST end with exactly this line to detect truncation:
+```
+--END OF LLM OUTPUT--
+```
+
+**FAILURE TO INCLUDE THIS LINE WILL RESULT IN TRUNCATION DETECTION AND RETRY.**
+
 Generate a hierarchical semantic tree global summary that synthesizes all the individual file analyses and subdirectory content into a cohesive understanding of this directory's purpose and implementation.
 """
 
@@ -674,7 +712,7 @@ You are a structural compliance checker operating at the STRUCTURAL LEVEL ONLY. 
 1. Return "COMPLIANT" if it perfectly meets all structural formatting requirements
 2. Return the complete corrected version if any structural formatting issues are found
 
-**🚨 REVIEWER SCOPE LIMITATIONS:**
+**REVIEWER SCOPE LIMITATIONS:**
 - **STRUCTURAL COMPLIANCE ONLY**: You validate formatting structure, NOT semantic content relevance
 - **NO SEMANTIC ASSESSMENT**: Do NOT assess whether content is semantically appropriate for each level
 - **NO LEVEL COUNT ENFORCEMENT**: Do NOT require precise number of semantic levels (content may have fewer levels if appropriate)
@@ -683,26 +721,35 @@ You are a structural compliance checker operating at the STRUCTURAL LEVEL ONLY. 
 
 **STRUCTURAL FORMATTING REQUIREMENTS TO CHECK AND FIX:**
 
-🚨 **HEADER STRUCTURE VALIDATION:**
+All requirements below are EQUALLY CRITICAL and must be validated with the same level of attention:
+
+**HEADER STRUCTURE VALIDATION:**
 - Headers must use correct markdown formatting (####, #####, ######, etc.)
 - Headers must be GENERIC only (no specific file/directory information in header text)
 - Each header level must be followed by a blank line
 - No malformed headers or inconsistent markdown formatting
 
-🚨 **CODE SNIPPET FORMATTING:**
+**CODE SNIPPET FORMATTING:**
 - All code snippets MUST be wrapped in markdown code blocks with triple backticks (```)
 - Language identifiers MUST be included when possible (```python, ```javascript, ```bash, etc.)
 - Every code snippet MUST be preceded by a 2-sentence explanation of its intent and benefit
 - **CRITICAL**: Any quotes from files or code snippets containing '#' characters MUST be properly enclosed in markdown code blocks to prevent confusion with structural markdown headers
 
-🚨 **DIRECTORY FORMATTING:**
+**DIRECTORY FORMATTING:**
 - All directory names MUST have trailing slashes (e.g., "src/" not "src")
 
-🚨 **TEXT FORMATTING:**
+**TEXT FORMATTING:**
 - Content MUST be written in present tense
 - Each header MUST be followed by a blank line
 - Remove any subjective judgments or enhancement proposals
 - Remove structural redundancy between levels (not semantic redundancy)
+
+**OUTPUT COMPLETENESS VALIDATION:**
+- The output MUST end with exactly this line:
+```
+--END OF LLM OUTPUT--
+```
+- If this line is missing, return exactly "TRUNCATED"
 
 **FIXING INSTRUCTIONS:**
 If you find structural formatting issues:
@@ -716,11 +763,11 @@ If you find structural formatting issues:
 8. Remove structural formatting redundancy
 
 **CRITICAL OUTPUT CONSTRAINTS:**
-🚨 **NO ADDITIONAL COMPLIANCE ISSUES**: You must NOT create any new compliance problems
-🚨 **NO EXPLANATIONS**: Do NOT add any explanation of discrepancies discovered or what was fixed
-🚨 **NO EXTRA FORMATTING**: Do NOT add any extra formatting elements, headers, or structural changes beyond corrections
-🚨 **STRICT OUTPUT**: Output ONLY the original input content but corrected to be compliant - nothing more, nothing less
-🚨 **NO COMMENTARY**: Do NOT add notes, comments, or explanations about the review process
+- **NO ADDITIONAL COMPLIANCE ISSUES**: You must NOT create any new compliance problems
+- **NO EXPLANATIONS**: Do NOT add any explanation of discrepancies discovered or what was fixed
+- **NO EXTRA FORMATTING**: Do NOT add any extra formatting elements, headers, or structural changes beyond corrections
+- **STRICT OUTPUT**: Output ONLY the original input content but corrected to be compliant - nothing more, nothing less
+- **NO COMMENTARY**: Do NOT add notes, comments, or explanations about the review process
 
 **OUTPUT FORMAT:**
 - If perfect: Return exactly "COMPLIANT"
@@ -741,7 +788,7 @@ You are a structural compliance checker operating at the STRUCTURAL LEVEL ONLY. 
 1. Return "COMPLIANT" if it perfectly meets all structural formatting requirements
 2. Return the complete corrected version if any structural formatting issues are found
 
-**🚨 REVIEWER SCOPE LIMITATIONS:**
+**REVIEWER SCOPE LIMITATIONS:**
 - **STRUCTURAL COMPLIANCE ONLY**: You validate formatting structure, NOT semantic content relevance
 - **NO SEMANTIC ASSESSMENT**: Do NOT assess whether content is semantically appropriate for each level
 - **NO LEVEL COUNT ENFORCEMENT**: Do NOT require precise number of semantic levels (content may have fewer levels if appropriate)
@@ -750,26 +797,35 @@ You are a structural compliance checker operating at the STRUCTURAL LEVEL ONLY. 
 
 **STRUCTURAL FORMATTING REQUIREMENTS TO CHECK AND FIX:**
 
-🚨 **HEADER STRUCTURE VALIDATION:**
+All requirements below are EQUALLY CRITICAL and must be validated with the same level of attention:
+
+**HEADER STRUCTURE VALIDATION:**
 - Headers must use correct markdown formatting (####, #####, ######, etc.)
 - Headers must be GENERIC only (no specific directory information in header text)
 - Each header level must be followed by a blank line
 - No malformed headers or inconsistent markdown formatting
 
-🚨 **CODE SNIPPET FORMATTING:**
+**CODE SNIPPET FORMATTING:**
 - All code snippets MUST be wrapped in markdown code blocks with triple backticks (```)
 - Language identifiers MUST be included when possible (```python, ```javascript, ```bash, etc.)
 - Every code snippet MUST be preceded by a 2-sentence explanation of its intent and benefit
 - **CRITICAL**: Any quotes from files or code snippets containing '#' characters MUST be properly enclosed in markdown code blocks to prevent confusion with structural markdown headers
 
-🚨 **DIRECTORY FORMATTING:**
+**DIRECTORY FORMATTING:**
 - All directory names MUST have trailing slashes (e.g., "models/" not "models")
 
-🚨 **TEXT FORMATTING:**
+**TEXT FORMATTING:**
 - Content MUST be written in present tense
 - Each header MUST be followed by a blank line
 - Remove any subjective judgments or enhancement proposals
 - Remove structural redundancy between levels (not semantic redundancy)
+
+**OUTPUT COMPLETENESS VALIDATION:**
+- The output MUST end with exactly this line:
+```
+--END OF LLM OUTPUT--
+```
+- If this line is missing, return exactly "TRUNCATED"
 
 **FIXING INSTRUCTIONS:**
 If you find structural formatting issues:
@@ -783,11 +839,11 @@ If you find structural formatting issues:
 8. Remove structural formatting redundancy
 
 **CRITICAL OUTPUT CONSTRAINTS:**
-🚨 **NO ADDITIONAL COMPLIANCE ISSUES**: You must NOT create any new compliance problems
-🚨 **NO EXPLANATIONS**: Do NOT add any explanation of discrepancies discovered or what was fixed
-🚨 **NO EXTRA FORMATTING**: Do NOT add any extra formatting elements, headers, or structural changes beyond corrections
-🚨 **STRICT OUTPUT**: Output ONLY the original input content but corrected to be compliant - nothing more, nothing less
-🚨 **NO COMMENTARY**: Do NOT add notes, comments, or explanations about the review process
+- **NO ADDITIONAL COMPLIANCE ISSUES**: You must NOT create any new compliance problems
+- **NO EXPLANATIONS**: Do NOT add any explanation of discrepancies discovered or what was fixed
+- **NO EXTRA FORMATTING**: Do NOT add any extra formatting elements, headers, or structural changes beyond corrections
+- **STRICT OUTPUT**: Output ONLY the original input content but corrected to be compliant - nothing more, nothing less
+- **NO COMMENTARY**: Do NOT add notes, comments, or explanations about the review process
 
 **OUTPUT FORMAT:**
 - If perfect: Return exactly "COMPLIANT"
@@ -808,7 +864,7 @@ You are a structural compliance checker operating at the STRUCTURAL LEVEL ONLY. 
 1. Return "COMPLIANT" if it perfectly meets all structural formatting requirements
 2. Return the complete corrected version if any structural formatting issues are found
 
-**🚨 REVIEWER SCOPE LIMITATIONS:**
+**REVIEWER SCOPE LIMITATIONS:**
 - **STRUCTURAL COMPLIANCE ONLY**: You validate formatting structure, NOT semantic content relevance
 - **NO SEMANTIC ASSESSMENT**: Do NOT assess whether content is semantically appropriate for each level
 - **NO LEVEL COUNT ENFORCEMENT**: Do NOT require precise number of semantic levels (content may have fewer levels if appropriate)
@@ -817,27 +873,36 @@ You are a structural compliance checker operating at the STRUCTURAL LEVEL ONLY. 
 
 **STRUCTURAL FORMATTING REQUIREMENTS TO CHECK AND FIX:**
 
-🚨 **HEADER STRUCTURE VALIDATION:**
+All requirements below are EQUALLY CRITICAL and must be validated with the same level of attention:
+
+**HEADER STRUCTURE VALIDATION:**
 - Headers must use correct markdown formatting (####, #####, ######, etc.)
 - Headers must be GENERIC only (no specific directory information in header text)
 - Each header level must be followed by a blank line
 - No malformed headers or inconsistent markdown formatting
 
-🚨 **CODE SNIPPET FORMATTING:**
+**CODE SNIPPET FORMATTING:**
 - All code snippets MUST be wrapped in markdown code blocks with triple backticks (```)
 - Language identifiers MUST be included when possible (```python, ```javascript, ```bash, etc.)
 - Every code snippet MUST be preceded by a 2-sentence explanation of its intent and benefit
 - **CRITICAL**: Any quotes from files or code snippets containing '#' characters MUST be properly enclosed in markdown code blocks to prevent confusion with structural markdown headers
 
-🚨 **DIRECTORY FORMATTING:**
+**DIRECTORY FORMATTING:**
 - All directory names MUST have trailing slashes (e.g., "tests/" not "tests")
 
-🚨 **TEXT FORMATTING:**
+**TEXT FORMATTING:**
 - Content MUST be written in present tense
 - Each header MUST be followed by a blank line
 - Remove any subjective judgments or enhancement proposals
 - Remove structural redundancy between levels (not semantic redundancy)
 - Focus on factual technical information only
+
+**OUTPUT COMPLETENESS VALIDATION:**
+- The output MUST end with exactly this line:
+```
+--END OF LLM OUTPUT--
+```
+- If this line is missing, return exactly "TRUNCATED"
 
 **FIXING INSTRUCTIONS:**
 If you find structural formatting issues:
@@ -852,11 +917,11 @@ If you find structural formatting issues:
 9. Remove any subjective judgments or quality assessments
 
 **CRITICAL OUTPUT CONSTRAINTS:**
-🚨 **NO ADDITIONAL COMPLIANCE ISSUES**: You must NOT create any new compliance problems
-🚨 **NO EXPLANATIONS**: Do NOT add any explanation of discrepancies discovered or what was fixed
-🚨 **NO EXTRA FORMATTING**: Do NOT add any extra formatting elements, headers, or structural changes beyond corrections
-🚨 **STRICT OUTPUT**: Output ONLY the original input content but corrected to be compliant - nothing more, nothing less
-🚨 **NO COMMENTARY**: Do NOT add notes, comments, or explanations about the review process
+- **NO ADDITIONAL COMPLIANCE ISSUES**: You must NOT create any new compliance problems
+- **NO EXPLANATIONS**: Do NOT add any explanation of discrepancies discovered or what was fixed
+- **NO EXTRA FORMATTING**: Do NOT add any extra formatting elements, headers, or structural changes beyond corrections
+- **STRICT OUTPUT**: Output ONLY the original input content but corrected to be compliant - nothing more, nothing less
+- **NO COMMENTARY**: Do NOT add notes, comments, or explanations about the review process
 
 **OUTPUT FORMAT:**
 - If perfect: Return exactly "COMPLIANT"

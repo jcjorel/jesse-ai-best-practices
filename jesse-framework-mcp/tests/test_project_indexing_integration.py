@@ -167,7 +167,7 @@ async def test_real_project_indexing():
             enable_llm_replay=False,                 # Force fresh LLM calls
             max_file_size=2 * 1024 * 1024,          # 2MB limit
             batch_size=5,                            # Moderate batch size for stability
-            max_concurrent_operations=2,             # Conservative concurrency
+            max_concurrent_operations=1,             # Conservative concurrency
             continue_on_file_errors=True,            # Don't stop on individual file failures
             enable_progress_reporting=True           # Monitor progress
         )
