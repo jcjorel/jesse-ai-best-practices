@@ -1,112 +1,98 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/models/indexing_config.py -->
-<!-- Cached On: 2025-07-05T16:21:50.925160 -->
-<!-- Source Modified: 2025-07-05T16:04:02.868441 -->
+<!-- Cached On: 2025-07-05T20:36:27.966058 -->
+<!-- Source Modified: 2025-07-05T19:59:47.807652 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This configuration data model provides immutable, type-safe configuration management for the Jesse Framework MCP knowledge base hierarchical indexing system, controlling all aspects of file processing, LLM integration, and special handling requirements. The module defines comprehensive configuration parameters through the `IndexingConfig` frozen dataclass with validation at initialization, supporting three distinct indexing modes (`FULL`, `INCREMENTAL`, `SELECTIVE`) via the `IndexingMode` enum. Key semantic entities include `IndexingConfig` frozen dataclass for immutable configuration, `IndexingMode` string-based enum for processing strategies, `Claude4SonnetModel.CLAUDE_4_SONNET` LLM model integration, `get_project_root()` function for automatic knowledge directory detection, `should_process_file()` and `should_process_directory()` filtering methods, `to_dict()` and `from_dict()` serialization methods, `load_for_handler()` class method for configuration manager integration, `__post_init__()` validation method, `dataclasses.dataclass` with `frozen=True` for immutability, `pathlib.Path` for file system operations, and comprehensive parameter validation with descriptive error messages. The system enables zero-configuration startup by defaulting `knowledge_output_directory` to `{PROJECT_ROOT}/.knowledge/` while supporting full customization through JSON configuration files and configuration manager integration.
+The `indexing_config.py` file serves as the comprehensive configuration data model for the Jesse Framework MCP's knowledge base hierarchical indexing system, providing immutable type-safe configuration management with validation at initialization through frozen dataclasses. This module enables centralized control of all indexing parameters including file processing constraints, LLM integration settings, and specialized handling requirements, evidenced by the main `IndexingConfig` class with hierarchical configuration groups and the `IndexingMode` enum with values `FULL`, `FULL_KB_REBUILD`, and `INCREMENTAL`. Key semantic entities include configuration dataclasses like `FileProcessingConfig`, `ContentFilteringConfig`, `LLMConfig`, `ChangeDetectionConfig`, `ErrorHandlingConfig`, `OutputConfig`, and `DebugConfig`, integration with `Claude4SonnetModel.CLAUDE_4_SONNET` for LLM configuration, utility methods `should_process_file()` and `should_process_directory()` for filtering decisions, and serialization methods `to_dict()` and `from_dict()` for persistence and configuration manager integration. The system implements automatic default knowledge directory setting to `{PROJECT_ROOT}/.knowledge/` through `get_project_root()` integration and provides backward compatibility through property accessors for flat configuration access patterns.
 
 ##### Main Components
 
-The module contains two primary classes: `IndexingMode` string-based enum defining three processing strategies (`FULL` for complete re-indexing, `INCREMENTAL` for changed files only, `SELECTIVE` for specific paths), and `IndexingConfig` frozen dataclass with 23 configuration parameters organized into categories including file processing configuration (`max_file_size`, `chunk_size`, `chunk_overlap`), batch processing configuration (`batch_size`, `max_concurrent_operations`), content filtering configuration (`excluded_extensions`, `excluded_directories`, `project_base_exclusions`), LLM configuration (`llm_model`, `temperature`, `max_tokens`), change detection configuration (`indexing_mode`, `timestamp_tolerance_seconds`), special handling flags (`enable_git_clone_indexing`, `enable_project_base_indexing`, `respect_gitignore`), performance configuration (`enable_progress_reporting`, `progress_update_interval`), error handling configuration (`max_retries`, `retry_delay_seconds`, `continue_on_file_errors`), knowledge output configuration (`knowledge_output_directory`), and debug configuration (`debug_mode`, `debug_output_directory`, `enable_llm_replay`). Supporting methods include `__post_init__()` for validation, `should_process_file()` and `should_process_directory()` for filtering, `to_dict()` and `from_dict()` for serialization, and `load_for_handler()` for configuration manager integration.
+The file contains the primary `IndexingConfig` frozen dataclass with seven hierarchical configuration groups, six specialized configuration dataclasses (`FileProcessingConfig`, `ContentFilteringConfig`, `LLMConfig`, `ChangeDetectionConfig`, `ErrorHandlingConfig`, `OutputConfig`, `DebugConfig`) that organize related parameters, and the `IndexingMode` enum defining processing strategies. Core methods include `__post_init__()` for validation and default setting, filtering methods `should_process_file()` and `should_process_directory()` for processing decisions, serialization methods `to_dict()` and `from_dict()` for configuration persistence, and the class method `load_for_handler()` for configuration manager integration. The class provides comprehensive property accessors for backward compatibility, enabling flat access to hierarchically organized configuration parameters.
 
 ###### Architecture & Design
 
-The architecture implements an immutable configuration pattern using `@dataclass(frozen=True)` to prevent runtime configuration modifications, with comprehensive validation occurring once at initialization through `__post_init__()` for performance optimization. The design separates concerns through distinct configuration categories with clear parameter grouping, while integrating with the existing `strands_agent_driver` Claude 4 Sonnet configuration for LLM consistency. Configuration management follows a hierarchical exclusion system with base exclusions applied universally and handler-specific exclusions (`project_base_exclusions`) applied conditionally. The system implements automatic default resolution for `knowledge_output_directory` using project root detection, falling back gracefully when project root cannot be determined. Serialization support enables configuration persistence and debugging through dictionary conversion with proper handling of complex types like sets and enums.
+The architecture follows a hierarchical frozen dataclass pattern with specialized configuration groups that organize related parameters into logical domains, enabling maintainable configuration management while preserving immutability after initialization. The design implements a composition pattern where the main `IndexingConfig` class contains focused configuration objects for different concerns, combined with property accessors that provide backward compatibility during the transition from flat to hierarchical configuration structures. The system uses defensive validation through `__post_init__()` that checks all parameters at creation time, integrated with automatic default setting for the knowledge output directory using project root detection. Each configuration group follows the frozen dataclass pattern ensuring immutability while providing clear separation of concerns between file processing, content filtering, LLM integration, change detection, error handling, output management, and debug functionality.
 
 ####### Implementation Approach
 
-The implementation uses frozen dataclass with field factories for mutable default values like sets, ensuring each instance gets independent collections while maintaining immutability after initialization. Parameter validation employs comprehensive bounds checking in `__post_init__()` with descriptive error messages for debugging, including validation of file sizes, batch parameters, concurrency limits, LLM settings, and performance parameters. File and directory filtering uses set-based lookups for performance optimization in `should_process_file()` and `should_process_directory()` methods. Serialization handling converts sets to lists for JSON compatibility while preserving semantics, with enum values converted to string representation for safe serialization. The `from_dict()` class method implements reverse conversion with proper type handling for sets, enums, and Path objects. Configuration loading integrates with `IndexingConfigManager` through `load_for_handler()` class method, supporting auto-generation of missing configurations from centralized defaults.
+The implementation employs frozen dataclasses with `field(default_factory=...)` for complex default values like sets and nested configuration objects, ensuring proper initialization without shared mutable state between instances. Configuration validation uses comprehensive parameter checking in `__post_init__()` with descriptive error messages for invalid values, including range validation for temperature (0.0-1.0), positive value validation for file sizes and batch parameters, and non-negative validation for retry settings. The filtering system implements efficient set-based membership testing for excluded extensions and directories, with specialized logic for project-base exclusions through optional `project_base_exclusions` parameter. Serialization handles complex type conversion including sets to lists for JSON compatibility, enum values to strings, and Path objects to string representations, with corresponding deserialization logic in `from_dict()` that reconstructs proper types from JSON-compatible formats.
 
 ######## External Dependencies & Integration Points
 
-**→ Inbound:**
-- `jesse_framework_mcp.llm.strands_agent_driver.models:Claude4SonnetModel` - LLM model configuration providing `CLAUDE_4_SONNET` constant
-- `jesse_framework_mcp.helpers.path_utils:get_project_root` - project root detection for automatic knowledge directory configuration
-- `dataclasses` (external library) - dataclass decorator and field factory for immutable configuration structure
-- `pathlib.Path` (external library) - cross-platform path operations and validation
-- `typing` (external library) - type annotations for `Set`, `Optional`, `Dict`, `Any` type hints
-- `enum.Enum` (external library) - enumeration base class for `IndexingMode` string enum
+**→ Inbound:** [configuration model dependencies]
+- `jesse_framework_mcp.llm.strands_agent_driver.models:Claude4SonnetModel` - LLM model constants for configuration defaults
+- `jesse_framework_mcp.helpers.path_utils:get_project_root` - project root detection for default knowledge directory
+- `dataclasses` (external library) - frozen dataclass implementation for immutable configuration
+- `pathlib` (external library) - path handling and validation for directory configuration
+- `typing` (external library) - type annotations for configuration parameters
+- `enum` (external library) - IndexingMode enumeration for processing strategies
 
-**← Outbound:**
-- `../indexing/config_manager.py:IndexingConfigManager` - configuration manager consuming `IndexingConfig` instances for validation and loading
-- `../indexing/hierarchical_indexer.py` - hierarchical indexer consuming configuration for processing parameters and filtering rules
-- JSON configuration files serialized through `to_dict()` method for user customization and persistence
-- Knowledge base processing components consuming file and directory filtering methods
+**← Outbound:** [configuration consumers]
+- `../indexing/config_manager.py:IndexingConfigManager` - configuration loading and validation through from_dict method
+- `knowledge_bases/indexing/` - indexing operations consuming configuration parameters through property accessors
+- `*.indexing-config.json` - JSON configuration files generated through to_dict serialization
+- `hierarchical_indexer.py` - indexing operations using filtering methods and processing parameters
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core configuration foundation defining all operational parameters for the Jesse Framework knowledge base indexing system, serving as the single source of truth for processing constraints and LLM integration settings
-- **Ecosystem Position**: Central infrastructure component that all indexing operations depend on for validated configuration parameters, bridging between user-customizable JSON configurations and runtime processing requirements
-- **Integration Pattern**: Used by indexing components during initialization for parameter access, configuration managers for validation and auto-generation, and serialization systems for configuration persistence and debugging workflows
+- **System Role**: Central configuration model that defines all parameters for knowledge base indexing operations, serving as the single source of truth for indexing behavior across the Jesse Framework MCP system
+- **Ecosystem Position**: Core data model that bridges between configuration management, indexing operations, and LLM integration, enabling type-safe configuration with validation
+- **Integration Pattern**: Used by indexing handlers through property access, configuration managers through serialization methods, and validation systems through filtering methods, with automatic integration to project structure through default directory setting
 
 ######### Edge Cases & Error Handling
 
-The system handles missing project root detection gracefully in `__post_init__()` by catching exceptions and maintaining `knowledge_output_directory` as `None` for backward compatibility. File access errors in `should_process_file()` are handled through try-catch blocks, returning `False` for inaccessible files to prevent processing failures. Parameter validation provides comprehensive bounds checking with descriptive error messages: `max_file_size` must be positive, `chunk_overlap` must be less than `chunk_size`, `temperature` must be between 0.0 and 1.0, and all count parameters must be non-negative. Configuration loading through `load_for_handler()` raises `ValueError` when project root cannot be determined and no `knowledge_dir` is provided. Serialization edge cases include handling `None` values for optional parameters and proper conversion of complex types like sets and Path objects. The frozen dataclass prevents accidental configuration modification after initialization, with `object.__setattr__()` used only during `__post_init__()` for default value assignment.
+The system handles invalid configuration parameters through comprehensive validation in `__post_init__()` that raises `ValueError` with descriptive messages for out-of-range values, negative parameters, and invalid LLM settings. File and directory filtering methods include defensive checks for file system errors, handling `OSError` and `FileNotFoundError` exceptions gracefully by returning `False` for inaccessible files. Configuration serialization handles optional parameters through proper None checking, converting Path objects to strings safely, and managing complex type conversions between sets/lists and enums/strings. The `from_dict()` method provides robust deserialization with fallback defaults for missing parameters, proper type conversion from JSON-compatible formats, and validation through normal dataclass initialization. Project root detection failures are handled gracefully by maintaining `None` values for knowledge directory configuration, enabling fallback behavior in consuming systems.
 
 ########## Internal Implementation Details
 
-The frozen dataclass uses `object.__setattr__()` in `__post_init__()` to modify the immutable `knowledge_output_directory` field when setting the default value to `project_root / '.knowledge/'`. Default factory functions for sets use lambda expressions to ensure each instance gets independent collections: `excluded_extensions` defaults to 11 common file extensions, `excluded_directories` defaults to 7 common directory names. Parameter validation occurs in specific order: file processing parameters first, then batch processing, LLM parameters, and performance parameters, with early failure preventing invalid configuration creation. The `to_dict()` method handles complex type conversion: sets converted to lists, enums converted to string values, Path objects converted to string representation, with `None` values preserved for optional parameters. The `from_dict()` method implements reverse conversion with defensive copying to avoid modifying input dictionaries, proper set reconstruction from lists, enum conversion from string values, and Path object creation from string paths. Configuration manager integration uses dynamic imports to avoid circular dependencies.
+The configuration groups use `field(default_factory=...)` with lambda functions to create fresh instances of sets and configuration objects, preventing shared mutable state between `IndexingConfig` instances. Default knowledge directory setting uses `object.__setattr__()` to modify the frozen dataclass during `__post_init__()`, creating a new `OutputConfig` instance with the resolved project root path. Property accessors provide direct access to nested configuration parameters without exposing the hierarchical structure, maintaining backward compatibility during the transition period. The filtering system uses set membership testing for O(1) performance on excluded extensions and directories, with case-sensitive directory name comparison and lowercase extension comparison for consistent behavior. Serialization preserves all configuration state through complete dictionary representation, handling complex types like `IndexingMode.value` for enum serialization and conditional string conversion for optional Path parameters.
 
 ########### Code Usage Examples
 
-**Basic configuration creation with validation:**
-
-This example demonstrates creating an IndexingConfig instance with custom parameters and automatic validation. The frozen dataclass ensures immutability while providing comprehensive parameter validation at initialization.
+This example demonstrates creating and validating a basic indexing configuration with custom parameters. The code shows how to initialize the configuration with hierarchical groups and access parameters through both hierarchical and flat property access patterns.
 
 ```python
-from jesse_framework_mcp.knowledge_bases.models.indexing_config import IndexingConfig, IndexingMode
 from pathlib import Path
-
-# Create configuration with custom parameters
-config = IndexingConfig(
-    max_file_size=1024 * 1024,  # 1MB limit
-    batch_size=5,
-    indexing_mode=IndexingMode.INCREMENTAL,
-    knowledge_output_directory=Path("/custom/knowledge/path"),
-    debug_mode=True
+from jesse_framework_mcp.knowledge_bases.models.indexing_config import (
+    IndexingConfig, FileProcessingConfig, LLMConfig, IndexingMode
 )
 
-# Configuration is immutable after creation
-print(f"Batch size: {config.batch_size}")
-print(f"Knowledge directory: {config.knowledge_output_directory}")
+# Create configuration with custom file processing settings
+file_config = FileProcessingConfig(max_file_size=1024*1024, batch_size=5)
+llm_config = LLMConfig(temperature=0.2, max_tokens=15000)
+
+config = IndexingConfig(
+    handler_type="git-clones",
+    file_processing=file_config,
+    llm_config=llm_config
+)
+
+# Access through both hierarchical and flat patterns
+print(f"Max file size: {config.file_processing.max_file_size}")
+print(f"Max file size (flat): {config.max_file_size}")
+print(f"LLM model: {config.llm_model}")
 ```
 
-**File and directory filtering with configuration rules:**
-
-This pattern shows how to use the configuration's filtering methods for file and directory processing decisions. The methods provide centralized filtering logic based on configuration parameters.
+This example shows configuration serialization and deserialization for persistence and configuration management integration. The code demonstrates the complete round-trip process for configuration storage and loading.
 
 ```python
-from pathlib import Path
-
-# Use configuration for file filtering decisions
-test_file = Path("src/main.py")
-test_dir = Path("node_modules/")
-
-if config.should_process_file(test_file):
-    print(f"Processing file: {test_file}")
-
-if config.should_process_directory(test_dir):
-    print(f"Processing directory: {test_dir}")
-else:
-    print(f"Skipping excluded directory: {test_dir}")
-```
-
-**Configuration serialization and loading from handler type:**
-
-This example demonstrates configuration serialization for persistence and loading configurations for specific handler types. The serialization maintains all configuration state while the class method provides convenient handler-specific loading.
-
-```python
-# Serialize configuration to dictionary for persistence
+# Serialize configuration to dictionary for JSON storage
 config_dict = config.to_dict()
-print(f"Serialized config keys: {list(config_dict.keys())}")
+print(f"Serialized config: {config_dict['handler_type']}")
 
-# Load configuration for specific handler type
+# Deserialize configuration from dictionary (e.g., from JSON file)
+loaded_config = IndexingConfig.from_dict(config_dict)
+print(f"Loaded handler: {loaded_config.handler_type}")
+
+# Use filtering methods for file processing decisions
+test_file = Path("example.py")
+if loaded_config.should_process_file(test_file):
+    print(f"Will process: {test_file}")
+
+# Load configuration for specific handler using convenience method
 project_config = IndexingConfig.load_for_handler("project-base")
-git_config = IndexingConfig.load_for_handler("git-clones")
-
-# Create configuration from dictionary (e.g., from JSON file)
-restored_config = IndexingConfig.from_dict(config_dict)
+print(f"Project config mode: {project_config.indexing_mode}")
 ```

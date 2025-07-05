@@ -1,97 +1,101 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/tools.py -->
-<!-- Cached On: 2025-07-05T13:56:09.268333 -->
-<!-- Source Modified: 2025-07-05T12:56:57.111246 -->
+<!-- Cached On: 2025-07-05T20:39:52.063209 -->
+<!-- Source Modified: 2025-07-05T20:01:39.759968 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file implements FastMCP tools integration for the Jesse Framework MCP Knowledge Bases Hierarchical Indexing System, providing standardized MCP tool interfaces for manual indexing operations, system status monitoring, and search capabilities through async tool execution patterns. The module enables external MCP clients to trigger knowledge base indexing operations, monitor processing status, and access search functionality through well-defined tool interfaces following Jesse Framework patterns. Key semantic entities include `register_knowledge_bases_tools()` function for centralized tool registration, `FastMCP` server integration with `@server.tool()` decorators, tool implementations `knowledge_bases_index_trigger`, `knowledge_bases_status`, and `knowledge_bases_search`, `HierarchicalIndexer` integration for core processing coordination, `IndexingConfig` and `IndexingMode` for configuration management, `Context` for progress reporting and user feedback, `format_http_response()` utility for consistent HTTP formatting, global `_current_indexer` variable for tool coordination, comprehensive error handling with structured HTTP responses, and async-first architecture supporting concurrent operations with real-time progress reporting through FastMCP Context integration.
+The `tools.py` file serves as the FastMCP tools integration layer for the Jesse Framework MCP's knowledge base hierarchical indexing system, providing standardized MCP tool interfaces for manual indexing operations, system status monitoring, and search capabilities through the FastMCP server framework. This module enables user-initiated knowledge base operations through MCP protocol integration, evidenced by the `register_knowledge_bases_tools()` function that registers three tools with the FastMCP server and the global `_current_indexer` variable for operation coordination. Key semantic entities include `FastMCP` server integration, `@server.tool()` decorators for tool registration, `Context` parameter for progress reporting, `HierarchicalIndexer` for core processing operations, `IndexingConfig` and `IndexingMode` for configuration management, `format_http_response()` for consistent response formatting, tool functions `knowledge_bases_index_trigger()`, `knowledge_bases_status()`, and `knowledge_bases_search()`, and comprehensive error handling with HTTP status codes (400, 404, 409, 500, 501). The system implements async-first architecture supporting concurrent operations with real-time feedback through FastMCP Context integration and HTTP-formatted responses following JESSE Framework patterns.
 
 ##### Main Components
 
-The file contains the primary `register_knowledge_bases_tools()` function that registers three core MCP tools with the FastMCP server. The `knowledge_bases_index_trigger` tool enables manual indexing operations with configurable parameters including `target_path`, `indexing_mode`, `enable_git_clone_indexing`, and `enable_project_base_indexing`, providing comprehensive validation, progress reporting, and result statistics. The `knowledge_bases_status` tool delivers real-time monitoring capabilities for ongoing indexing operations, accessing the global `_current_indexer` instance to provide detailed processing statistics and operation status information. The `knowledge_bases_search` tool serves as a placeholder for future search functionality, maintaining tool interface consistency while indicating planned feature availability. Each tool implements comprehensive error handling with structured HTTP responses, detailed logging through `logger.error()`, and progress reporting through `FastMCP Context` integration for real-time user feedback.
+The file contains the primary `register_knowledge_bases_tools()` function that serves as the central tool registration point, three MCP tool implementations as nested functions within the registration function, and a global `_current_indexer` variable for operation state management. The `knowledge_bases_index_trigger()` tool provides manual indexing capabilities with configurable parameters including `target_path`, `indexing_mode`, `enable_git_clone_indexing`, and `enable_project_base_indexing`. The `knowledge_bases_status()` tool offers real-time status monitoring and statistics retrieval for ongoing and completed indexing operations. The `knowledge_bases_search()` tool serves as a placeholder for future search functionality with parameters for `query`, `search_scope`, and `max_results`. Each tool implements comprehensive error handling, progress reporting through FastMCP Context, and HTTP-formatted response generation for consistency with JESSE Framework patterns.
 
 ###### Architecture & Design
 
-The architecture follows FastMCP tool registration patterns with centralized tool management through a single registration function that decorates async tool handlers with `@server.tool()`. The design implements global state management through `_current_indexer` variable enabling tool coordination and status sharing across multiple tool invocations. Key design patterns include the tool decorator pattern for MCP integration, async-first architecture supporting non-blocking tool execution, comprehensive parameter validation pattern with HTTP error responses, progress reporting pattern through FastMCP Context integration, and structured error handling pattern with detailed HTTP responses and logging. The system uses HTTP response formatting through `format_http_response()` utility maintaining consistency with Jesse Framework patterns and enabling proper MCP client integration with standardized response structures.
+The architecture follows a centralized tool registration pattern where all MCP tools are defined as nested functions within the `register_knowledge_bases_tools()` function, enabling clean encapsulation and shared access to the global indexer state. The design implements async-first patterns throughout with all tool functions declared as async and using await for I/O operations and progress reporting. The system uses a global state management approach through the `_current_indexer` variable to coordinate operations and prevent concurrent indexing conflicts. Each tool follows a consistent three-section documentation pattern as specified in JESSE_CODE_COMMENTS.md, with tool intent, design principles, and implementation details clearly separated. The architecture integrates HTTP response formatting through the `format_http_response()` helper function, ensuring consistent response structures across all tools with appropriate HTTP status codes and content types.
 
 ####### Implementation Approach
 
-The implementation uses async tool handlers registered through FastMCP decorators with comprehensive parameter validation including `IndexingMode` enum validation, path existence checking, and concurrent operation prevention. Tool execution employs `HierarchicalIndexer` instantiation with `IndexingConfig` based on provided parameters, progress reporting through `FastMCP Context` with `ctx.info()` and `ctx.error()` methods, and detailed result compilation including processing statistics and operation summaries. Status monitoring uses global indexer instance access with real-time status retrieval through `current_status` property and comprehensive statistics serialization. Error handling implements try-catch blocks with structured HTTP error responses including status codes, error messages, and detailed exception information for debugging support. The approach maintains tool interface consistency through standardized parameter patterns and response formatting across all tool implementations.
+The implementation uses FastMCP's `@server.tool()` decorator pattern for tool registration with descriptive names and documentation strings that appear in MCP client interfaces. Tool parameter validation employs early validation patterns with immediate HTTP error responses for invalid inputs, including IndexingMode validation and path existence checking. The system implements conflict detection through global state checking, preventing concurrent indexing operations by returning HTTP 409 Conflict responses when operations are already in progress. Progress reporting uses FastMCP Context methods (`ctx.info()`, `ctx.error()`) for real-time user feedback during long-running operations. Response generation follows a consistent pattern using `format_http_response()` with appropriate HTTP status codes, structured data payloads, and JSON content types for successful operations, while error responses include detailed error information and debugging context.
 
 ######## External Dependencies & Integration Points
 
-**→ Inbound:**
-- `.indexing:HierarchicalIndexer` - core indexing orchestrator providing hierarchical processing capabilities and status tracking
-- `.models:IndexingConfig` - configuration data model providing processing parameters and validation
-- `.models:IndexingMode` - enumeration defining indexing strategies for tool parameter validation
-- `..helpers.async_http_formatter:format_http_response` - HTTP response formatting utility for consistent Jesse Framework response patterns
-- `fastmcp:Context` - MCP context providing progress reporting and user interaction capabilities
-- `fastmcp.server:FastMCP` - MCP server framework providing tool registration and management capabilities
-- `pathlib` (external library) - cross-platform path operations for tool parameter validation and processing
-- `asyncio` (external library) - async programming patterns for non-blocking tool execution
-- `logging` (external library) - structured logging for error tracking and debugging support
+**→ Inbound:** [MCP tools integration dependencies]
+- `fastmcp:Context` - progress reporting and user feedback during tool execution
+- `fastmcp.server:FastMCP` - MCP server framework for tool registration and execution
+- `.indexing:HierarchicalIndexer` - core indexing orchestrator for processing operations
+- `.models:IndexingConfig` - configuration data model for indexing parameters
+- `.models:IndexingMode` - enumeration for processing mode validation
+- `..helpers.async_http_formatter:format_http_response` - HTTP response formatting for consistency
+- `pathlib` (external library) - cross-platform path operations for tool parameters
+- `asyncio` (external library) - async programming patterns for concurrent operations
+- `logging` (external library) - structured logging for tool operation tracking
 
-**← Outbound:**
-- MCP clients - consume registered tools through FastMCP protocol for manual indexing operations and status monitoring
-- Jesse Framework MCP server - integrates registered tools into overall MCP server tool catalog
-- External automation systems - trigger indexing operations through MCP tool interfaces for automated knowledge base maintenance
-- Development tools - access indexing capabilities and status monitoring for development workflow integration
+**← Outbound:** [MCP tools consumers]
+- `FastMCP server instances` - consume registered tools through MCP protocol integration
+- `MCP clients` - invoke tools through standardized MCP tool interface protocol
+- `Jesse Framework MCP server` - integrates tools into broader MCP server functionality
+- `User interfaces` - access tools through MCP-compatible clients and applications
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: MCP tool provider for the Jesse Framework knowledge base indexing system, exposing manual indexing operations and system monitoring through standardized FastMCP tool interfaces
-- **Ecosystem Position**: Peripheral interface component bridging the knowledge base indexing system with external MCP clients and automation systems requiring manual control and monitoring capabilities
-- **Integration Pattern**: Registered with FastMCP server during system initialization, consumed by MCP clients through tool invocation requests, and integrated with core HierarchicalIndexer for processing coordination while maintaining global state for tool coordination
+- **System Role**: MCP protocol bridge that exposes knowledge base indexing functionality through standardized tool interfaces, enabling user-initiated operations and system monitoring within the Jesse Framework MCP ecosystem
+- **Ecosystem Position**: Interface layer component that connects FastMCP server infrastructure with core indexing functionality, serving as the primary user interaction point for knowledge base operations
+- **Integration Pattern**: Used by MCP server during initialization through tool registration, consumed by MCP clients through protocol-standard tool invocation, and integrated with core indexing system through HierarchicalIndexer coordination
 
 ######### Edge Cases & Error Handling
 
-The system handles invalid indexing mode parameters through `IndexingMode` enum validation returning HTTP 400 responses with specific error messages listing valid mode options. Concurrent operation prevention uses global indexer state checking with `is_processing` property returning HTTP 409 conflict responses when indexing is already in progress. Path validation implements existence and directory checking with HTTP 404 and 400 responses for missing or invalid target paths. Configuration instantiation failures are managed through comprehensive try-catch blocks with detailed error logging and HTTP 500 responses. Tool execution exceptions are caught and converted to structured HTTP error responses including error details and technical information for debugging support. Status retrieval handles missing indexer instances gracefully with informative HTTP 200 responses indicating no operations have been initiated. Search tool placeholder implementation returns HTTP 501 responses indicating planned feature availability while maintaining tool interface consistency.
+The system handles invalid indexing mode parameters through `IndexingMode` enum validation, returning HTTP 400 Bad Request responses with detailed error messages listing valid modes. Concurrent operation conflicts are managed through global indexer state checking, preventing multiple simultaneous indexing operations by returning HTTP 409 Conflict responses. File system validation includes path existence checking and directory validation, returning HTTP 404 Not Found for missing paths and HTTP 400 Bad Request for non-directory targets. Exception handling uses comprehensive try-catch blocks with structured logging through the logger instance and detailed error responses including exception details and context information. The search tool handles future functionality through HTTP 501 Not Implemented responses, maintaining interface consistency while indicating planned feature status. Tool execution failures result in HTTP 500 Internal Server Error responses with detailed error information and debugging context for troubleshooting.
 
 ########## Internal Implementation Details
 
-The tool registration uses FastMCP decorator pattern with async function definitions enabling non-blocking tool execution and proper MCP protocol integration. Global state management employs `_current_indexer` variable with Optional typing for tool coordination and status sharing across multiple invocations. Parameter validation implements specific checks for each tool parameter including enum validation, path resolution, and type checking with descriptive error messages. Progress reporting uses FastMCP Context methods with `await ctx.info()` and `await ctx.error()` for real-time user feedback during tool execution. Error logging uses structured logging with `exc_info=True` parameter for complete exception stack trace capture and debugging support. HTTP response formatting delegates to `format_http_response()` utility with status codes, response data, and content type specification for consistent Jesse Framework integration. Tool response data structures use nested dictionaries with comprehensive information organization supporting both programmatic access and human readability.
+The global `_current_indexer` variable uses Optional typing to handle uninitialized states and provides thread-safe access patterns for operation coordination. Tool registration uses FastMCP's decorator pattern with nested function definitions, enabling shared access to the global indexer state while maintaining clean encapsulation. Response data structures follow consistent patterns with status fields, operation metadata, statistics dictionaries, and error arrays limited to 10 entries for response size management. Progress reporting integrates FastMCP Context methods throughout tool execution, providing real-time feedback during long-running indexing operations. HTTP response formatting uses the `format_http_response()` helper with consistent status codes, structured payloads, and appropriate content type headers. Error handling includes comprehensive exception logging with stack traces and structured error responses containing error messages, details, and context information for debugging and user guidance.
 
 ########### Code Usage Examples
 
-Basic tool registration demonstrates the integration pattern for FastMCP server setup with knowledge base tools. This approach enables comprehensive manual indexing operations and system monitoring through standardized MCP tool interfaces.
+This example demonstrates the tool registration process and integration with a FastMCP server instance. The code shows how to register all knowledge base tools with proper server configuration and logging setup.
 
 ```python
-# Register knowledge base tools with FastMCP server for MCP client access
 from fastmcp.server import FastMCP
 from jesse_framework_mcp.knowledge_bases.tools import register_knowledge_bases_tools
 
 # Initialize FastMCP server and register knowledge base tools
-server = FastMCP("jesse-framework-mcp")
+server = FastMCP("Jesse Framework MCP")
 register_knowledge_bases_tools(server)
 
-# Tools are now available for MCP client invocation:
+# Tools are now available for MCP client invocation
 # - knowledge_bases_index_trigger
 # - knowledge_bases_status  
 # - knowledge_bases_search
 ```
 
-Manual indexing trigger demonstrates the tool invocation pattern for user-initiated knowledge base processing. This pattern enables targeted indexing operations with configurable scope and processing behavior for specific knowledge base maintenance requirements.
+This example shows how MCP clients would invoke the indexing trigger tool with various configuration options. The code demonstrates the parameter structure and expected response format for successful indexing operations.
 
 ```python
-# MCP client tool invocation pattern for manual indexing operations
-import asyncio
-from mcp_client import MCPClient
-
-async def trigger_knowledge_base_indexing():
-    client = MCPClient("jesse-framework-mcp")
-    
-    # Trigger incremental indexing for .knowledge directory
-    result = await client.call_tool("knowledge_bases_index_trigger", {
-        "target_path": ".knowledge",
-        "indexing_mode": "incremental",
+# MCP client tool invocation example (conceptual)
+response = await mcp_client.call_tool(
+    "knowledge_bases_index_trigger",
+    {
+        "target_path": "./src/",
+        "indexing_mode": "incremental", 
         "enable_git_clone_indexing": True,
         "enable_project_base_indexing": False
-    })
-    
-    # Monitor indexing status during operation
-    status = await client.call_tool("knowledge_bases_status", {})
-    
-    return result, status
+    }
+)
+
+# Expected response structure
+{
+    "status": "completed",
+    "target_path": "/absolute/path/to/src/",
+    "indexing_mode": "incremental",
+    "statistics": {...},
+    "completion_percentage": 100.0,
+    "operation_summary": {
+        "total_files_discovered": 150,
+        "files_completed": 145,
+        "files_failed": 5
+    }
+}
 ```

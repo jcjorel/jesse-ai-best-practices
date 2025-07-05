@@ -1,99 +1,84 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/config_manager.py -->
-<!-- Cached On: 2025-07-05T16:17:22.256015 -->
-<!-- Source Modified: 2025-07-05T16:08:33.020741 -->
+<!-- Cached On: 2025-07-05T20:32:35.253495 -->
+<!-- Source Modified: 2025-07-05T20:01:57.484013 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This configuration manager provides centralized JSON configuration file management for the Jesse Framework MCP knowledge base indexing system, bridging Python defaults with user-customizable runtime configurations through `Pydantic` validation. The module enables auto-generation of missing configuration files from centralized defaults, type-safe configuration loading, and handler-specific validation for different indexing scenarios (`project-base`, `git-clones`, `pdf-knowledge`). Key semantic entities include `IndexingConfigManager` class for configuration orchestration, `IndexingConfigModel` Pydantic model for validation, `HandlerType` enum for type safety, `get_default_config()` function integration, `validate_handler_type()` validation, `IndexingConfig` class conversion, `json` module for serialization, `pathlib.Path` for file operations, and comprehensive logging through `logger`. The system provides immutable configuration loading, comprehensive error handling with descriptive validation messages, and configuration caching for performance optimization, enabling zero-configuration startup while supporting user customization without code changes.
+The `config_manager.py` file serves as the central configuration management system for the Jesse Framework MCP's knowledge base indexing operations, providing auto-generation of missing JSON configuration files from centralized Python defaults and comprehensive `Pydantic` validation for type-safe configuration management. This module enables user-customizable JSON configuration files while maintaining immutable configuration loading that prevents runtime modifications, evidenced by the `IndexingConfigManager` class with its `load_config()` method and configuration caching via `_config_cache`. Key semantic entities include `HandlerType` enum with values `PROJECT_BASE`, `GIT_CLONES`, and `PDF_KNOWLEDGE`, hierarchical `Pydantic` models like `FileProcessingConfigModel`, `ContentFilteringConfigModel`, and `LLMConfigModel`, plus integration with `.defaults` module through `get_default_config()` and `validate_handler_type()` functions. The system bridges centralized Python defaults with runtime JSON configurations through the `IndexingConfigModel` class that validates handler-specific parameters and converts to `IndexingConfig` instances via `from_dict()` method.
 
 ##### Main Components
 
-The module contains three primary classes: `HandlerType` enum defining supported indexing handler types (`PROJECT_BASE`, `GIT_CLONES`, `PDF_KNOWLEDGE`) with string-based values for JSON serialization, `IndexingConfigModel` Pydantic model providing comprehensive validation for all indexing configuration parameters with handler-specific validation rules and field constraints, and `IndexingConfigManager` class orchestrating configuration loading, auto-generation, validation, and caching operations. Supporting functionality includes field validators for `chunk_overlap`, `indexing_mode`, and `project_base_exclusions` parameters, configuration conversion methods, cache management, and comprehensive error handling with structured logging.
+The file contains the `IndexingConfigManager` class as the primary configuration orchestrator, seven specialized `Pydantic` validation models (`FileProcessingConfigModel`, `ContentFilteringConfigModel`, `LLMConfigModel`, `ChangeDetectionConfigModel`, `ErrorHandlingConfigModel`, `OutputConfigModel`, `DebugConfigModel`), the comprehensive `IndexingConfigModel` that aggregates all validation models, and the `HandlerType` enum defining supported indexing handler types. The manager provides core methods including `load_config()` for configuration loading with auto-generation, `_generate_default_config()` for JSON file creation, `_load_json_config()` for validation and loading, and `_convert_to_indexing_config()` for model transformation.
 
 ###### Architecture & Design
 
-The architecture implements a layered configuration management pattern with centralized defaults feeding into JSON configuration auto-generation, followed by Pydantic validation and conversion to runtime configuration objects. The design separates concerns through distinct validation layers: handler type validation, Pydantic model validation, and business rule validation for interdependent parameters. Configuration management follows immutable loading patterns with caching for performance optimization, while file system operations implement graceful error handling and atomic configuration generation. The system bridges between compile-time Python defaults and runtime JSON configurations, enabling user customization while maintaining type safety and operational consistency.
+The architecture follows a hierarchical validation pattern with nested `Pydantic` models that mirror the configuration structure, enabling comprehensive type safety and validation at each level. The design implements an auto-generation strategy where missing JSON configuration files are created from centralized defaults, combined with immutable configuration loading that prevents runtime modifications through caching and conversion to `IndexingConfig` instances. The system uses a bridge pattern between Python defaults and JSON runtime configurations, with the `IndexingConfigManager` serving as the facade that coordinates between the defaults module, file system operations, and validation models.
 
 ####### Implementation Approach
 
-The implementation uses `Pydantic` models with field validators for comprehensive parameter validation, including cross-field validation for `chunk_overlap` vs `chunk_size` relationships and handler-specific requirements. Configuration loading employs a cache-first strategy with automatic JSON generation from centralized defaults when files are missing. File operations use `pathlib.Path` for cross-platform compatibility and UTF-8 encoding for international content support. The conversion process transforms validated Pydantic models to `IndexingConfig` instances through dictionary manipulation, handling set conversions for exclusion lists and optional parameter processing. Error handling provides detailed validation messages and comprehensive logging for operational visibility.
+The implementation employs `Pydantic` model validation with custom field validators like `validate_indexing_mode()` and `validate_project_base_exclusions()` that enforce handler-specific constraints and cross-field validation rules. Configuration loading uses a multi-stage approach: handler type validation, cache checking, auto-generation of missing files, JSON loading with UTF-8 encoding, `Pydantic` validation, and conversion to `IndexingConfig` instances. The system implements configuration caching through the `_config_cache` dictionary to optimize repeated loads, and uses atomic file operations with proper error handling for configuration generation and loading operations.
 
 ######## External Dependencies & Integration Points
 
-**→ Inbound:**
-- `.defaults:get_default_config` - centralized configuration template retrieval for auto-generation
-- `.defaults:validate_handler_type` - handler type validation against supported registry
-- `.defaults:get_supported_handler_types` - supported handler enumeration for error messages
-- `..models.indexing_config:IndexingConfig` - target configuration class for validated config conversion
-- `json` (external library) - JSON serialization and deserialization with UTF-8 encoding
-- `pathlib.Path` (external library) - cross-platform file system operations and path manipulation
-- `pydantic` (external library) - configuration validation, type safety, and field constraint enforcement
-- `logging` (external library) - structured logging for configuration operations and error reporting
+**→ Inbound:** [configuration management dependencies]
+- `.defaults:get_default_config` - centralized configuration template retrieval
+- `.defaults:validate_handler_type` - handler type validation logic
+- `..models.indexing_config:IndexingConfig` - target configuration class for conversion
+- `json` (external library) - JSON serialization and parsing operations
+- `pathlib` (external library) - cross-platform file system path operations
+- `pydantic` (external library) - configuration validation and type safety
 
-**← Outbound:**
-- Knowledge base indexing system components consuming validated `IndexingConfig` instances
-- JSON configuration files generated in knowledge directory for user customization
-- Configuration cache providing performance optimization for repeated loads
-- Error messages and validation feedback for configuration debugging
+**← Outbound:** [configuration consumers]
+- `knowledge_bases/indexing/` - indexing operations consuming validated configurations
+- `*.indexing-config.json` - generated JSON configuration files for user customization
+- `IndexingConfig` instances - validated configuration objects for indexing workflows
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core configuration management component bridging centralized Python defaults with user-customizable JSON configurations for the Jesse Framework knowledge base indexing system
-- **Ecosystem Position**: Central infrastructure component that all indexing operations depend on for validated configuration loading and type-safe parameter access
-- **Integration Pattern**: Used by indexing components during initialization to load validated configurations, with JSON files enabling user customization workflows and operational configuration management
+- **System Role**: Central configuration hub that bridges Python defaults with JSON runtime configurations for the knowledge base indexing system, ensuring type-safe configuration management across all indexing operations
+- **Ecosystem Position**: Core infrastructure component that enables zero-configuration startup while supporting user customization through JSON files
+- **Integration Pattern**: Used by indexing handlers during initialization to load validated configurations, with auto-generation ensuring seamless deployment and user customization through standard JSON editing workflows
 
 ######### Edge Cases & Error Handling
 
-The system handles missing configuration files through automatic generation from centralized defaults, invalid JSON through comprehensive parsing error reporting with file location details, and Pydantic validation failures through detailed field-level error messages. Handler type validation prevents unsupported configuration loading with descriptive error messages listing supported types. File system errors including permission issues and missing directories are handled gracefully with comprehensive logging and error propagation. Cross-field validation catches configuration inconsistencies like `chunk_overlap` exceeding `chunk_size`, while handler-specific validation ensures required parameters like `project_base_exclusions` for project-base handlers. Cache invalidation supports dynamic configuration updates, and atomic file operations prevent partial configuration generation.
+The system handles JSON parsing errors through `JSONDecodeError` catching with descriptive error messages, `Pydantic` validation failures with detailed field-level error reporting via `ValidationError.errors()`, and file system permission errors during configuration generation and loading. Handler type validation prevents unsupported configuration loading with comprehensive error messages listing supported types from `get_supported_handler_types()`. The manager handles missing configuration files through automatic generation, directory creation failures with graceful error propagation, and provides configuration cache clearing via `clear_cache()` for dynamic configuration updates.
 
 ########## Internal Implementation Details
 
-The `IndexingConfigManager` maintains an internal `_config_cache` dictionary for performance optimization, using handler type strings as keys and `IndexingConfig` instances as values. Configuration file paths follow the pattern `{handler_type}.indexing-config.json` within the knowledge directory. The `_convert_to_indexing_config()` method handles type conversions including list-to-set transformations for exclusion parameters and optional parameter processing. Pydantic model validation uses `model_dump()` for dictionary extraction and field validators with `info.data` access for cross-field validation. File operations use UTF-8 encoding explicitly and implement proper exception handling with detailed error logging. The system ensures directory creation with `mkdir(parents=True, exist_ok=True)` and handles concurrent access through immutable configuration loading patterns.
+The `_config_cache` dictionary provides performance optimization for repeated configuration loads, keyed by handler type strings. Configuration file naming follows the pattern `{handler_type}.indexing-config.json` within the knowledge directory structure. The `_convert_to_indexing_config()` method handles hierarchical to flat dictionary conversion using `model_dump()` and delegates to `IndexingConfig.from_dict()` for final object creation. File operations use UTF-8 encoding with proper exception handling, and JSON generation includes indentation and ASCII escaping configuration for human-readable output. The validation system supports cross-field validation through `field_validator` decorators with access to other field values via the `info` parameter.
 
 ########### Code Usage Examples
 
-**Basic configuration manager initialization and usage:**
-
-This example demonstrates the standard pattern for initializing the configuration manager and loading validated configurations. The manager automatically handles missing configuration files through default generation.
+This example demonstrates initializing the configuration manager and loading a validated configuration for project-base indexing operations:
 
 ```python
 from pathlib import Path
 from jesse_framework_mcp.knowledge_bases.indexing.config_manager import IndexingConfigManager
 
 # Initialize configuration manager with knowledge directory
-knowledge_dir = Path(".knowledge")
-config_manager = IndexingConfigManager(knowledge_dir)
+config_manager = IndexingConfigManager(Path("./knowledge_bases"))
 
-# Load configuration for project-base indexing (auto-generates if missing)
+# Load configuration for project-base handler (auto-generates if missing)
 config = config_manager.load_config("project-base")
+
+# Access validated configuration parameters
+print(f"Max file size: {config.max_file_size}")
+print(f"Batch size: {config.batch_size}")
+print(f"LLM model: {config.llm_model}")
 ```
 
-**Handler-specific configuration loading with validation:**
-
-This pattern shows how to load configurations for different handler types with automatic validation and error handling. Each handler type has specific validation rules and default parameters.
+This example shows how to clear the configuration cache and reload updated configurations:
 
 ```python
-# Load different handler configurations
-project_config = config_manager.load_config("project-base")
-git_config = config_manager.load_config("git-clones")
-pdf_config = config_manager.load_config("pdf-knowledge")
-
-# Configuration is cached for performance
-cached_config = config_manager.load_config("project-base")  # Returns cached instance
-```
-
-**Configuration file path access and cache management:**
-
-This example demonstrates accessing configuration file paths for external operations and managing the configuration cache for dynamic updates.
-
-```python
-# Get configuration file path for external access
-config_path = config_manager.get_config_file_path("project-base")
-print(f"Configuration file: {config_path}")
-
-# Clear cache to force reload after external configuration changes
+# Clear cache to force reload of updated configurations
 config_manager.clear_cache()
-reloaded_config = config_manager.load_config("project-base")
+
+# Get configuration file path for manual editing
+config_path = config_manager.get_config_file_path("pdf-knowledge")
+print(f"Edit configuration at: {config_path}")
+
+# Reload configuration after manual changes
+updated_config = config_manager.load_config("pdf-knowledge")
 ```

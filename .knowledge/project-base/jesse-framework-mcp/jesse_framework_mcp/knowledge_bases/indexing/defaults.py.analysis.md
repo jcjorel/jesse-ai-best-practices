@@ -1,105 +1,83 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/defaults.py -->
-<!-- Cached On: 2025-07-05T16:18:30.832793 -->
-<!-- Source Modified: 2025-07-05T16:01:50.512265 -->
+<!-- Cached On: 2025-07-05T20:35:23.215314 -->
+<!-- Source Modified: 2025-07-05T20:02:16.420071 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This module provides centralized default configuration templates for the Jesse Framework MCP knowledge base indexing system, serving as the foundation for auto-generating JSON configuration files when they don't exist. The module defines production-ready defaults for three distinct indexing handlers: `project-base` for whole codebase indexing, `git-clones` for read-only git repository processing, and `pdf-knowledge` for PDF document extraction. Key semantic entities include `PROJECT_BASE_DEFAULT_CONFIG`, `GIT_CLONES_DEFAULT_CONFIG`, `PDF_KNOWLEDGE_DEFAULT_CONFIG` dictionaries, `BASE_EXCLUDED_EXTENSIONS` and `BASE_EXCLUDED_DIRECTORIES` sets for common exclusions, `PROJECT_BASE_EXCLUSIONS` set for project-specific exclusions, `DEFAULT_CONFIGS` registry mapping handler types to configurations, `get_default_config()` factory function, `get_supported_handler_types()` enumeration function, `validate_handler_type()` validation function, `copy.deepcopy()` for template immutability, and `Claude4SonnetModel.CLAUDE_4_SONNET` LLM model integration. The system enables zero-configuration startup while supporting user customization through JSON file generation and maintains type safety through comprehensive parameter coverage matching `IndexingConfig` structure.
+The `defaults.py` file serves as the centralized configuration template repository for the Jesse Framework MCP's knowledge base indexing system, providing production-ready default configurations for three specialized indexing handlers: `project-base`, `git-clones`, and `pdf-knowledge`. This module enables zero-configuration startup by auto-generating JSON configuration files when they don't exist, evidenced by the `get_default_config()` function that returns deep copies of handler-specific templates and the `DEFAULT_CONFIGS` registry containing complete `IndexingConfig` parameter coverage. Key semantic entities include configuration dictionaries like `PROJECT_BASE_DEFAULT_CONFIG`, `GIT_CLONES_DEFAULT_CONFIG`, and `PDF_KNOWLEDGE_DEFAULT_CONFIG`, exclusion sets such as `BASE_EXCLUDED_EXTENSIONS` and `PROJECT_BASE_EXCLUSIONS`, and utility functions `validate_handler_type()` and `get_supported_handler_types()` for configuration management. The system implements a hierarchical exclusion strategy combining base exclusions with handler-specific exclusions, integrated with `Claude4SonnetModel.CLAUDE_4_SONNET` for LLM configuration and structured into logical groups like `file_processing`, `content_filtering`, `llm_config`, `change_detection`, `error_handling`, `output_config`, and `debug_config`.
 
 ##### Main Components
 
-The module contains three primary configuration dictionaries: `PROJECT_BASE_DEFAULT_CONFIG` with 2MB file size limits, 8000-character chunks, batch size of 7, and comprehensive exclusions including `.knowledge/`, `.coding_assistant/`, and `.clinerules/` directories; `GIT_CLONES_DEFAULT_CONFIG` optimized for git repositories with 1MB file limits, 6000-character chunks, batch size of 5, and no project-base exclusions; and `PDF_KNOWLEDGE_DEFAULT_CONFIG` for document processing with 10MB file limits, 4000-character chunks, batch size of 3, and document-specific optimizations. Supporting components include `BASE_EXCLUDED_EXTENSIONS` set with 15 common file extensions like `.pyc`, `.log`, `.cache`, `BASE_EXCLUDED_DIRECTORIES` set with 16 common directories like `__pycache__/`, `node_modules/`, `.git/`, and `PROJECT_BASE_EXCLUSIONS` set with 3 project-specific directories. Utility functions include `get_default_config()`, `get_supported_handler_types()`, and `validate_handler_type()` for configuration management.
+The file contains three primary configuration templates (`PROJECT_BASE_DEFAULT_CONFIG`, `GIT_CLONES_DEFAULT_CONFIG`, `PDF_KNOWLEDGE_DEFAULT_CONFIG`) with handler-specific optimizations, exclusion rule sets including `BASE_EXCLUDED_EXTENSIONS`, `BASE_EXCLUDED_DIRECTORIES`, and `PROJECT_BASE_EXCLUSIONS` for content filtering, and the `DEFAULT_CONFIGS` registry that maps handler types to their respective configurations. Core utility functions include `get_default_config()` for template retrieval with deep copying, `get_supported_handler_types()` for handler discovery, and `validate_handler_type()` for configuration validation. Each configuration template contains seven hierarchical sections covering file processing limits, content filtering rules, LLM configuration, change detection settings, error handling parameters, output configuration, and debug options.
 
 ###### Architecture & Design
 
-The architecture implements a template-based configuration system with hierarchical exclusion patterns, separating base exclusions applied to all handlers from handler-specific exclusions. The design uses immutable template access through `copy.deepcopy()` to prevent accidental modification of default configurations, while maintaining a centralized registry pattern through `DEFAULT_CONFIGS` dictionary mapping handler types to their respective configurations. Configuration templates follow a comprehensive parameter coverage strategy, ensuring all `IndexingConfig` parameters are represented with production-ready values. The system implements handler-specific optimization strategies: project-base configurations prioritize comprehensive exclusions and larger batch sizes, git-clones configurations use smaller file limits and conservative processing, and pdf-knowledge configurations accommodate larger documents with specialized processing parameters.
+The architecture follows a template-based configuration pattern with handler-specific specialization, where each indexing handler receives optimized defaults tailored to its processing characteristics and use cases. The design implements a hierarchical exclusion system that combines universal base exclusions with handler-specific exclusions, enabling shared filtering rules while allowing customization for specialized processing needs. The configuration structure uses a registry pattern through `DEFAULT_CONFIGS` that maps handler type strings to configuration dictionaries, combined with immutable template access through deep copying to prevent accidental modification of default values. Each configuration template follows a consistent hierarchical organization with logical groupings that mirror the `IndexingConfig` structure for seamless integration.
 
 ####### Implementation Approach
 
-The implementation uses dictionary-based configuration templates with explicit parameter specification for all indexing configuration options including file processing (max_file_size, chunk_size, chunk_overlap), batch processing (batch_size, max_concurrent_operations), content filtering (excluded_extensions, excluded_directories, project_base_exclusions), LLM configuration (llm_model, temperature, max_tokens), change detection (indexing_mode, timestamp_tolerance_seconds), special handling flags, performance settings, error handling parameters, and debug configuration. Set-based exclusion management uses `BASE_EXCLUDED_EXTENSIONS` and `BASE_EXCLUDED_DIRECTORIES` converted to lists for JSON serialization compatibility. The factory function `get_default_config()` implements deep copying to ensure template immutability and handler type validation against the `DEFAULT_CONFIGS` registry. Configuration values are optimized for each handler type: project-base uses larger chunks and batches for comprehensive processing, git-clones uses smaller limits for diverse content, and pdf-knowledge uses document-specific parameters.
+The implementation uses dictionary-based configuration templates with nested structures that organize parameters into logical groups like `file_processing`, `content_filtering`, and `llm_config` for maintainability and discoverability. Configuration generation employs `copy.deepcopy()` to ensure template immutability while allowing safe customization of returned configurations. The exclusion system uses Python sets for efficient membership testing, converted to lists in configuration templates for JSON serialization compatibility. Handler-specific optimizations include different `max_file_size` limits (2MB for project-base, 1MB for git-clones, 10MB for PDF), varying `batch_size` parameters (7, 5, 3 respectively), and specialized `indexing_mode` settings (`incremental`, `full_kb_rebuild`, `incremental`) tailored to each handler's processing characteristics.
 
 ######## External Dependencies & Integration Points
 
-**→ Inbound:**
-- `jesse_framework_mcp.llm.strands_agent_driver.models:Claude4SonnetModel` - LLM model configuration for `CLAUDE_4_SONNET` constant
-- `copy` (external library) - deep copying functionality for immutable template access
-- `typing` (external library) - type annotations for `Dict`, `Any`, `List`, `Set` type hints
+**→ Inbound:** [configuration template dependencies]
+- `jesse_framework_mcp.llm.strands_agent_driver.models:Claude4SonnetModel` - LLM model constants for configuration templates
+- `copy` (external library) - deep copying for immutable template access
+- `typing` (external library) - type annotations for configuration structures
 
-**← Outbound:**
-- `config_manager.py:IndexingConfigManager` - consumes default configurations for auto-generation of missing JSON files
-- `config_manager.py:get_default_config` - factory function called during configuration loading and validation
-- JSON configuration files generated in knowledge directories for user customization
-- Pydantic validation models consuming configuration templates for type safety
+**← Outbound:** [configuration consumers]
+- `config_manager.py:IndexingConfigManager` - consumes default configurations for auto-generation
+- `*.indexing-config.json` - generated JSON configuration files based on these templates
+- `knowledge_bases/indexing/` - indexing handlers consuming validated configurations
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core configuration foundation providing centralized default templates for the Jesse Framework knowledge base indexing system, enabling auto-generation of JSON configurations and zero-configuration startup
-- **Ecosystem Position**: Central infrastructure component that all indexing handlers depend on for default configuration values, serving as the bridge between hardcoded defaults and user-customizable JSON configurations
-- **Integration Pattern**: Used by configuration managers during initialization to auto-generate missing JSON files, with templates consumed by validation systems and indexing components requiring production-ready default parameters
+- **System Role**: Central configuration template repository that enables zero-configuration startup for the Jesse Framework MCP indexing system by providing production-ready defaults for all supported indexing handlers
+- **Ecosystem Position**: Core infrastructure component that bridges between hardcoded Python defaults and user-customizable JSON configurations
+- **Integration Pattern**: Used by configuration management during initialization to auto-generate missing JSON files, with templates consumed by indexing handlers through the configuration loading pipeline
 
 ######### Edge Cases & Error Handling
 
-The system handles unsupported handler types through `get_default_config()` validation, raising `ValueError` with descriptive messages listing supported handler types from the `DEFAULT_CONFIGS` registry. Template immutability is enforced through `copy.deepcopy()` to prevent accidental modification of default configurations during multiple access operations. Handler type validation provides boolean checking through `validate_handler_type()` for use in conditional logic and error prevention. Configuration completeness is maintained through comprehensive parameter coverage matching `IndexingConfig` structure requirements, ensuring no missing parameters during JSON generation. The exclusion system handles hierarchical patterns with base exclusions applied to all handlers and handler-specific exclusions added only where appropriate, preventing configuration inconsistencies.
+The system handles unsupported handler types through `get_default_config()` validation that raises `ValueError` with clear error messages listing supported handler types from the registry. Configuration template integrity is protected through `copy.deepcopy()` usage that prevents accidental modification of default values during configuration generation and customization. The exclusion system handles edge cases through comprehensive base exclusions covering common development artifacts (`.pyc`, `__pycache__`, `.git`, `.DS_Store`) and build outputs (`dist/`, `build/`, `target/`), with handler-specific exclusions like `PROJECT_BASE_EXCLUSIONS` adding specialized filtering for knowledge base outputs and AI assistant workspaces. Missing or invalid configuration parameters are handled through complete parameter coverage in each template, ensuring all `IndexingConfig` fields have appropriate default values.
 
 ########## Internal Implementation Details
 
-The configuration dictionaries use explicit parameter specification with production-optimized values: `max_file_size` ranges from 1MB for git-clones to 10MB for PDF documents, `chunk_size` varies from 4000 for documents to 8000 for project-base processing, `batch_size` ranges from 3 for documents to 7 for project-base, and `temperature` settings range from 0.2 for document analysis to 0.4 for diverse git content. Exclusion sets use specific patterns: `BASE_EXCLUDED_EXTENSIONS` includes build artifacts and temporary files, `BASE_EXCLUDED_DIRECTORIES` covers common build and cache directories, and `PROJECT_BASE_EXCLUSIONS` targets project-specific directories like `.knowledge/`, `.coding_assistant/`, and `.clinerules/`. The `DEFAULT_CONFIGS` registry uses string keys matching handler type identifiers for direct lookup operations. List conversion from sets ensures JSON serialization compatibility while maintaining set-based operations during template generation.
+The configuration templates use specific optimization values tailored to each handler's characteristics: project-base uses `batch_size: 7` and `max_concurrent_operations: 3` for balanced cost/performance, git-clones uses smaller batches (`batch_size: 5`) and conservative concurrency (`max_concurrent_operations: 2`) for read-only processing, while PDF processing uses `batch_size: 3` and higher `max_file_size: 10MB` for document handling. Temperature settings vary by handler with project-base using `0.3` for consistent summarization, git-clones using `0.4` for diverse content, and PDF using `0.2` for document analysis precision. The exclusion system converts Python sets to lists for JSON serialization compatibility while maintaining efficient set-based operations during development. Configuration registry uses string keys matching handler type identifiers for direct lookup and validation operations.
 
 ########### Code Usage Examples
 
-**Basic configuration template retrieval with validation:**
-
-This example demonstrates the standard pattern for retrieving default configurations with automatic validation and deep copying. The function ensures template immutability while providing handler-specific optimized configurations.
+This example demonstrates retrieving and customizing a default configuration template for project-base indexing operations. The code shows how to safely obtain a configuration template and modify it without affecting the original defaults.
 
 ```python
-from jesse_framework_mcp.knowledge_bases.indexing.defaults import get_default_config
+from jesse_framework_mcp.knowledge_bases.indexing.defaults import get_default_config, validate_handler_type
 
-# Retrieve project-base configuration template
-project_config = get_default_config("project-base")
-print(f"Max file size: {project_config['max_file_size']}")  # 2097152 (2MB)
-print(f"Batch size: {project_config['batch_size']}")  # 7
-
-# Retrieve git-clones configuration with different optimizations
-git_config = get_default_config("git-clones")
-print(f"Max file size: {git_config['max_file_size']}")  # 1048576 (1MB)
-print(f"Batch size: {git_config['batch_size']}")  # 5
-```
-
-**Handler type validation and enumeration:**
-
-This pattern shows how to validate handler types and enumerate supported configurations for dynamic configuration management. The validation functions provide safe access to configuration templates.
-
-```python
-from jesse_framework_mcp.knowledge_bases.indexing.defaults import (
-    validate_handler_type, get_supported_handler_types
-)
-
-# Validate handler type before configuration access
+# Validate handler type before configuration retrieval
 if validate_handler_type("project-base"):
+    # Get deep copy of default configuration template
     config = get_default_config("project-base")
-
-# Enumerate all supported handler types
-supported_types = get_supported_handler_types()
-print(f"Supported handlers: {supported_types}")  # ['git-clones', 'pdf-knowledge', 'project-base']
+    
+    # Safely customize configuration without affecting defaults
+    config["file_processing"]["batch_size"] = 10
+    config["debug_config"]["debug_mode"] = True
+    print(f"Handler: {config['handler_type']}")
+    print(f"Batch size: {config['file_processing']['batch_size']}")
 ```
 
-**Configuration customization with exclusion patterns:**
-
-This example demonstrates accessing and customizing exclusion patterns from default configurations. The hierarchical exclusion system provides base exclusions plus handler-specific additions.
+This example shows how to discover available handler types and access their configuration templates programmatically. The code demonstrates the registry pattern for dynamic configuration discovery and validation.
 
 ```python
-# Access exclusion patterns from default configurations
-project_config = get_default_config("project-base")
-base_exclusions = set(project_config['excluded_directories'])
-project_exclusions = set(project_config['project_base_exclusions'])
+from jesse_framework_mcp.knowledge_bases.indexing.defaults import get_supported_handler_types, get_default_config
 
-# Combine exclusions for comprehensive filtering
-all_exclusions = base_exclusions.union(project_exclusions)
-print(f"Total excluded directories: {len(all_exclusions)}")
+# Discover all supported handler types
+supported_handlers = get_supported_handler_types()
+print(f"Supported handlers: {supported_handlers}")
 
-# Git-clones configuration has no project-base exclusions
-git_config = get_default_config("git-clones")
-print(f"Git exclusions: {git_config.get('project_base_exclusions')}")  # None
+# Access configuration templates for all handlers
+for handler_type in supported_handlers:
+    config = get_default_config(handler_type)
+    print(f"{handler_type}: {config['description']}")
+    print(f"  Max file size: {config['file_processing']['max_file_size']}")
+    print(f"  Indexing mode: {config['change_detection']['indexing_mode']}")
 ```
