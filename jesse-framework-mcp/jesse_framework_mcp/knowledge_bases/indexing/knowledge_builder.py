@@ -88,7 +88,7 @@ from ..models import (
 from ...llm.strands_agent_driver import StrandsClaude4Driver, Claude4SonnetConfig
 from ...helpers.path_utils import get_portable_path
 from .knowledge_file_generator import KnowledgeFileGenerator
-from .enhanced_prompts import EnhancedPrompts
+from .knowledge_prompts import EnhancedPrompts
 from .debug_handler import DebugHandler
 from .file_analysis_cache import FileAnalysisCache
 
