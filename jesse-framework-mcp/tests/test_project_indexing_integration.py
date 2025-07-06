@@ -5,8 +5,13 @@ Simple integration test for Knowledge Bases Hierarchical Indexing System.
 This test triggers indexing on the actual JESSE Framework project root to verify
 the system works with real-world complexity, real files, and real project structures.
 Focus is on basic functionality verification and error detection without complex scenarios.
+
+Command line options:
+  --full-rebuild      Delete all analysis and KB files, rebuild everything from scratch (expensive)
+  --kb-only-rebuild   Keep analysis files, regenerate only KB files (fast, for testing KB synthesis)
 """
 
+import argparse
 import asyncio
 import tempfile
 import shutil
@@ -112,7 +117,33 @@ class MockContext:
         print(f"ERROR: {message}")
 
 
-async def test_real_project_indexing():
+def delete_kb_files(project_root: Path):
+    """Delete all KB files to force regeneration"""
+    kb_files_deleted = 0
+    knowledge_base_dir = project_root / ".knowledge"
+    if knowledge_base_dir.exists():
+        for kb_file in knowledge_base_dir.rglob("*_kb.md"):
+            if kb_file.exists():
+                kb_file.unlink()
+                kb_files_deleted += 1
+                print(f"🗑️ Deleted KB file: {kb_file.relative_to(project_root)}")
+    print(f"✅ Deleted {kb_files_deleted} KB files")
+    return kb_files_deleted
+
+def delete_analysis_files(project_root: Path):
+    """Delete all analysis files to force reanalysis"""
+    analysis_files_deleted = 0
+    knowledge_base_dir = project_root / ".knowledge"
+    if knowledge_base_dir.exists():
+        for analysis_file in knowledge_base_dir.rglob("*.analysis.md"):
+            if analysis_file.exists():
+                analysis_file.unlink()
+                analysis_files_deleted += 1
+                print(f"🗑️ Deleted analysis file: {analysis_file.relative_to(project_root)}")
+    print(f"✅ Deleted {analysis_files_deleted} analysis files")
+    return analysis_files_deleted
+
+async def test_real_project_indexing(full_rebuild: bool = False, kb_only_rebuild: bool = False):
     """
     [Function intent]
     Simple integration test triggering indexing on actual JESSE Framework project root.
@@ -124,6 +155,7 @@ async def test_real_project_indexing():
     Single test scenario avoiding unnecessary complexity for first integration test.
     Real project structure providing authentic testing conditions and edge cases.
     Comprehensive error monitoring enabling clear success/failure determination.
+    Configurable rebuild modes enabling targeted testing without waste.
 
     [Implementation details]
     Targets actual project root for realistic integration testing conditions.
@@ -131,9 +163,18 @@ async def test_real_project_indexing():
     Creates debug output directory for detailed analysis of any processing issues.
     Monitors all message types to identify errors, warnings, and success indicators.
     Reports clear success/failure determination with detailed statistics.
+    Supports full rebuild (nuclear) and KB-only rebuild (surgical) options.
     """
     print("=== JESSE Framework Project Root Integration Test ===")
     print("Testing real project indexing with actual complexity and file structures")
+    
+    # Show rebuild mode
+    if full_rebuild:
+        print("🔥 FULL REBUILD MODE: Will delete all analysis and KB files (expensive)")
+    elif kb_only_rebuild:
+        print("🔧 KB-ONLY REBUILD MODE: Will delete only KB files, keep analysis (fast)")
+    else:
+        print("📈 INCREMENTAL MODE: Will use existing cache when possible")
     
     # Define project root - use ensure_project_root() for dynamic detection with error handling
     try:
@@ -149,6 +190,17 @@ async def test_real_project_indexing():
         print("Unexpected error during project root detection")
         return False
     
+    # Handle rebuild modes
+    if full_rebuild:
+        print("\n=== FULL REBUILD: DELETING ALL FILES ===")
+        analysis_deleted = delete_analysis_files(project_root)
+        kb_deleted = delete_kb_files(project_root)
+        print(f"🔥 Nuclear rebuild: {analysis_deleted} analysis + {kb_deleted} KB files deleted")
+    elif kb_only_rebuild:
+        print("\n=== KB-ONLY REBUILD: DELETING KB FILES ===")
+        kb_deleted = delete_kb_files(project_root)
+        print(f"🔧 Surgical rebuild: {kb_deleted} KB files deleted, analysis preserved")
+    
     # Create debug directory for detailed analysis
     debug_dir = Path("/tmp/jesse_project_indexing_integration_test")
     if debug_dir.exists():
@@ -157,40 +209,38 @@ async def test_real_project_indexing():
     print(f"Debug output directory: {debug_dir}")
     
     try:
-        # Create integration test configuration using hierarchical structure
-        from jesse_framework_mcp.knowledge_bases.models.indexing_config import (
-            FileProcessingConfig, ChangeDetectionConfig, ErrorHandlingConfig, DebugConfig
-        )
+        # Create integration test configuration using updated defaults
+        # This ensures we get the scratchpad exclusion and other updates
+        from jesse_framework_mcp.knowledge_bases.indexing.defaults import get_default_config
         
-        file_processing = FileProcessingConfig(
-            max_file_size=2 * 1024 * 1024,  # 2MB limit
-            batch_size=5,                    # Moderate batch size for stability
-            max_concurrent_operations=1      # Conservative concurrency
-        )
+        # Load the complete default config including scratchpad exclusion
+        config_dict = get_default_config('project-base')
         
-        change_detection = ChangeDetectionConfig(
-            indexing_mode=IndexingMode.FULL_KB_REBUILD  # Safer than nuclear FULL for first test, but more thorough than INCREMENTAL
-        )
+        # Override specific settings for integration testing
+        config_dict['file_processing'].update({
+            'max_file_size': 2 * 1024 * 1024,  # 2MB limit
+            'batch_size': 5,                    # Moderate batch size for stability
+            'max_concurrent_operations': 1      # Conservative concurrency
+        })
         
-        error_handling = ErrorHandlingConfig(
-            continue_on_file_errors=True  # Don't stop on individual file failures
-        )
+        config_dict['change_detection'].update({
+            'indexing_mode': 'full_kb_rebuild'  # Safer than nuclear FULL for first test, but more thorough than INCREMENTAL
+        })
         
-        debug_config = DebugConfig(
-            debug_mode=True,                         # Capture debug info for errors
-            debug_output_directory=debug_dir,        # Store debug files for analysis
-            enable_llm_replay=False                  # Force fresh LLM calls
-        )
+        config_dict['error_handling'].update({
+            'continue_on_file_errors': True  # Don't stop on individual file failures
+        })
         
-        config = IndexingConfig(
-            handler_type="project-base",
-            description="Integration test configuration",
-            file_processing=file_processing,
-            change_detection=change_detection,
-            error_handling=error_handling,
-            debug_config=debug_config
-        )
+        config_dict['debug_config'].update({
+            'debug_mode': True,                         # Capture debug info for errors
+            'debug_output_directory': str(debug_dir),   # Store debug files for analysis
+            'enable_llm_replay': False                  # Force fresh LLM calls
+        })
+        
+        # Create config from updated defaults (includes scratchpad exclusion)
+        config = IndexingConfig.from_dict(config_dict)
         print(f"Configuration: {config.indexing_mode.value} mode")
+        print(f"Excluded directories: {sorted(list(config.excluded_directories))}")
         
         # Show what files/directories will be processed
         print("\n=== PROJECT STRUCTURE ANALYSIS ===")
@@ -383,17 +433,54 @@ async def main():
     Single comprehensive integration test focusing on real-world project complexity.
     Clear result reporting enabling easy assessment of system functionality.
     Preservation of debug artifacts for detailed analysis when needed.
+    Command line argument support for different rebuild modes.
 
     [Implementation details]
+    Parses command line arguments for rebuild modes.
     Executes real project indexing test with comprehensive error monitoring.
     Reports final success/failure status with detailed analysis information.
     Preserves all debug output for post-test analysis and troubleshooting.
     """
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(
+        description="JESSE Framework Knowledge Base Integration Test",
+        epilog="Examples:\n"
+               "  python test_project_indexing_integration.py                    # Incremental mode\n"
+               "  python test_project_indexing_integration.py --kb-only-rebuild # Fast KB rebuild\n"
+               "  python test_project_indexing_integration.py --full-rebuild    # Complete rebuild",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    rebuild_group = parser.add_mutually_exclusive_group()
+    rebuild_group.add_argument(
+        '--full-rebuild',
+        action='store_true',
+        help='Delete all analysis and KB files, rebuild everything from scratch (expensive, includes LLM calls)'
+    )
+    rebuild_group.add_argument(
+        '--kb-only-rebuild',
+        action='store_true', 
+        help='Keep analysis files, regenerate only KB files (fast, perfect for testing KB synthesis fixes)'
+    )
+    
+    args = parser.parse_args()
+    
     print("JESSE Framework - Project Root Indexing Integration Test")
     print("=" * 60)
     
+    # Show selected mode
+    if args.full_rebuild:
+        print("🔥 Mode: FULL REBUILD (Nuclear - deletes everything)")
+    elif args.kb_only_rebuild:
+        print("🔧 Mode: KB-ONLY REBUILD (Surgical - preserves analysis)")
+    else:
+        print("📈 Mode: INCREMENTAL (Uses existing cache)")
+    
     try:
-        success = await test_real_project_indexing()
+        success = await test_real_project_indexing(
+            full_rebuild=args.full_rebuild,
+            kb_only_rebuild=args.kb_only_rebuild
+        )
         
         print("\n" + "=" * 60)
         if success:

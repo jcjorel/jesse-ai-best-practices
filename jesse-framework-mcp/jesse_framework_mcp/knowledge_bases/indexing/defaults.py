@@ -36,6 +36,11 @@
 # <system>: copy - Deep copying for configuration template generation
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-06T10:27:00Z : Added scratchpad directory to base exclusions by CodeAssistant
+# * Added 'scratchpad' to BASE_EXCLUDED_DIRECTORIES ensuring all indexing handlers exclude this directory
+# * Prevents indexing of user scratchpad content across project-base, git-clones, and pdf-knowledge handlers
+# * Maintains consistency with existing system directory exclusions (.git, __pycache__, etc.)
+# * Universal exclusion approach requiring no handler-specific configuration changes
 # 2025-07-05T17:32:00Z : Configuration structure hierarchical reorganization by CodeAssistant
 # * Restructured all three configuration templates with logical grouping (file_processing, content_filtering, llm_config, etc.)
 # * Maintained backward compatibility by keeping all existing configuration keys and values
@@ -78,7 +83,8 @@ BASE_EXCLUDED_DIRECTORIES: Set[str] = {
     '.mypy_cache', 'node_modules', '.venv', 'venv',
     '.tox', 'dist', 'build', '.cache',
     '.coverage', '.nyc_output', 'coverage',
-    'target', 'bin', 'obj'  # Common build output directories
+    'target', 'bin', 'obj',  # Common build output directories
+    'scratchpad'  # User scratchpad directory - never index
 }
 
 # Project-base specific exclusions (in addition to base exclusions)

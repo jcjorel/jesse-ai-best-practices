@@ -20,7 +20,7 @@
 # - Leaf-first hierarchical processing without parent-to-child context dependencies
 # - Bottom-up assembly pattern aggregating child summaries into parent knowledge files
 # - Async-first architecture supporting concurrent processing and progress reporting
-# - Integration with ChangeDetector and KnowledgeBuilder for modular processing
+# - Integration with RebuildDecisionEngine and KnowledgeBuilder for modular processing
 # - Defensive programming with comprehensive error handling and recovery mechanisms
 ###############################################################################
 # [Source file constraints]
@@ -33,7 +33,6 @@
 # [Dependencies]
 # <codebase>: ..models.indexing_config - Configuration and filtering logic
 # <codebase>: ..models.knowledge_context - Context structures and processing state
-# <codebase>: .change_detector - Change detection and timestamp comparison
 # <codebase>: .knowledge_builder - LLM-powered content summarization
 # <codebase>: .special_handlers - Git-clone and project-base special handling
 # <system>: asyncio - Async programming patterns and concurrency control
@@ -41,25 +40,25 @@
 # <system>: logging - Structured logging and error reporting
 ###############################################################################
 # [GenAI tool change history]
-# 2025-07-05T13:29:00Z : Integrated orphaned analysis cleanup component by CodeAssistant
-# * Added OrphanedAnalysisCleanup integration for comprehensive knowledge base maintenance
-# * Implemented Phase 1.7 orphaned file cleanup after cache structure preparation
-# * Added support for cleaning up orphaned analysis files (.analysis.md) and knowledge files (_kb.md)
-# * Integrated leaf-first cleanup strategy ensuring safe bottom-up directory processing
-# 2025-07-04T16:49:00Z : Implemented complete truncation artifact prevention system by CodeAssistant
-# * Updated _process_single_file() to handle None return from KnowledgeBuilder indicating truncated files
-# * Modified _process_directory_files() to completely omit truncated files from DirectoryContext file_contexts
-# * Added proper logging and statistics tracking for truncated files with no artifact creation
-# * Enhanced type hints to Optional[FileContext] reflecting truncation handling behavior
-# 2025-07-03T17:57:00Z : Fixed systematic knowledge file rebuilding by integrating comprehensive change detection by CodeAssistant
-# * Replaced old _detect_changes() with comprehensive change detection using check_comprehensive_directory_change()
-# * Added _apply_comprehensive_change_detection() method for recursive directory evaluation with proper constituent dependency checking
-# * Updated directory processing to skip knowledge file generation when processing_status is SKIPPED (up-to-date directories)
-# * Integrated enhanced FileAnalysisCache logic eliminating systematic rebuilds when only source files change without cached analysis updates
-# 2025-07-01T13:25:00Z : Fixed semaphore deadlock issue by CodeAssistant
-# * Moved semaphore usage from directory processing to file processing level
-# * Prevented recursive deadlocks in leaf-first directory processing
-# * Ensured concurrent file processing without blocking directory traversal
+# 2025-07-06T17:12:00Z : CRITICAL EXECUTION ORDER FIX - Fixed file-first processing to prevent stale KB generation by CodeAssistant
+# * FIXED FUNDAMENTAL LOGICAL BUG: Corrected execution order in _process_directory_leaf_first to implement true file-first optimization
+# * BEFORE: Generated directory KB files FIRST using stale analysis cache, then processed individual files (defeating optimization)
+# * AFTER: Process individual stale files FIRST to refresh analysis cache, THEN generate directory KB files using fresh cache
+# * Added explicit file-first messaging: "🔄 FILE-FIRST: Processing X stale files to refresh analysis cache"
+# * PREVENTS STALE KB GENERATION: Directory knowledge files now always use fresh individual file analysis data
+# 2025-07-06T16:32:00Z : CRITICAL WORKFLOW FIX - Added Phase 1.8 cleanup execution preventing cache inconsistencies by CodeAssistant
+# * FIXED CRITICAL ISSUE: Added _execute_cleanup_decisions() method to actually delete orphaned files before rebuild processing
+# * Added Phase 1.8 "Execute Cleanup Decisions" between decision analysis and change detection phases
+# * Implemented concurrent deletion with safety validation and comprehensive error handling
+# * PREVENTS CACHE INCONSISTENCIES: Orphaned cache files now removed before rebuild processing begins
+# 2025-07-06T14:25:00Z : Integrated centralized RebuildDecisionEngine replacing scattered decision logic by CodeAssistant
+# * Added RebuildDecisionEngine integration consolidating decision logic from HierarchicalIndexer, ChangeDetector, and FileAnalysisCache
+# * Replaced scattered change detection and rebuild logic with unified decision engine providing comprehensive audit trails
+# * Simplified indexing workflow by delegating all decision-making to centralized engine with clear reasoning
+# 2025-07-06T14:09:00Z : Fixed empty directory rebuild loops and missing project root summary by CodeAssistant
+# * Enhanced empty directory detection with improved logging (📁 EMPTY message) to prevent infinite rebuild cycles
+# * Added project root forced processing (🏗️ PROJECT ROOT message) ensuring root_kb.md generation in incremental mode
+# * Integrated FileAnalysisCache._is_directory_empty_of_processable_content() to skip knowledge file generation for empty directories
 ###############################################################################
 
 """
@@ -84,11 +83,17 @@ from ..models import (
     FileContext, 
     ProcessingStatus,
     ProcessingStats,
-    IndexingStatus
+    IndexingStatus,
+    DecisionReport,
+    DecisionOutcome,
+    ExecutionPlan,
+    ExecutionResults
 )
-from .change_detector import ChangeDetector
+from .rebuild_decision_engine import RebuildDecisionEngine
 from .knowledge_builder import KnowledgeBuilder
-from .orphaned_cleanup import OrphanedAnalysisCleanup
+from .special_handlers import ProjectBaseHandler, GitCloneHandler
+from .plan_generator import PlanGenerator
+from .execution_engine import ExecutionEngine
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +113,7 @@ class HierarchicalIndexer:
     Defensive error handling enabling graceful degradation and partial processing recovery.
 
     [Implementation details]
-    Uses ChangeDetector for incremental processing and timestamp-based change detection.
+    Uses RebuildDecisionEngine for centralized decision-making and comprehensive change detection.
     Delegates content summarization to KnowledgeBuilder with strands_agent_driver integration.
     Handles special cases through GitCloneHandler and ProjectBaseHandler components.
     Implements concurrent processing with configurable concurrency limits for performance.
@@ -118,54 +123,54 @@ class HierarchicalIndexer:
     def __init__(self, config: IndexingConfig):
         """
         [Class method intent]
-        Initializes hierarchical indexer with configuration and component dependencies.
-        Sets up change detection, knowledge building, and special handling components
-        for coordinated hierarchical processing operations.
+        Initializes hierarchical indexer with Plan-then-Execute architecture components.
+        Sets up decision engine, plan generator, and execution engine for coordinated processing.
 
         [Design principles]
-        Dependency injection pattern enabling testability and component modularity.
+        Plan-then-Execute architecture separating decision-making from execution for perfect debuggability.
+        Component dependency injection enabling testability and modularity.
         Configuration-driven behavior supporting different processing scenarios.
-        Component initialization with error handling preventing construction failures.
 
         [Implementation details]
-        Creates ChangeDetector, KnowledgeBuilder, and special handler components.
+        Creates RebuildDecisionEngine for centralized decision-making.
+        Creates PlanGenerator for converting decisions into atomic tasks.
+        Creates ExecutionEngine for executing atomic tasks with dependency resolution.
         Initializes processing statistics and status tracking structures.
-        Sets up concurrency semaphore based on configuration limits.
         """
         self.config = config
-        self.change_detector = ChangeDetector(config)
-        self.knowledge_builder = KnowledgeBuilder(config)
-        self.orphaned_cleanup = OrphanedAnalysisCleanup(config)
+        
+        # Plan-then-Execute architecture components
+        self.rebuild_decision_engine = RebuildDecisionEngine(config)
+        self.plan_generator = PlanGenerator(config)
+        self.execution_engine = ExecutionEngine(config)
         
         # Processing coordination
-        self._processing_semaphore = asyncio.Semaphore(config.max_concurrent_operations)
         self._current_status = IndexingStatus()
         
-        logger.info(f"Initialized HierarchicalIndexer with config: {config.to_dict()}")
+        logger.info(f"Initialized HierarchicalIndexer with Plan-then-Execute architecture: {config.to_dict()}")
     
     async def index_hierarchy(self, root_path: Path, ctx: Context) -> IndexingStatus:
         """
         [Class method intent]
-        Performs complete hierarchical indexing of the specified root directory using
-        leaf-first processing strategy. Coordinates change detection, content building,
-        and knowledge file generation for the entire directory hierarchy.
+        Performs complete hierarchical indexing using Plan-then-Execute architecture.
+        Separates decision-making from execution for perfect debuggability and atomic task processing.
 
         [Design principles]
-        Comprehensive hierarchy processing with accurate progress reporting through FastMCP Context.
-        Leaf-first processing ensuring bottom-up assembly of hierarchical knowledge files.
-        Error recovery enabling partial processing completion when individual components fail.
-        Statistics tracking providing detailed performance metrics and operation insights.
+        Plan-then-Execute architecture providing perfect execution plan visibility before expensive operations.
+        Atomic task execution with dependency resolution ensuring proper hierarchical processing order.
+        Comprehensive progress reporting with real-time status updates and performance metrics.
+        Error recovery enabling graceful degradation and recovery from individual task failures.
 
         [Implementation details]
-        Implements discovery phase for directory structure analysis and file enumeration.
-        Uses change detection for incremental processing when configured for efficiency.
-        Processes directories in leaf-first order ensuring child completion before parents.
-        Integrates special handling for git-clones and project-base scenarios.
-        Reports progress through FastMCP Context for real-time user feedback.
+        Phase 1: Discovery - Build complete directory structure context
+        Phase 2: Decision Analysis - Generate comprehensive DecisionReport with change detection
+        Phase 3: Plan Generation - Convert decisions into atomic ExecutionPlan with dependencies
+        Phase 4: Plan Preview - Show detailed execution plan for perfect debuggability
+        Phase 5: Atomic Execution - Execute tasks with dependency resolution and progress reporting
         """
         self._current_status = IndexingStatus(
             overall_status=ProcessingStatus.PROCESSING,
-            current_operation="Starting hierarchical indexing",
+            current_operation="Starting Plan-then-Execute hierarchical indexing",
             processing_stats=ProcessingStats()
         )
         
@@ -176,64 +181,50 @@ class HierarchicalIndexer:
             # Start timing
             self._current_status.processing_stats.processing_start_time = datetime.now()
             
-            await ctx.info(f"Starting hierarchical indexing of: {root_path}")
+            await ctx.info(f"🚀 Starting Plan-then-Execute hierarchical indexing of: {root_path}")
             
-            # Phase 1: Discovery - Build directory structure
+            # Phase 1: Discovery (KEEP - build DirectoryContext hierarchy)
             await ctx.info("Phase 1: Discovering directory structure")
             self._current_status.current_operation = "Discovering directory structure"
             
             root_context = await self._discover_directory_structure(root_path, ctx)
             self._current_status.root_directory_context = root_context
             
-            # Phase 1.5: Cache Structure Preparation
-            await ctx.info("Phase 1.5: Preparing cache directory structure")
-            self._current_status.current_operation = "Preparing cache structure"
-            await self.knowledge_builder.analysis_cache.prepare_cache_structure(root_context, root_path, ctx)
+            # Phase 2: Decision Analysis (KEEP - generate comprehensive DecisionReport)
+            await ctx.info("Phase 2: Analyzing hierarchy for comprehensive decision-making")
+            self._current_status.current_operation = "Analyzing hierarchy decisions"
             
-            # Phase 1.7: Orphaned Analysis Cleanup
-            await ctx.info("Phase 1.7: Cleaning up orphaned analysis files")
-            self._current_status.current_operation = "Cleaning up orphaned files"
-            cleanup_stats = await self.orphaned_cleanup.cleanup_orphaned_files(
-                self.config.knowledge_output_directory, root_path, ctx
-            )
-            await ctx.info(f"Cleanup completed: {cleanup_stats.total_items_deleted} items removed")
+            decision_report = await self.rebuild_decision_engine.analyze_hierarchy(root_context, root_path, ctx)
+            await ctx.info(f"Decision analysis completed: {decision_report.total_decisions} decisions, {len(decision_report.files_to_delete)} deletions")
             
-            # Phase 2: Change Detection (conditional based on mode)
-            if self.config.indexing_mode.value == "incremental":
-                await ctx.info("Phase 2: Detecting changes for incremental processing")
-                self._current_status.current_operation = "Detecting changes"
-                root_context = await self._detect_changes(root_context, ctx)
-                self._current_status.root_directory_context = root_context
-            elif self.config.indexing_mode.value == "full_kb_rebuild":
-                await ctx.info("Phase 2: Skipping change detection - rebuilding all KB files (with file analysis cache)")
-                # No change detection, but individual file analysis still uses cache
-            else:  # self.config.indexing_mode.value == "full"
-                await ctx.info("Phase 2: Skipping change detection - nuclear rebuild of everything from scratch")
-                # No change detection, and file analysis cache will be bypassed
+            # Phase 3: Plan Generation (NEW - convert decisions to atomic tasks)
+            self._current_status.current_operation = "Generating atomic execution plan"
+            execution_plan = await self._generate_execution_plan(root_context, decision_report, root_path, ctx)
             
-            # Phase 3: Leaf-First Processing
-            await ctx.info("Phase 3: Processing files and directories (leaf-first)")
-            self._current_status.current_operation = "Processing files (leaf-first)"
+            # Phase 4: Plan Preview (NEW - perfect debuggability)
+            self._current_status.current_operation = "Previewing execution plan"
+            await self._preview_execution_plan(execution_plan, ctx)
             
-            await self._process_directory_hierarchy(root_context, ctx)
+            # Phase 5: Atomic Execution (NEW - dependency-aware task execution)
+            self._current_status.current_operation = "Executing atomic tasks"
+            execution_results = await self._execute_plan_with_progress(execution_plan, ctx)
             
-            # Complete processing
-            self._current_status.processing_stats.processing_end_time = datetime.now()
-            self._current_status.overall_status = ProcessingStatus.COMPLETED
-            self._current_status.current_operation = "Indexing completed successfully"
+            # Create final status from execution results
+            final_status = self._create_final_status(execution_results)
             
-            duration = self._current_status.processing_stats.processing_duration
-            await ctx.info(f"Hierarchical indexing completed in {duration:.2f} seconds")
+            duration = final_status.processing_stats.processing_duration
+            await ctx.info(f"🎯 Plan-then-Execute indexing completed in {duration:.2f} seconds")
             
-            return self._current_status
+            return final_status
             
         except Exception as e:
             self._current_status.overall_status = ProcessingStatus.FAILED
             self._current_status.current_operation = f"Indexing failed: {str(e)}"
-            self._current_status.processing_stats.add_error(f"Hierarchy indexing failed: {str(e)}")
+            self._current_status.processing_stats.add_error(f"Plan-then-Execute indexing failed: {str(e)}")
+            self._current_status.processing_stats.processing_end_time = datetime.now()
             
-            logger.error(f"Hierarchical indexing failed: {e}", exc_info=True)
-            await ctx.error(f"Hierarchical indexing failed: {str(e)}")
+            logger.error(f"Plan-then-Execute indexing failed: {e}", exc_info=True)
+            await ctx.error(f"Plan-then-Execute indexing failed: {str(e)}")
             
             if not self.config.continue_on_file_errors:
                 raise
@@ -345,7 +336,7 @@ class HierarchicalIndexer:
         Recursive change detection ensuring all directories are evaluated for staleness.
 
         [Implementation details]
-        Uses enhanced check_comprehensive_directory_change() for each directory.
+        Uses RebuildDecisionEngine.should_rebuild_directory() for centralized decision-making.
         Updates DirectoryContext processing_status to PENDING only for directories requiring rebuild.
         Returns updated DirectoryContext hierarchy with proper change detection status.
         """
@@ -374,7 +365,7 @@ class HierarchicalIndexer:
         Bottom-up evaluation ensuring child changes propagate to parent directories.
         
         [Implementation details]
-        Uses ChangeDetector.check_comprehensive_directory_change() for each directory.
+        Uses RebuildDecisionEngine.should_rebuild_directory() for each directory.
         Recursively processes subdirectories first, then evaluates current directory.
         Updates processing_status to PENDING only for directories that need rebuilding.
         """
@@ -398,19 +389,19 @@ class HierarchicalIndexer:
                 processing_end_time=directory_context.processing_end_time
             )
             
-            # Step 3: Apply comprehensive change detection to current directory
-            change_info = await self.change_detector.check_comprehensive_directory_change(
+            # Step 3: Apply centralized decision engine to current directory (handles project root and other special cases)
+            decision = await self.rebuild_decision_engine.should_rebuild_directory(
                 directory_context_with_updated_children, self._source_root, ctx
             )
             
-            # Step 4: Update processing status based on change detection result
-            if change_info is not None:
+            # Step 4: Update processing status based on decision result
+            if decision.outcome == DecisionOutcome.REBUILD:
                 # Changes detected - mark for processing
-                await ctx.debug(f"Directory needs processing: {directory_context.directory_path.name} - {change_info.change_type.value}")
+                await ctx.debug(f"Directory needs processing: {directory_context.directory_path.name} - {decision.reason.value}")
                 processing_status = ProcessingStatus.PENDING
             else:
                 # No changes detected - skip processing
-                await ctx.debug(f"Directory up to date: {directory_context.directory_path.name}")
+                await ctx.debug(f"Directory up to date: {directory_context.directory_path.name} - {decision.reasoning_text}")
                 processing_status = ProcessingStatus.SKIPPED
             
             # Step 5: Return updated context with change detection status
@@ -442,319 +433,11 @@ class HierarchicalIndexer:
                 processing_end_time=directory_context.processing_end_time
             )
     
-    async def _process_directory_hierarchy(self, root_context: DirectoryContext, ctx: Context) -> None:
-        """
-        [Class method intent]
-        Processes the directory hierarchy using leaf-first strategy ensuring child contexts
-        are completely processed before parent directory knowledge file generation.
-        Coordinates concurrent processing while maintaining dependency order.
-
-        [Design principles]
-        Leaf-first processing ensuring bottom-up assembly without parent-to-child dependencies.
-        Concurrent processing within dependency constraints for optimal performance.
-        Progress reporting providing real-time feedback throughout hierarchical processing.
-        Error handling enabling graceful degradation and partial processing completion.
-
-        [Implementation details]
-        Implements depth-first traversal identifying leaf directories for initial processing.
-        Uses async semaphore for concurrency control respecting configuration limits.
-        Processes all child files before attempting parent directory knowledge generation.
-        Reports progress through FastMCP Context with detailed operation status.
-        Captures and uses updated root context to ensure root-level knowledge file generation.
-        """
-        await ctx.info("Starting leaf-first hierarchical processing")
-        
-        # Process in leaf-first order and capture the updated root context
-        updated_root_context = await self._process_directory_leaf_first(root_context, ctx)
-        
-        # Update the status with the processed root context
-        self._current_status.root_directory_context = updated_root_context
-        
-        await ctx.info("Leaf-first processing completed")
     
-    async def _process_directory_leaf_first(self, directory_context: DirectoryContext, ctx: Context) -> DirectoryContext:
-        """
-        [Class method intent]
-        Processes a single directory using leaf-first strategy by first processing all
-        subdirectories recursively, then processing files in current directory,
-        and finally generating directory knowledge file from child summaries.
-        Returns updated DirectoryContext with processed subdirectory and file contexts.
-
-        [Design principles]
-        Recursive leaf-first processing ensuring child completion before parent processing.
-        Bottom-up assembly aggregating child summaries into parent knowledge files.
-        Concurrent file processing for performance optimization within single directory.
-        Comprehensive error handling enabling graceful degradation on individual failures.
-        Immutable context management ensuring proper state updates throughout processing.
-
-        [Implementation details]
-        First recursively processes all subdirectories ensuring child context completion.
-        Then processes all files in current directory using concurrent batch processing.
-        Finally generates directory knowledge file using KnowledgeBuilder with child summaries.
-        Updates processing statistics and status throughout the processing workflow.
-        Returns updated DirectoryContext with all processed children for parent context updates.
-        """
-        try:
-            await ctx.info(f"Processing directory: {directory_context.directory_path}")
-            
-            # Step 1: Process all subdirectories first (leaf-first) and collect updated contexts
-            updated_subdirectory_contexts = []
-            for subdir_context in directory_context.subdirectory_contexts:
-                updated_subdir_context = await self._process_directory_leaf_first(subdir_context, ctx)
-                updated_subdirectory_contexts.append(updated_subdir_context)
-            
-            # Step 2: Process all files in current directory
-            updated_directory_context = directory_context
-            if directory_context.file_contexts:
-                await ctx.info(f"Processing {len(directory_context.file_contexts)} files in {directory_context.directory_path}")
-                updated_directory_context = await self._process_directory_files(directory_context, ctx)
-            
-            # Step 3: Create directory context with updated subdirectory contexts
-            complete_directory_context = DirectoryContext(
-                directory_path=updated_directory_context.directory_path,
-                file_contexts=updated_directory_context.file_contexts,
-                subdirectory_contexts=updated_subdirectory_contexts,  # Use updated subdirectory contexts
-                processing_status=updated_directory_context.processing_status,
-                knowledge_file_path=updated_directory_context.knowledge_file_path,
-                directory_summary=updated_directory_context.directory_summary,
-                error_message=updated_directory_context.error_message,
-                processing_start_time=datetime.now(),
-                processing_end_time=None
-            )
-            
-            # Step 4: Generate directory knowledge file from child summaries (only if needed)
-            if complete_directory_context.processing_status == ProcessingStatus.SKIPPED:
-                # Directory is up to date - skip knowledge file generation
-                await ctx.info(f"Directory up to date, skipping knowledge file generation: {directory_context.directory_path}")
-                
-                # Update statistics
-                self._current_status.processing_stats.directories_completed += 1
-                
-                return DirectoryContext(
-                    directory_path=complete_directory_context.directory_path,
-                    file_contexts=complete_directory_context.file_contexts,
-                    subdirectory_contexts=complete_directory_context.subdirectory_contexts,
-                    processing_status=ProcessingStatus.COMPLETED,  # Mark as completed (skipped but successful)
-                    knowledge_file_path=complete_directory_context.knowledge_file_path,
-                    directory_summary=complete_directory_context.directory_summary,
-                    error_message=complete_directory_context.error_message,
-                    processing_start_time=complete_directory_context.processing_start_time,
-                    processing_end_time=datetime.now()
-                )
-            elif complete_directory_context.is_ready_for_summary:
-                # Directory needs processing - generate knowledge file
-                await ctx.info(f"Generating knowledge file for: {directory_context.directory_path}")
-                final_directory_context = await self._generate_directory_knowledge_file(complete_directory_context, ctx)
-                
-                # Update statistics
-                self._current_status.processing_stats.directories_completed += 1
-                
-                return final_directory_context
-            else:
-                await ctx.warning(f"Directory not ready for summary generation: {directory_context.directory_path}")
-                
-                # Update statistics
-                self._current_status.processing_stats.directories_completed += 1
-                
-                return complete_directory_context
-            
-        except Exception as e:
-            logger.error(f"Directory processing failed for {directory_context.directory_path}: {e}", exc_info=True)
-            self._current_status.processing_stats.directories_failed += 1
-            self._current_status.processing_stats.add_error(f"Directory processing failed: {directory_context.directory_path}: {e}")
-            
-            if not self.config.continue_on_file_errors:
-                raise
-            
-            # Return failed context
-            return DirectoryContext(
-                directory_path=directory_context.directory_path,
-                file_contexts=directory_context.file_contexts,
-                subdirectory_contexts=directory_context.subdirectory_contexts,
-                processing_status=ProcessingStatus.FAILED,
-                error_message=str(e),
-                processing_start_time=datetime.now(),
-                processing_end_time=datetime.now()
-            )
     
-    async def _process_directory_files(self, directory_context: DirectoryContext, ctx: Context) -> DirectoryContext:
-        """
-        [Class method intent]
-        Processes all files in a directory using concurrent batch processing for performance.
-        Delegates individual file processing to KnowledgeBuilder while maintaining
-        processing statistics and error handling throughout the operation.
-        Returns updated DirectoryContext with processed file contexts.
-
-        [Design principles]
-        Concurrent file processing for performance optimization using configured batch sizes.
-        Individual file processing delegation to specialized KnowledgeBuilder component.
-        Comprehensive error handling enabling graceful degradation on individual file failures.
-        Accurate statistics tracking for progress reporting and performance monitoring.
-        Immutable context management ensuring proper state updates throughout processing.
-
-        [Implementation details]
-        Groups files into batches based on configuration batch size for concurrent processing.
-        Uses asyncio.gather for concurrent processing within each batch for performance.
-        Delegates individual file content analysis to KnowledgeBuilder component.
-        Updates processing statistics for each file including success, failure, and error tracking.
-        Creates new DirectoryContext with updated file contexts maintaining immutability.
-        """
-        files_to_process = [fc for fc in directory_context.file_contexts 
-                           if fc.processing_status == ProcessingStatus.PENDING]
-        
-        if not files_to_process:
-            return directory_context
-        
-        updated_file_contexts = list(directory_context.file_contexts)  # Copy the list
-        
-        # Process files in batches for performance
-        batch_size = self.config.batch_size
-        for i in range(0, len(files_to_process), batch_size):
-            batch = files_to_process[i:i + batch_size]
-            
-            # Process batch concurrently
-            tasks = [self._process_single_file(file_context, ctx) for file_context in batch]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            # Update file contexts and statistics based on results
-            for file_context, result in zip(batch, results):
-                if isinstance(result, Exception):
-                    self._current_status.processing_stats.files_failed += 1
-                    self._current_status.processing_stats.add_error(f"File processing failed: {result}")
-                    # Keep original context for failed files
-                elif result is None:
-                    # Truncation detected - completely omit this file from processing
-                    self._current_status.processing_stats.files_completed += 1  # Count as completed (omitted)
-                    # Remove the original file context from the list
-                    updated_file_contexts = [fc for fc in updated_file_contexts if fc.file_path != file_context.file_path]
-                    await ctx.info(f"🚨 TRUNCATION: File {file_context.file_path.name} omitted from processing - no artifacts created")
-                else:
-                    self._current_status.processing_stats.files_completed += 1
-                    # Update the file context in the list
-                    for j, fc in enumerate(updated_file_contexts):
-                        if fc.file_path == file_context.file_path:
-                            updated_file_contexts[j] = result
-                            break
-                
-                self._current_status.processing_stats.files_processed += 1
-        
-        # Return updated directory context with processed file contexts
-        return DirectoryContext(
-            directory_path=directory_context.directory_path,
-            file_contexts=updated_file_contexts,
-            subdirectory_contexts=directory_context.subdirectory_contexts,
-            processing_status=directory_context.processing_status,
-            knowledge_file_path=directory_context.knowledge_file_path,
-            directory_summary=directory_context.directory_summary,
-            error_message=directory_context.error_message,
-            processing_start_time=directory_context.processing_start_time,
-            processing_end_time=directory_context.processing_end_time
-        )
     
-    async def _process_single_file(self, file_context: FileContext, ctx: Context) -> Optional[FileContext]:
-        """
-        [Class method intent]
-        Processes a single file by delegating content analysis to KnowledgeBuilder with cache support.
-        Passes source_root parameter enabling high-performance file analysis caching
-        for significant performance improvements on unchanged files.
-        Handles truncation detection by returning None to completely omit files from processing.
-
-        [Design principles]
-        Single file processing delegation to specialized KnowledgeBuilder component.
-        Cache-enabled processing for performance optimization on unchanged files.
-        Comprehensive error handling enabling graceful degradation on individual file failures.
-        Truncation detection handling completely omitting files when LLM output is incomplete.
-        Timing statistics collection for performance analysis and optimization.
-        Processing status updates for accurate progress reporting and coordination.
-        Semaphore usage for concurrency control without recursive deadlocks.
-
-        [Implementation details]
-        Uses semaphore to control concurrent file processing operations.
-        Delegates content analysis to KnowledgeBuilder.build_file_knowledge method with source_root.
-        Passes source_root parameter enabling FileAnalysisCache for performance optimization.
-        Handles None return from KnowledgeBuilder indicating truncated files should be omitted.
-        Tracks processing timing for performance analysis and optimization insights.
-        Handles errors gracefully with detailed logging and statistics updates.
-        Returns updated FileContext with processing results or None for omitted files.
-        """
-        async with self._processing_semaphore:
-            try:
-                await ctx.debug(f"Processing file: {file_context.file_path}")
-                
-                # Delegate to knowledge builder with source_root for cache support
-                updated_context = await self.knowledge_builder.build_file_knowledge(
-                    file_context, ctx, source_root=getattr(self, '_source_root', None)
-                )
-                
-                # Handle truncation detection - None means file should be completely omitted
-                if updated_context is None:
-                    await ctx.debug(f"File omitted due to truncation: {file_context.file_path}")
-                    return None
-                
-                return updated_context
-                
-            except Exception as e:
-                logger.error(f"File processing failed for {file_context.file_path}: {e}", exc_info=True)
-                
-                # Return failed context
-                return FileContext(
-                    file_path=file_context.file_path,
-                    file_size=file_context.file_size,
-                    last_modified=file_context.last_modified,
-                    processing_status=ProcessingStatus.FAILED,
-                    error_message=str(e),
-                    processing_start_time=file_context.processing_start_time,
-                    processing_end_time=datetime.now()
-                )
     
-    async def _generate_directory_knowledge_file(self, directory_context: DirectoryContext, ctx: Context) -> DirectoryContext:
-        """
-        [Class method intent]
-        Generates knowledge file for directory by aggregating child file summaries and
-        subdirectory knowledge files into hierarchical directory summary.
-        Delegates content generation to KnowledgeBuilder for consistent LLM integration.
 
-        [Design principles]
-        Bottom-up assembly aggregating child summaries into parent directory knowledge files.
-        Hierarchical knowledge file generation following standard knowledge file format.
-        Content generation delegation to specialized KnowledgeBuilder component.
-        Error handling enabling graceful degradation when knowledge generation fails.
-
-        [Implementation details]
-        Collects all child file summaries and subdirectory knowledge content.
-        Delegates hierarchical summary generation to KnowledgeBuilder component.
-        Writes generated knowledge file to appropriate location in filesystem.
-        Updates DirectoryContext with processing results and knowledge file path.
-        """
-        try:
-            await ctx.debug(f"Generating knowledge file for directory: {directory_context.directory_path}")
-            
-            # Delegate to knowledge builder for directory summary generation
-            # Pass source root for proper hierarchical structure preservation
-            updated_context = await self.knowledge_builder.build_directory_summary(
-                directory_context, ctx, source_root=getattr(self, '_source_root', None)
-            )
-            
-            return updated_context
-            
-        except Exception as e:
-            logger.error(f"Directory knowledge generation failed for {directory_context.directory_path}: {e}", exc_info=True)
-            self._current_status.processing_stats.add_error(f"Directory knowledge generation failed: {directory_context.directory_path}: {e}")
-            
-            if not self.config.continue_on_file_errors:
-                # Return failed context
-                return DirectoryContext(
-                    directory_path=directory_context.directory_path,
-                    file_contexts=directory_context.file_contexts,
-                    subdirectory_contexts=directory_context.subdirectory_contexts,
-                    processing_status=ProcessingStatus.FAILED,
-                    error_message=str(e),
-                    processing_start_time=directory_context.processing_start_time,
-                    processing_end_time=datetime.now()
-                )
-            else:
-                raise
-    
     def _get_all_directories(self, directory_context: DirectoryContext) -> List[DirectoryContext]:
         """
         [Class method intent]
@@ -797,24 +480,147 @@ class HierarchicalIndexer:
         """
         return self._current_status
     
+    # Plan-then-Execute Architecture Methods
+    
+    async def _generate_execution_plan(
+        self, 
+        root_context: DirectoryContext, 
+        decision_report: DecisionReport, 
+        root_path: Path, 
+        ctx: Context
+    ) -> ExecutionPlan:
+        """
+        [Class method intent]
+        Converts DecisionReport into atomic ExecutionPlan using PlanGenerator.
+        Creates comprehensive execution plan with proper task dependencies and resource estimation.
+
+        [Design principles]
+        Decision-to-plan translation delegating to specialized PlanGenerator component.
+        Comprehensive execution planning with dependency resolution and resource estimation.
+        Clear progress reporting for plan generation phase with detailed statistics.
+
+        [Implementation details]
+        Delegates plan generation to PlanGenerator.create_execution_plan() method.
+        Reports plan generation results with task count and LLM call estimation.
+        Returns validated ExecutionPlan ready for preview and execution.
+        """
+        await ctx.info("Phase 3: Generating atomic execution plan from decisions")
+        
+        execution_plan = await self.plan_generator.create_execution_plan(
+            root_context, decision_report, root_path, ctx
+        )
+        
+        await ctx.info(f"✅ Execution plan generated: {len(execution_plan.tasks)} tasks, {execution_plan.expensive_task_count} LLM calls")
+        return execution_plan
+    
+    async def _preview_execution_plan(self, plan: ExecutionPlan, ctx: Context) -> None:
+        """
+        [Class method intent]
+        Shows detailed execution plan preview before expensive operations for perfect debuggability.
+        Provides comprehensive task breakdown, dependency analysis, and resource estimation.
+
+        [Design principles]
+        Perfect debuggability enabling complete execution plan understanding before expensive operations.
+        Comprehensive preview with task categorization and resource estimation for informed decisions.
+        No side effects ensuring preview can be called safely without affecting system state.
+
+        [Implementation details]
+        Delegates to ExecutionEngine.preview_plan() for detailed formatted output.
+        Provides task breakdown, dependency validation, and execution analysis.
+        Reports estimated duration and parallel execution opportunities.
+        """
+        await ctx.info("Phase 4: Previewing execution plan for debuggability")
+        
+        # Use ExecutionEngine preview capability for detailed analysis
+        await self.execution_engine.preview_plan(plan, ctx)
+    
+    async def _execute_plan_with_progress(self, plan: ExecutionPlan, ctx: Context) -> ExecutionResults:
+        """
+        [Class method intent]
+        Executes atomic tasks with dependency resolution and comprehensive progress reporting.
+        Delegates to ExecutionEngine for atomic task execution with real-time progress updates.
+
+        [Design principles]
+        Atomic task execution with dependency resolution ensuring proper execution ordering.
+        Comprehensive progress reporting providing real-time execution status and performance metrics.
+        Error handling enabling graceful degradation and recovery from individual task failures.
+
+        [Implementation details]
+        Delegates to ExecutionEngine.execute_plan() for atomic task execution.
+        Reports execution completion with success rate and performance metrics.
+        Returns comprehensive ExecutionResults for final status creation.
+        """
+        await ctx.info("Phase 5: Executing atomic tasks with dependency resolution")
+        
+        execution_results = await self.execution_engine.execute_plan(plan, ctx)
+        
+        await ctx.info(f"🎯 Execution completed: {execution_results.success_rate:.1%} success rate")
+        await ctx.info(f"📊 Performance: {execution_results.llm_calls_made} LLM calls, {execution_results.total_duration:.1f}s total")
+        
+        return execution_results
+    
+    def _create_final_status(self, execution_results: ExecutionResults) -> IndexingStatus:
+        """
+        [Class method intent]
+        Converts ExecutionResults to IndexingStatus format for consistent API compatibility.
+        Maps execution metrics to processing statistics and status information.
+
+        [Design principles]
+        Result mapping ensuring consistent API compatibility with existing IndexingStatus format.
+        Comprehensive statistics mapping preserving all performance metrics and error information.
+        Status determination based on execution results and success rates.
+
+        [Implementation details]
+        Maps ExecutionResults performance metrics to ProcessingStats format.
+        Determines overall processing status based on execution success rates and error counts.
+        Preserves all error information and performance metrics for comprehensive reporting.
+        """
+        # Update current status with execution results
+        self._current_status.processing_stats.processing_end_time = execution_results.execution_end or datetime.now()
+        
+        # Map execution results to processing statistics
+        stats = self._current_status.processing_stats
+        stats.files_processed = execution_results.files_processed
+        stats.files_completed = execution_results.files_processed
+        stats.files_failed = len(execution_results.failed_tasks)
+        stats.directories_processed = execution_results.directories_processed
+        stats.directories_completed = execution_results.directories_processed
+        
+        # Add any execution errors to statistics
+        for task_id, error in execution_results.failed_tasks:
+            stats.add_error(f"Task {task_id} failed: {error}")
+        
+        # Determine overall status
+        if execution_results.success_rate >= 0.9:  # 90% success rate threshold
+            self._current_status.overall_status = ProcessingStatus.COMPLETED
+            self._current_status.current_operation = "Indexing completed successfully"
+        elif execution_results.success_rate >= 0.5:  # 50% success rate threshold
+            self._current_status.overall_status = ProcessingStatus.COMPLETED  # Partial success
+            self._current_status.current_operation = f"Indexing completed with {len(execution_results.failed_tasks)} failures"
+        else:
+            self._current_status.overall_status = ProcessingStatus.FAILED
+            self._current_status.current_operation = f"Indexing failed: {execution_results.success_rate:.1%} success rate"
+        
+        return self._current_status
+
     async def cleanup(self) -> None:
         """
         [Class method intent]
-        Cleans up hierarchical indexer resources including knowledge builder and handler components.
-        Ensures proper resource cleanup and connection closure for all component dependencies.
+        Cleans up hierarchical indexer resources including execution engine and plan generator components.
+        Ensures proper resource cleanup and connection closure for all Plan-then-Execute dependencies.
 
         [Design principles]
         Comprehensive resource cleanup ensuring no resource leaks or connection issues.
-        Component cleanup delegation enabling proper resource management across dependencies.
+        Component cleanup delegation enabling proper resource management across Plan-then-Execute architecture.
         Error handling preventing cleanup failures from cascading to calling code.
 
         [Implementation details]
-        Delegates cleanup to KnowledgeBuilder and handler components for proper resource management.
+        Delegates cleanup to ExecutionEngine for proper resource management.
         Handles cleanup errors gracefully with appropriate logging and error reporting.
         """
         try:
-            if hasattr(self, 'knowledge_builder') and self.knowledge_builder:
-                await self.knowledge_builder.cleanup()
+            if hasattr(self, 'execution_engine') and self.execution_engine:
+                await self.execution_engine._cleanup_execution_resources()
             
             logger.info("HierarchicalIndexer cleanup completed")
         except Exception as e:

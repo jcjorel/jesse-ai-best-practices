@@ -38,6 +38,16 @@
 # <system>: logging - Structured logging for cache operations and debugging
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-06T19:56:00Z : Enhanced debug output with detailed timestamp reasoning for cache staleness decisions by CodeAssistant
+# * Enhanced is_cache_fresh() to return tuple (bool, str) with detailed timestamp-based reasoning
+# * Added precise timestamp comparison details showing cache vs source file modification times
+# * Improved debug messages to show exact timestamps: "Cache (2025-07-06 17:19:16) < source (2025-07-06 19:30:00)"
+# * Supports better debugging by showing why files are considered stale with specific timestamp comparisons
+# 2025-07-06T19:30:00Z : CRITICAL BUG FIX - Fixed infinite rebuild loop by removing cached analysis comparison from directory staleness checking by CodeAssistant
+# * EMERGENCY FIX: Removed cached analysis comparison from is_knowledge_file_stale() method preventing infinite rebuild loops
+# * Fixed core logic issue where cached analyses were always newer than knowledge files causing perpetual rebuilds
+# * Added precise timestamp logging with detailed reasoning for all staleness decisions supporting debugging
+# * Removed timestamp tolerance for direct filesystem timestamp comparison eliminating race conditions and timing inconsistencies
 # 2025-07-03T17:39:00Z : Fixed change detection logic to properly implement layered processing approach by CodeAssistant
 # * Removed direct source file → knowledge file comparison to prevent systematic rebuilds
 # * Knowledge files now only rebuild when cached analyses or subdirectory knowledge files are newer
@@ -47,20 +57,6 @@
 # * Added is_knowledge_file_stale() method providing comprehensive staleness checking against all constituents
 # * Added get_constituent_staleness_info() method for detailed debugging and analysis of staleness conditions
 # * Added get_knowledge_file_path() method centralizing knowledge file path calculation logic
-# 2025-07-03T16:52:00Z : Implemented upfront cache structure preparation for safer concurrent operations by CodeAssistant
-# * Added prepare_cache_structure() method to pre-create entire cache directory hierarchy at index start
-# * Eliminates race conditions during concurrent cache operations through upfront directory creation
-# * Modified cache_analysis() to rely on pre-created structure with fallback to on-demand creation
-# * Enhanced reliability and consistency of cache operations under concurrent load
-# 2025-07-03T16:36:00Z : Implemented portable path metadata using get_portable_path() by CodeAssistant
-# * Updated _create_metadata_header() to use get_portable_path() for JESSE path variables
-# * Cache metadata now stores relative paths like {PROJECT_ROOT}/src/file.js instead of absolute paths
-# * Improves cache portability across different environments and working directories
-# * Added fallback error handling for portable path conversion failures
-# 2025-07-03T16:30:00Z : Enhanced cache hit logging to display cache file path by CodeAssistant
-# * Updated cache hit debug messages to include full cache file path for better visibility
-# * Provides clear debugging information showing exact cache file location when cache hits occur
-# * Maintains existing functionality while improving troubleshooting and cache understanding
 ###############################################################################
 
 """
@@ -220,42 +216,57 @@ class FileAnalysisCache:
             logger.warning(f"Cache write failed for {file_path.name}: {e}")
             # Don't raise - cache failures shouldn't break core processing
     
-    def is_cache_fresh(self, file_path: Path, source_root: Path) -> bool:
+    def is_cache_fresh(self, file_path: Path, source_root: Path) -> Tuple[bool, str]:
         """
         [Class method intent]
         Determines if cached analysis is fresh by comparing source file timestamp with cache timestamp.
         Returns False for missing cache or stale content to trigger fresh LLM analysis.
 
         [Design principles]
-        Timestamp-based freshness checking with tolerance for reliable incremental processing.
+        Direct timestamp comparison without tolerance for simplicity and reliability.
         Conservative approach treating missing or inaccessible cache as requiring fresh analysis.
         Filesystem error handling preventing cache issues from breaking freshness determination.
+        Detailed reasoning return supporting debugging and decision audit trails.
 
         [Implementation details]
-        Compares source file modification time with cache file modification time.
-        Applies configured timestamp tolerance to avoid false positives from filesystem precision.
-        Handles missing files and filesystem errors by returning False for safety.
+        Compares source file modification time with cache file modification time directly.
+        Cache is fresh if it's newer than or equal to source file (no tolerance needed).
+        Returns tuple with boolean freshness status and detailed reasoning including precise timestamps.
+        Handles missing files and filesystem errors by returning False with detailed error information.
         """
         try:
             cache_path = self.get_cache_path(file_path, source_root)
             
             # Cache file must exist
             if not cache_path.exists():
-                return False
+                reason = f"Cache file does not exist for {file_path.name}"
+                logger.debug(f"Cache miss for {file_path.name}: cache file does not exist")
+                return False, reason
             
             # Get timestamps
             source_mtime = datetime.fromtimestamp(file_path.stat().st_mtime)
             cache_mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
             
-            # Cache is fresh if it's newer than source file (with tolerance)
-            is_fresh = cache_mtime >= source_mtime - self.timestamp_tolerance
+            # Cache is fresh if it's newer than or equal to source file
+            is_fresh = cache_mtime >= source_mtime
             
-            logger.debug(f"Cache freshness check for {file_path.name}: {'fresh' if is_fresh else 'stale'}")
-            return is_fresh
+            # Detailed reasoning with timestamps
+            source_mtime_str = source_mtime.strftime("%Y-%m-%d %H:%M:%S")
+            cache_mtime_str = cache_mtime.strftime("%Y-%m-%d %H:%M:%S")
+            
+            if is_fresh:
+                reason = f"Cache ({cache_mtime_str}) >= source ({source_mtime_str}) for {file_path.name}"
+                logger.debug(f"Cache hit for {file_path.name}: cache ({cache_mtime_str}) >= source ({source_mtime_str})")
+            else:
+                reason = f"Cache ({cache_mtime_str}) < source ({source_mtime_str}) for {file_path.name}"
+                logger.debug(f"Cache stale for {file_path.name}: cache ({cache_mtime_str}) < source ({source_mtime_str})")
+                
+            return is_fresh, reason
             
         except Exception as e:
+            reason = f"Cache freshness check failed for {file_path.name}: {e}"
             logger.debug(f"Cache freshness check failed for {file_path.name}: {e}")
-            return False  # Conservative: assume stale on error
+            return False, reason  # Conservative: assume stale on error
     
     def get_cache_path(self, file_path: Path, source_root: Path) -> Path:
         """
@@ -379,92 +390,93 @@ class FileAnalysisCache:
         [Class method intent]
         Calculate knowledge file path for a directory following project-base conventions.
         Centralizes knowledge file path logic for consistent usage across components.
+        FIXED: Now uses same root directory detection as KnowledgeBuilder to prevent path mismatches.
 
         [Design principles]
         Consistent knowledge file path calculation following project-base indexing rules.
         Centralized logic preventing path calculation inconsistencies across components.
+        Root directory detection matching KnowledgeBuilder behavior for path consistency.
         Error handling ensuring graceful fallback when path calculation fails.
 
         [Implementation details]
         Uses project-base subdirectory structure mirroring source directory organization.
+        Detects root directories and generates root_kb.md for handler root contexts.
         Calculates relative path from source root and recreates structure in knowledge directory.
         Returns Path object ready for knowledge file operations and timestamp comparisons.
         """
         try:
+            # CRITICAL FIX: Use same root directory detection as KnowledgeBuilder
+            is_root_directory = self._is_handler_root_directory(directory_path, source_root)
+            
+            if is_root_directory:
+                knowledge_filename = "root_kb.md"
+            else:
+                knowledge_filename = f"{directory_path.name}_kb.md"
+            
+            # Calculate relative path and knowledge directory
+            if directory_path == source_root:
+                # Project root goes directly in project-base/ subdirectory
+                knowledge_dir = self.config.knowledge_output_directory / "project-base"
+                return knowledge_dir / knowledge_filename
+            
             relative_path = directory_path.relative_to(source_root)
             knowledge_dir = self.config.knowledge_output_directory / "project-base" / relative_path
-            knowledge_filename = f"{directory_path.name}_kb.md"
             return knowledge_dir / knowledge_filename
+            
         except ValueError:
             # Fallback for path calculation issues
-            knowledge_filename = f"{directory_path.name}_kb.md"
+            is_root_directory = self._is_handler_root_directory(directory_path, source_root)
+            knowledge_filename = "root_kb.md" if is_root_directory else f"{directory_path.name}_kb.md"
             return self.config.knowledge_output_directory / "project-base" / knowledge_filename
 
-    def is_knowledge_file_stale(
-        self, 
-        directory_path: Path, 
-        source_root: Path,
-        file_contexts: List[FileContext],
-        subdirectory_paths: Optional[List[Path]] = None
-    ) -> Tuple[bool, Optional[str]]:
+    def _is_handler_root_directory(self, directory_path: Path, source_root: Optional[Path] = None) -> bool:
         """
         [Class method intent]
-        Comprehensive staleness check for directory knowledge files.
-        Checks all constituent dependencies including source files, cached analyses, and subdirectory knowledge files.
-
+        Detects if directory_path represents a handler root directory requiring root_kb.md generation.
+        Identical logic to KnowledgeBuilder._is_handler_root_directory() for path consistency.
+        
         [Design principles]
-        Comprehensive dependency checking ensuring knowledge files are rebuilt when any constituent changes.
-        Clear staleness reasoning supporting debugging and optimization efforts.
-        Conservative approach treating access errors as requiring rebuild for reliability.
-        Timestamp-based comparison with configurable tolerance for filesystem precision handling.
+        Handler-agnostic root detection supporting all three knowledge base handler types.
+        Identical logic to KnowledgeBuilder ensuring consistent path generation across components.
+        Clear detection logic based on directory structure patterns and source root relationships.
+        Conservative approach defaulting to subdirectory behavior when detection is uncertain.
 
         [Implementation details]
-        Checks knowledge file existence, source file timestamps, cached analysis timestamps, and subdirectory knowledge timestamps.
-        Returns tuple with staleness status and human-readable reason for transparency.
-        Applies timestamp tolerance consistently across all timestamp comparisons.
-        Handles filesystem errors gracefully with appropriate logging and fallback behavior.
-
-        Returns:
-            tuple[bool, Optional[str]]: (is_stale, reason)
-            - is_stale: True if knowledge file needs rebuilding
-            - reason: Human-readable reason for staleness (for debugging)
+        Project-base: Root when directory_path equals source_root (processing project root).
+        Git-clones: Root when directory is top level of a .kb/ knowledge base directory.
+        PDF-knowledge: Root when directory is top level of a .kb/ knowledge base directory.
+        Returns boolean indicating whether root_kb.md should be generated for this directory.
         """
-        knowledge_file_path = self.get_knowledge_file_path(directory_path, source_root)
-        
-        # Check 1: Missing knowledge file
-        if not knowledge_file_path.exists():
-            return True, "Knowledge file does not exist"
-        
         try:
-            knowledge_mtime = datetime.fromtimestamp(knowledge_file_path.stat().st_mtime)
-        except OSError as e:
-            return True, f"Cannot access knowledge file: {e}"
-        
-        # Check 2: Cached analyses newer than knowledge file
-        for file_context in file_contexts:
-            cache_path = self.get_cache_path(file_context.file_path, source_root)
-            if cache_path.exists():
-                try:
-                    cache_mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
-                    if cache_mtime > knowledge_mtime + self.timestamp_tolerance:
-                        return True, f"Cached analysis {cache_path.name} is newer than knowledge file"
-                except OSError:
-                    # If we can't read cache file, assume it's stale
-                    continue
-        
-        # Check 4: Subdirectory knowledge files newer than parent
-        if subdirectory_paths:
-            for subdir_path in subdirectory_paths:
-                subdir_knowledge_path = self.get_knowledge_file_path(subdir_path, source_root)
-                if subdir_knowledge_path.exists():
-                    try:
-                        subdir_mtime = datetime.fromtimestamp(subdir_knowledge_path.stat().st_mtime)
-                        if subdir_mtime > knowledge_mtime + self.timestamp_tolerance:
-                            return True, f"Subdirectory knowledge file {subdir_path.name}_kb.md is newer than parent"
-                    except OSError:
-                        continue
-        
-        return False, None
+            # Project-base handler: Root when processing the project root itself
+            if source_root and directory_path == source_root:
+                return True
+            
+            # Git-clones and PDF-knowledge handlers: Root when directory name ends with .kb
+            # and is likely the top level of a knowledge base structure
+            if directory_path.name.endswith('.kb'):
+                return True
+            
+            # Check if directory is inside a .kb directory structure but at its root
+            # This handles cases where we're processing the content inside a .kb directory
+            parent_parts = directory_path.parts
+            for i, part in enumerate(parent_parts):
+                if part.endswith('.kb'):
+                    # Check if current directory is the immediate child of the .kb directory
+                    kb_path = Path(*parent_parts[:i+1])
+                    if directory_path == kb_path:
+                        return True
+                    break
+            
+            # Default: not a root directory
+            return False
+            
+        except Exception as e:
+            logger.warning(f"Failed to detect handler root directory for {directory_path}: {e}")
+            # Conservative fallback: not a root directory
+            return False
+
+
 
     async def get_constituent_staleness_info(
         self, 
@@ -582,12 +594,9 @@ class FileAnalysisCache:
                 
                 info['subdirectory_knowledge_files'].append(subdir_info)
         
-        # Determine overall staleness
-        is_stale, reason = self.is_knowledge_file_stale(
-            directory_path, source_root, file_contexts, subdirectory_paths
-        )
-        info['is_stale'] = is_stale
-        info['staleness_reason'] = reason
+        # Note: Staleness determination now handled by RebuildDecisionEngine
+        info['is_stale'] = False  # Default for legacy compatibility
+        info['staleness_reason'] = 'Use RebuildDecisionEngine for staleness checking'
         
         return info
 
@@ -729,6 +738,69 @@ class FileAnalysisCache:
             all_files.extend(self._collect_all_files_recursive(subdir_context))
         
         return all_files
+
+    def is_knowledge_file_stale(
+        self, 
+        directory_path: Path, 
+        source_root: Path,
+        file_contexts: List[FileContext],
+        subdirectory_paths: Optional[List[Path]] = None
+    ) -> Tuple[bool, str]:
+        """
+        [Class method intent]
+        Staleness checking for directory knowledge files against source files and subdirectory knowledge files only.
+        Determines if knowledge file needs rebuilding based on source files and subdirectory knowledge files.
+        CRITICAL: Does NOT check cached analyses to prevent infinite rebuild loops.
+
+        [Design principles]
+        Clean separation of concerns: cached analyses are for individual file processing, not directory rebuild decisions.
+        Direct timestamp comparison without tolerance for simplicity and reliability.
+        Clear reasoning with precise timestamps supporting debugging and decision audit trails.
+
+        [Implementation details]
+        Compares knowledge file timestamp against source files and subdirectory knowledge files only.
+        Uses direct filesystem timestamp comparison without tolerance for consistent behavior.
+        Returns boolean staleness status with detailed reasoning including precise timestamps.
+        """
+        try:
+            knowledge_file_path = self.get_knowledge_file_path(directory_path, source_root)
+            
+            # If knowledge file doesn't exist, it's stale
+            if not knowledge_file_path.exists():
+                return True, "Knowledge file does not exist"
+            
+            try:
+                knowledge_mtime = datetime.fromtimestamp(knowledge_file_path.stat().st_mtime)
+                knowledge_mtime_str = knowledge_mtime.strftime("%Y-%m-%d %H:%M:%S")
+            except OSError:
+                return True, "Cannot access knowledge file timestamp"
+            
+            # Check source files only (NOT cached analyses)
+            for file_context in file_contexts:
+                source_mtime_str = file_context.last_modified.strftime("%Y-%m-%d %H:%M:%S")
+                if file_context.last_modified > knowledge_mtime:
+                    return True, f"Source file newer: {file_context.file_path.name} ({source_mtime_str}) > knowledge file ({knowledge_mtime_str})"
+            
+            # Check subdirectory knowledge files only
+            if subdirectory_paths:
+                for subdir_path in subdirectory_paths:
+                    subdir_knowledge_path = self.get_knowledge_file_path(subdir_path, source_root)
+                    if subdir_knowledge_path.exists():
+                        try:
+                            subdir_mtime = datetime.fromtimestamp(subdir_knowledge_path.stat().st_mtime)
+                            subdir_mtime_str = subdir_mtime.strftime("%Y-%m-%d %H:%M:%S")
+                            if subdir_mtime > knowledge_mtime:
+                                return True, f"Subdirectory knowledge file newer: {subdir_path.name} ({subdir_mtime_str}) > knowledge file ({knowledge_mtime_str})"
+                        except OSError:
+                            return True, f"Cannot access subdirectory knowledge timestamp: {subdir_path.name}"
+            
+            # All checks passed - knowledge file is up to date
+            return False, f"Knowledge file is up to date ({knowledge_mtime_str})"
+            
+        except Exception as e:
+            logger.warning(f"Knowledge file staleness check failed for {directory_path}: {e}")
+            # Conservative: assume stale on error to trigger rebuild
+            return True, f"Staleness check failed: {e}"
 
     def get_cache_stats(self, source_root: Path) -> dict:
         """

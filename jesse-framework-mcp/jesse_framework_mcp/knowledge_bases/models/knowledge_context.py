@@ -37,6 +37,10 @@
 # <system>: enum - Status enumeration definitions
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-06T11:59:00Z : Fixed empty directory indexing prevention by CodeAssistant
+# * Added explicit check in DirectoryContext.is_ready_for_summary to prevent indexing of totally empty directories
+# * Updated method documentation to reflect empty directory exclusion logic
+# * Ensures directories with no files AND no subdirectories are not indexed (return False)
 # 2025-07-01T12:05:00Z : Initial context models creation by CodeAssistant
 # * Created runtime context models for hierarchical indexing
 # * Set up processing state tracking and statistics
@@ -275,24 +279,34 @@ class DirectoryContext:
         Checks if directory is ready for knowledge file generation by verifying
         all child files and subdirectories have completed processing successfully.
         Accepts both completed and skipped files as ready for summary generation.
+        Prevents indexing of totally empty directories (no files AND no subdirectories).
+        Accepts completed empty directories even without directory summaries.
 
         [Design principles]
         Bottom-up processing readiness ensuring complete child context availability.
         Comprehensive readiness check including both files and subdirectories.
         Readiness criteria alignment with hierarchical processing requirements.
         Skipped files treated as ready since they don't require processing.
+        Empty directory exclusion preventing unnecessary knowledge file generation.
+        Completed empty directories accepted without requiring summaries.
 
         [Implementation details]
+        First checks if directory is totally empty and returns False to prevent indexing.
         Requires all file contexts to be completed or skipped for summary readiness.
-        Requires all subdirectory contexts to have completed processing with summaries.
+        Requires all subdirectory contexts to have completed processing.
+        For completed subdirectories, directory_summary is optional (allows empty directories).
         Boolean return value simplifies conditional logic in hierarchical processing workflow.
         """
+        # Prevent indexing of totally empty directories (no files AND no subdirectories)
+        if not self.file_contexts and not self.subdirectory_contexts:
+            return False
+        
         files_ready = all(
             fc.is_completed or fc.processing_status == ProcessingStatus.SKIPPED 
             for fc in self.file_contexts
         )
         subdirs_ready = all(
-            subdir.processing_status == ProcessingStatus.COMPLETED and subdir.directory_summary
+            subdir.processing_status == ProcessingStatus.COMPLETED
             for subdir in self.subdirectory_contexts
         )
         return files_ready and subdirs_ready

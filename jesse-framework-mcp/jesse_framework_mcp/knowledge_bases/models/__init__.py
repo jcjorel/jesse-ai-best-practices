@@ -56,6 +56,19 @@ from .knowledge_context import (
     ProcessingStatus,
     ChangeType
 )
+from .rebuild_decisions import (
+    DecisionReport,
+    RebuildDecision,
+    DeletionDecision,
+    DecisionOutcome,
+    DecisionReason
+)
+from .execution_plan import (
+    ExecutionPlan,
+    AtomicTask,
+    TaskType,
+    ExecutionResults
+)
 
 __all__ = [
     "IndexingConfig",
@@ -66,5 +79,14 @@ __all__ = [
     "IndexingStatus",
     "ProcessingStats",
     "ProcessingStatus",
-    "ChangeType"
+    "ChangeType",
+    "DecisionReport",
+    "RebuildDecision",
+    "DeletionDecision",
+    "DecisionOutcome",
+    "DecisionReason",
+    "ExecutionPlan",
+    "AtomicTask",
+    "TaskType",
+    "ExecutionResults"
 ]

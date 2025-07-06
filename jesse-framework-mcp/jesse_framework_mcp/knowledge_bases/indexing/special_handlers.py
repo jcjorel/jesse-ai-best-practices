@@ -38,6 +38,15 @@
 # <system>: gitignore_parser - Git ignore pattern parsing for project-base scenarios
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-06T22:13:00Z : CRITICAL BUG FIX - Implemented actual subdirectory discovery in ProjectBaseHandler by CodeAssistant
+# * Fixed ProjectBaseHandler.process_project_structure() which was just a placeholder stub returning empty subdirectory_contexts=[]
+# * Added comprehensive _build_project_directory_context() method with recursive directory traversal and proper filtering
+# * Implemented actual FileContext and DirectoryContext creation with metadata extraction and project-base exclusions
+# * RESOLVES: root_kb.md showing "No subdirectories processed" despite project having multiple subdirectories (artifacts/, howtos/, etc.)
+# 2025-07-06T13:33:00Z : Fixed project-base root naming to use root_kb.md by CodeAssistant
+# * Updated ProjectBaseHandler.get_project_knowledge_path() to return root_kb.md instead of {project_name}_kb.md
+# * Aligned implementation with established root_kb.md naming decision for project-base handler
+# * Updated method documentation to reflect root_kb.md naming convention for project root
 # 2025-07-01T12:16:00Z : Initial special handlers creation by CodeAssistant
 # * Created GitCloneHandler for read-only git clone processing with mirrored structure
 # * Created ProjectBaseHandler for whole codebase indexing with exclusion rules
@@ -334,36 +343,96 @@ class ProjectBaseHandler:
         await ctx.info(f"Processing project structure: {project_root}")
         
         try:
-            # This would implement comprehensive project structure processing
-            # For now, return basic structure
-            return DirectoryContext(
-                directory_path=project_root,
-                file_contexts=[],
-                subdirectory_contexts=[]
-            )
+            # Build comprehensive project directory context with actual discovery
+            return await self._build_project_directory_context(project_root, ctx)
             
         except Exception as e:
             logger.error(f"Project structure processing failed for {project_root}: {e}")
             await ctx.error(f"Project processing failed: {project_root}")
             raise
     
+    async def _build_project_directory_context(self, directory_path: Path, ctx: Context) -> DirectoryContext:
+        """
+        [Class method intent]
+        Builds DirectoryContext for project directory including all child files and subdirectories.
+        Recursively processes subdirectories while applying project-base exclusion filtering
+        and respecting gitignore patterns for comprehensive project knowledge coverage.
+
+        [Design principles]
+        Single directory context building with recursive subdirectory processing.
+        Project-base exclusion filtering applied consistently across all discovery operations.
+        Error handling enabling graceful degradation when individual items are inaccessible.
+        Progress reporting for large directory processing operations.
+
+        [Implementation details]
+        Iterates through directory contents applying should_process_project_item filters.
+        Creates FileContext objects for all processable files with metadata extraction.
+        Recursively builds DirectoryContext objects for processable subdirectories.
+        Handles filesystem errors gracefully with logging and continued processing.
+        """
+        from datetime import datetime
+        
+        file_contexts = []
+        subdirectory_contexts = []
+        
+        try:
+            # Process files and directories in current directory
+            for item in directory_path.iterdir():
+                try:
+                    # Apply project-base specific filtering
+                    if not self.should_process_project_item(item, directory_path):
+                        continue
+                    
+                    if item.is_file():
+                        # Create FileContext for processable files
+                        file_context = FileContext(
+                            file_path=item,
+                            file_size=item.stat().st_size,
+                            last_modified=datetime.fromtimestamp(item.stat().st_mtime)
+                        )
+                        file_contexts.append(file_context)
+                        
+                    elif item.is_dir():
+                        # Recursive directory processing for subdirectories
+                        await ctx.debug(f"Discovering subdirectory: {item.name}")
+                        subdir_context = await self._build_project_directory_context(item, ctx)
+                        subdirectory_contexts.append(subdir_context)
+                        
+                except (OSError, PermissionError) as e:
+                    logger.warning(f"Skipping inaccessible project item {item}: {e}")
+                    continue
+        
+        except (OSError, PermissionError) as e:
+            logger.error(f"Cannot access project directory {directory_path}: {e}")
+            await ctx.warning(f"Directory access failed: {directory_path.name}")
+        
+        # Report discovery results
+        if subdirectory_contexts:
+            await ctx.debug(f"Discovered {len(subdirectory_contexts)} subdirectories in {directory_path.name}")
+        
+        return DirectoryContext(
+            directory_path=directory_path,
+            file_contexts=file_contexts,
+            subdirectory_contexts=subdirectory_contexts
+        )
+    
     def get_project_knowledge_path(self, project_root: Path) -> Path:
         """
         [Class method intent]
         Determines knowledge file location for project-base indexing following
         established naming conventions. Provides consistent knowledge file
-        placement for whole project codebase indexing scenarios.
+        placement for whole project codebase indexing scenarios with root_kb.md naming.
 
         [Design principles]
         Consistent knowledge file placement following hierarchical conventions.
-        Project-base specific naming supporting specialized indexing scenarios.
+        Project-base root naming using root_kb.md for clear identification of project-level summary.
         Knowledge base organization enabling clear separation of project content.
 
         [Implementation details]
         Generates project knowledge base path within .knowledge/project-base/ structure.
-        Uses project name with knowledge file naming conventions.
+        Uses root_kb.md naming convention for project root knowledge files.
         Returns Path object for project knowledge file creation and management.
         """
         # Project knowledge files go in .knowledge/project-base/
         knowledge_root = project_root / ".knowledge" / "project-base"
-        return knowledge_root / f"{project_root.name}_kb.md"
+        return knowledge_root / "root_kb.md"

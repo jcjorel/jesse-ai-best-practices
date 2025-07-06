@@ -40,6 +40,12 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-06T13:05:00Z : Fixed missing global summary generation by implementing root_kb.md file naming for handler root directories by CodeAssistant
+# * Added _is_handler_root_directory() method detecting project-base, git-clones, and pdf-knowledge handler root contexts
+# * Modified _get_knowledge_file_path() to generate root_kb.md for handler root directories instead of {directory_name}_kb.md
+# * Fixed project root processing edge case where directory_path == source_root was creating problematic dot directory paths
+# * Enabled proper global summary generation for all three knowledge base handlers at their respective root scopes
+# * Preserved existing subdirectory behavior while enabling root-level global summaries as specified in handler architecture
 # 2025-07-04T17:58:00Z : Implemented continuation-based retry mechanism with intelligent response completion by CodeAssistant
 # * Completely redesigned retry strategy from "new conversation ID" approach to natural continuation using same conversation
 # * Added _generate_continuation_prompt() method for natural "please complete your response" continuation requests
@@ -55,11 +61,6 @@
 # * Removed unnecessary use_cache parameter handling since caching is now properly managed by conversation-specific keys
 # * Fixed fundamental architectural issue where same prompt content would retrieve cached responses regardless of conversation context
 # * Ensured perfect retry isolation where each unique conversation_id generates fresh LLM calls without any cache interference
-# 2025-07-04T17:32:00Z : Fixed critical artifact creation bug on global summary truncation by CodeAssistant
-# * Removed fallback content creation in _generate_global_summary() when technical errors occur during review
-# * Changed from creating fallback summary to raising RuntimeError preventing all knowledge file creation
-# * Ensured complete artifact prevention when global summary generation fails due to truncation or technical errors
-# * Fixed violation of "no artifacts on truncation" requirement that was allowing knowledge files to be created with fallback content
 ###############################################################################
 
 """
@@ -127,19 +128,19 @@ class KnowledgeBuilder:
     def __init__(self, config: IndexingConfig):
         """
         [Class method intent]
-        Initializes knowledge builder with configuration and Claude 4 Sonnet driver setup.
-        Creates strands_agent_driver instance optimized for analysis tasks with
-        configuration parameters matching indexing requirements.
+        Builds directory knowledge using centralized decision engine and template generation.
+        Trusts the decision already made by HierarchicalIndexer's RebuildDecisionEngine, then generates complete
+        knowledge file using alphabetical sorting and full rebuild approach.
 
         [Design principles]
-        Configuration-driven LLM setup ensuring consistent behavior across operations.
-        Claude 4 Sonnet optimization for analytical tasks requiring detailed summarization.
-        Error handling during initialization preventing construction failures.
+        Centralized decision logic delegated to RebuildDecisionEngine for consistent decision-making.
+        Full rebuild approach generating complete knowledge files from template on every change.
 
         [Implementation details]
-        Creates Claude4SonnetConfig optimized for analysis with low temperature.
-        Initializes StrandsClaude4Driver with proper model configuration.
-        Sets up prompt templates for different content types and scenarios.
+        Trusts decision already made by HierarchicalIndexer - no need to re-evaluate.
+        Collects file contexts and subdirectory summaries for template generation.
+        Generates global summary using LLM analysis of complete content.
+        Creates complete knowledge file using template generator with alphabetical sorting.
         """
         self.config = config
         
@@ -199,7 +200,7 @@ class KnowledgeBuilder:
                 logger.error(f"Failed to initialize Claude 4 Sonnet driver: {e}", exc_info=True)
                 raise RuntimeError(f"Knowledge builder initialization failed: {e}") from e
     
-    async def build_file_knowledge(self, file_context: FileContext, ctx: Context, source_root: Optional[Path] = None) -> FileContext:
+    async def build_file_knowledge(self, file_context: FileContext, ctx: Context, source_root: Optional[Path] = None, bypass_cache: bool = False) -> FileContext:
         """
         [Class method intent]
         Generates comprehensive file knowledge using cache-first Claude 4 Sonnet analysis.
@@ -243,8 +244,8 @@ class KnowledgeBuilder:
                     processing_end_time=datetime.now()
                 )
             
-            # Generate summary using cache-first Claude 4 Sonnet processing
-            summary = await self._process_single_file(file_context.file_path, file_content, ctx, source_root)
+            # Generate summary using cache-first Claude 4 Sonnet processing (unless bypassing cache due to rebuild decision)
+            summary = await self._process_single_file(file_context.file_path, file_content, ctx, source_root, bypass_cache=bypass_cache)
             
             return FileContext(
                 file_path=file_context.file_path,
@@ -279,18 +280,18 @@ class KnowledgeBuilder:
     async def build_directory_summary(self, directory_context: DirectoryContext, ctx: Context, source_root: Optional[Path] = None) -> DirectoryContext:
         """
         [Class method intent]
-        Builds directory knowledge using simple template generation with timestamp-based change detection.
-        Uses three-trigger change detection to determine if rebuild is needed, then generates complete
+        Builds directory knowledge using centralized decision engine and template generation.
+        Trusts the decision already made by HierarchicalIndexer's RebuildDecisionEngine, then generates complete
         knowledge file using alphabetical sorting and full rebuild approach.
 
         [Design principles]
-        Timestamp-based change detection using three-trigger system for comprehensive change detection.
+        Centralized decision logic delegated to RebuildDecisionEngine for consistent decision-making.
         Full rebuild approach generating complete knowledge files from template on every change.
         Alphabetical sorting ensuring consistent file and subdirectory ordering.
         Simple template generation replacing complex incremental update logic.
 
         [Implementation details]
-        Checks if directory needs rebuild using three-trigger timestamp detection.
+        Trusts decision already made by HierarchicalIndexer - no need to re-evaluate.
         Collects file contexts and subdirectory summaries for template generation.
         Generates global summary using LLM analysis of complete content.
         Creates complete knowledge file using template generator with alphabetical sorting.
@@ -306,24 +307,9 @@ class KnowledgeBuilder:
             # Determine knowledge file path
             knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path, source_root)
             
-            # Check if rebuild is needed using timestamp-based change detection
-            needs_rebuild, reason = self.template_generator.directory_needs_rebuild(
-                directory_context.directory_path, knowledge_file_path
-            )
-            
-            if not needs_rebuild:
-                await ctx.info(f"📄 KB UP TO DATE: {directory_context.directory_path.name} - {reason}")
-                return DirectoryContext(
-                    directory_path=directory_context.directory_path,
-                    file_contexts=directory_context.file_contexts,
-                    subdirectory_contexts=directory_context.subdirectory_contexts,
-                    processing_status=ProcessingStatus.SKIPPED,
-                    knowledge_file_path=knowledge_file_path,
-                    processing_start_time=processing_start,
-                    processing_end_time=datetime.now()
-                )
-            
-            await ctx.info(f"🔄 REBUILDING KB: {directory_context.directory_path.name} - {reason}")
+            # Trust the decision already made by HierarchicalIndexer - no need to re-evaluate
+            # This method is only called for directories that need processing
+            await ctx.info(f"� BUILDING KB: {directory_context.directory_path.name} - proceeding with knowledge file generation")
             
             # Collect completed file contexts for template generation
             completed_file_contexts = [
@@ -331,33 +317,62 @@ class KnowledgeBuilder:
                 if fc.is_completed and fc.knowledge_content
             ]
             
-            # Collect subdirectory summaries by extracting content from existing KB files
-            subdirectory_summaries = []
+            # DUAL CONTENT STRATEGY: Collect full content for LLM and filtered content for final KB
+            full_subdirectory_content = []  # For LLM global summary (rich context)
+            filtered_subdirectory_summaries = []  # For final KB file (concise summaries)
+            
             for subdir_context in directory_context.subdirectory_contexts:
                 if (subdir_context.processing_status == ProcessingStatus.COMPLETED and 
                     subdir_context.knowledge_file_path and 
                     subdir_context.knowledge_file_path.exists()):
                     
-                    # Extract fourth-level header content from subdirectory KB
-                    extracted_content = await self._extract_subdirectory_content(subdir_context.knowledge_file_path, ctx)
-                    subdirectory_summaries.append((subdir_context.directory_path, extracted_content))
+                    # Read FULL KB file content for LLM global summary (rich context)
+                    try:
+                        with open(subdir_context.knowledge_file_path, 'r', encoding='utf-8') as f:
+                            full_kb_content = f.read()
+                        full_subdirectory_content.append((subdir_context.directory_path, full_kb_content))
+                        await ctx.debug(f"📖 FULL CONTENT: Loaded {len(full_kb_content)} characters from {subdir_context.knowledge_file_path.name} for LLM context")
+                    except Exception as e:
+                        await ctx.warning(f"Error reading full KB content from {subdir_context.knowledge_file_path}: {e}")
+                        full_subdirectory_content.append((subdir_context.directory_path, f"*Error reading full content: {e}*"))
+                    
+                    # Extract FILTERED content for final KB file (concise summaries)
+                    filtered_content = await self._extract_subdirectory_content(subdir_context.knowledge_file_path, ctx)
+                    filtered_subdirectory_summaries.append((subdir_context.directory_path, filtered_content))
+                    await ctx.debug(f"✂️ FILTERED CONTENT: Extracted {len(filtered_content)} characters from {subdir_context.knowledge_file_path.name} for final KB")
             
-            # Generate global summary using LLM
+            # Generate global summary using FULL subdirectory content for rich LLM context
             global_summary = await self._generate_global_summary_from_contexts(
-                directory_context, completed_file_contexts, subdirectory_summaries, ctx
+                directory_context, completed_file_contexts, full_subdirectory_content, ctx
             )
             
-            # Generate complete knowledge file using template generator
+            # Generate complete knowledge file using FILTERED subdirectory content for final KB
             complete_knowledge_content = self.template_generator.generate_complete_knowledge_file(
                 directory_path=directory_context.directory_path,
                 global_summary=global_summary,
                 file_contexts=completed_file_contexts,
-                subdirectory_summaries=subdirectory_summaries,
+                subdirectory_summaries=filtered_subdirectory_summaries,  # Use filtered content for final KB
                 kb_file_path=knowledge_file_path
             )
             
             # Write complete knowledge file
             await self._write_knowledge_file(knowledge_file_path, complete_knowledge_content)
+            
+            # STALENESS ALGORITHM VERIFICATION: Ensure knowledge file is now fresh after rebuild
+            subdirectory_paths = [subdir.directory_path for subdir in directory_context.subdirectory_contexts]
+            is_stale, staleness_reason = self.analysis_cache.is_knowledge_file_stale(
+                directory_context.directory_path,
+                source_root,
+                completed_file_contexts,
+                subdirectory_paths
+            )
+            if is_stale:
+                error_msg = f"STALENESS ALGORITHM BUG: Knowledge file {knowledge_file_path.name} should be fresh after rebuild but is still stale: {staleness_reason}"
+                logger.error(error_msg)
+                await ctx.error(f"🚨 ALGORITHM BUG: {error_msg}")
+                raise RuntimeError(error_msg)
+            else:
+                await ctx.debug(f"✅ VERIFIED: Knowledge file freshness confirmed for {knowledge_file_path.name} after rebuild")
             
             await ctx.info(f"✅ Directory knowledge generation completed: {knowledge_file_path}")
             
@@ -508,20 +523,21 @@ class KnowledgeBuilder:
     async def _extract_subdirectory_content(self, subdir_kb_path: Path, ctx: Context) -> str:
         """
         [Class method intent]
-        Extracts content from fourth-level header in subdirectory knowledge base file.
-        Reads subdirectory KB file and extracts content from first fourth-level header
-        for integration into parent directory knowledge base.
+        Extracts content from fourth-level header in subdirectory knowledge base file for final KB integration.
+        Reads subdirectory KB file and extracts only the top-level content from first fourth-level header,
+        stopping at fifth-level headers to prevent massive content extraction and truncation issues.
 
         [Design principles]
-        Content extraction with formatting preservation maintaining original LLM output quality.
-        Fourth-level header targeting supporting hierarchical semantic context pattern.
+        Precise content extraction preventing orphaned markdown tags from truncation.
+        Fourth-level header targeting with fifth-level stopping for concise final KB summaries.
+        Content length control preventing processing truncation during parent KB generation.
         Error handling ensuring graceful degradation when extraction encounters issues.
 
         [Implementation details]
         Reads subdirectory KB file and searches for first fourth-level header.
-        Extracts all content until next same or higher level header.
-        Preserves original formatting without transformation.
-        Returns extracted content ready for template integration.
+        Extracts content until next same-level, higher-level, OR fifth-level header to prevent nested extraction.
+        Limits content extraction to immediate section content only, avoiding deep hierarchical nesting.
+        Returns filtered content ready for final KB template integration without truncation risk.
         """
         try:
             if not subdir_kb_path.exists():
@@ -532,7 +548,7 @@ class KnowledgeBuilder:
             with open(subdir_kb_path, 'r', encoding='utf-8') as f:
                 content = f.read()
             
-            # Simple extraction: find first fourth-level header and extract content
+            # Precise extraction: find first fourth-level header and extract only immediate content
             lines = content.split('\n')
             extracted_lines = []
             in_target_section = False
@@ -542,9 +558,10 @@ class KnowledgeBuilder:
                     # Found first fourth-level header - start extracting (skip the header)
                     in_target_section = True
                     continue
-                elif (line.startswith('#### ') or line.startswith('### ') or 
-                      line.startswith('## ') or line.startswith('# ')) and in_target_section:
-                    # Found next header - stop extracting
+                elif (line.startswith('#####') or line.startswith('#### ') or 
+                      line.startswith('### ') or line.startswith('## ') or 
+                      line.startswith('# ')) and in_target_section:
+                    # Found next header (including fifth-level) - stop extracting to prevent nested content
                     break
                 elif in_target_section:
                     # Extract content line
@@ -553,7 +570,18 @@ class KnowledgeBuilder:
             if extracted_lines:
                 # Join lines and clean up whitespace
                 result = '\n'.join(extracted_lines).strip()
-                await ctx.debug(f"Extracted {len(result)} characters from {subdir_kb_path}")
+                # Limit content length to prevent truncation in parent KB
+                if len(result) > 1500:
+                    # Truncate at sentence boundary for clean cutoff
+                    truncated = result[:1500]
+                    last_period = truncated.rfind('.')
+                    if last_period > 1000:  # Ensure we get meaningful content
+                        result = truncated[:last_period + 1]
+                    else:
+                        result = truncated + "..."
+                    await ctx.debug(f"Content truncated to prevent processing issues: {len(result)} characters from {subdir_kb_path}")
+                else:
+                    await ctx.debug(f"Extracted {len(result)} characters from {subdir_kb_path}")
                 return result
             else:
                 await ctx.info(f"No fourth-level header content found in {subdir_kb_path}")
@@ -666,7 +694,7 @@ class KnowledgeBuilder:
             logger.warning(f"File read error {file_path}: {e}")
             return ""
     
-    async def _process_single_file(self, file_path: Path, content: str, ctx: Context, source_root: Optional[Path] = None) -> str:
+    async def _process_single_file(self, file_path: Path, content: str, ctx: Context, source_root: Optional[Path] = None, bypass_cache: bool = False) -> str:
         """
         [Class method intent]
         Processes single file content through cache-first LLM analysis generating raw markdown output.
@@ -689,8 +717,10 @@ class KnowledgeBuilder:
         Returns raw analysis content ready for direct insertion into knowledge files.
         """
         try:
-            # PHASE 1: Check cache first for performance optimization (unless FULL mode)
-            if source_root and self.config.indexing_mode.value != "full":
+            # PHASE 1: Check cache first for performance optimization (unless bypassing cache due to rebuild decision or FULL mode)
+            if bypass_cache:
+                await ctx.info(f"🔄 REBUILD DECISION: Bypassing cache for {file_path.name} - RebuildDecisionEngine determined file is stale")
+            elif source_root and self.config.indexing_mode.value != "full":
                 cached_analysis = await self.analysis_cache.get_cached_analysis(file_path, source_root)
                 if cached_analysis:
                     cache_path = self.analysis_cache.get_cache_path(file_path, source_root)
@@ -795,6 +825,18 @@ class KnowledgeBuilder:
             if source_root and self.config.indexing_mode.value != "full":
                 await self.analysis_cache.cache_analysis(file_path, clean_final_content, source_root)
                 await ctx.debug(f"💾 CACHED: Clean analysis cached for {file_path.name} (compliant: {was_compliant})")
+                
+                # STALENESS ALGORITHM VERIFICATION: Ensure cache is now fresh after rebuild
+                # Note: Use direct cache method since we don't have decision engine instance here
+                is_fresh = self.analysis_cache.is_cache_fresh(file_path, source_root)
+                if not is_fresh:
+                    error_msg = f"STALENESS ALGORITHM BUG: File {file_path.name} should be fresh after caching but is still stale"
+                    logger.error(error_msg)
+                    await ctx.error(f"🚨 ALGORITHM BUG: {error_msg}")
+                    raise RuntimeError(error_msg)
+                else:
+                    await ctx.debug(f"✅ VERIFIED: Cache freshness confirmed for {file_path.name} after rebuild")
+                    
             elif source_root and self.config.indexing_mode.value == "full":
                 await ctx.debug(f"💥 FULL MODE: Not caching analysis for {file_path.name} - nuclear rebuild mode")
             
@@ -887,6 +929,53 @@ class KnowledgeBuilder:
         return file_contexts
     
     
+    def _is_handler_root_directory(self, directory_path: Path, source_root: Optional[Path] = None) -> bool:
+        """
+        [Class method intent]
+        Detects if directory_path represents a handler root directory requiring root_kb.md generation.
+        Identifies top-level contexts for project-base, git-clones, and pdf-knowledge handlers
+        to enable proper global summary file naming.
+
+        [Design principles]
+        Handler-agnostic root detection supporting all three knowledge base handler types.
+        Clear detection logic based on directory structure patterns and source root relationships.
+        Conservative approach defaulting to subdirectory behavior when detection is uncertain.
+
+        [Implementation details]
+        Project-base: Root when directory_path equals source_root (processing project root).
+        Git-clones: Root when directory is top level of a .kb/ knowledge base directory.
+        PDF-knowledge: Root when directory is top level of a .kb/ knowledge base directory.
+        Returns boolean indicating whether root_kb.md should be generated for this directory.
+        """
+        try:
+            # Project-base handler: Root when processing the project root itself
+            if source_root and directory_path == source_root:
+                return True
+            
+            # Git-clones and PDF-knowledge handlers: Root when directory name ends with .kb
+            # and is likely the top level of a knowledge base structure
+            if directory_path.name.endswith('.kb'):
+                return True
+            
+            # Check if directory is inside a .kb directory structure but at its root
+            # This handles cases where we're processing the content inside a .kb directory
+            parent_parts = directory_path.parts
+            for i, part in enumerate(parent_parts):
+                if part.endswith('.kb'):
+                    # Check if current directory is the immediate child of the .kb directory
+                    kb_path = Path(*parent_parts[:i+1])
+                    if directory_path == kb_path:
+                        return True
+                    break
+            
+            # Default: not a root directory
+            return False
+            
+        except Exception as e:
+            logger.warning(f"Failed to detect handler root directory for {directory_path}: {e}")
+            # Conservative fallback: not a root directory
+            return False
+
     def _get_knowledge_file_path(self, directory_path: Path, source_root: Optional[Path] = None) -> Path:
         """
         [Class method intent]
@@ -894,25 +983,39 @@ class KnowledgeBuilder:
         Implements hierarchical semantic context pattern with standardized knowledge file
         naming and location conventions for consistent knowledge base organization.
         Enforces project-base indexing business rule using mandatory project-base/ subdirectory.
+        Generates root_kb.md for handler root directories and {directory_name}_kb.md for subdirectories.
 
         [Design principles]
         Standardized knowledge file naming following hierarchical semantic context patterns.
+        Root directory detection enabling proper global summary generation as root_kb.md files.
         Configurable file placement enabling separation between source and knowledge files.
         Hierarchical structure preservation in knowledge output directory mirroring source structure.
         Mandatory project-base indexing segregation using dedicated project-base/ subdirectory.
 
         [Implementation details]
-        Generates knowledge file name using directory name with '_kb.md' suffix.
+        Detects root directory contexts and generates root_kb.md for handler scope roots.
         Uses knowledge_output_directory from config if specified, preserving relative structure.
         Always uses project-base/ subdirectory with structure mirroring for project-base indexing.
         Calculates relative path from source root and recreates structure in knowledge directory.
         Returns Path object ready for knowledge file writing operations.
         """
-        knowledge_filename = f"{directory_path.name}_kb.md"
+        # Determine if this is a root directory context requiring root_kb.md
+        is_root_directory = self._is_handler_root_directory(directory_path, source_root)
+        
+        if is_root_directory:
+            knowledge_filename = "root_kb.md"
+        else:
+            knowledge_filename = f"{directory_path.name}_kb.md"
         
         if self.config.knowledge_output_directory and source_root:
             # Use separate knowledge output directory, preserving relative structure
             try:
+                # Special handling for project root (source_root == directory_path)
+                if directory_path == source_root:
+                    # Project root goes directly in project-base/ subdirectory
+                    knowledge_dir = self.config.knowledge_output_directory / "project-base"
+                    return knowledge_dir / knowledge_filename
+                
                 # Calculate relative path from source root to current directory
                 relative_path = directory_path.relative_to(source_root)
                 

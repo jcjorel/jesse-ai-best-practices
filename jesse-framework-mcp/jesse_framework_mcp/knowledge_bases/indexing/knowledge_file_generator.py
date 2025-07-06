@@ -20,7 +20,7 @@
 # - Full rebuild: generate complete knowledge files from template on every change
 # - Alphabetical sorting: sort files and subdirectories consistently across all knowledge files
 # - Template-based generation: use string templates for predictable, debuggable output
-# - Timestamp-based change detection: use three-trigger system for comprehensive change detection
+# - Centralized decision logic: relies on RebuildDecisionEngine for all rebuild decisions
 # - Performance through simplicity: eliminate complex incremental update logic
 ###############################################################################
 # [Source file constraints]
@@ -49,7 +49,7 @@
 Knowledge File Generator for Knowledge Bases System.
 
 This module provides straightforward template-based knowledge file generation using
-full rebuild approach with alphabetical sorting and timestamp-based change detection.
+full rebuild approach with alphabetical sorting and centralized decision logic.
 """
 
 import logging
@@ -68,18 +68,18 @@ class KnowledgeFileGenerator:
     [Class intent]
     Knowledge file generator for complete knowledge base file generation using full rebuild approach.
     Replaces complex incremental updates with straightforward template generation, alphabetical sorting,
-    and comprehensive timestamp-based change detection for reliable and maintainable knowledge file creation.
+    and centralized decision logic for reliable and maintainable knowledge file creation.
 
     [Design principles]
     Full rebuild approach: generate complete knowledge files from template on every change.
     Alphabetical sorting: consistent file and subdirectory ordering across all knowledge files.
     Template-based generation: predictable, debuggable output using string templates.
-    Timestamp-based change detection: three-trigger system for comprehensive change detection.
+    Centralized decision logic: relies on RebuildDecisionEngine for all rebuild decisions.
     Performance through simplicity: eliminate complex parsing and section replacement logic.
 
     [Implementation details]
     Uses string templates for complete knowledge file generation with deterministic output.
-    Implements three-trigger timestamp comparison for change detection and rebuild decisions.
+    Trusts decisions already made by HierarchicalIndexer's RebuildDecisionEngine.
     Sorts all content alphabetically before template generation for consistent output.
     Preserves LLM formatting through direct content insertion without transformation.
     Provides clear logging and error handling for debugging and maintenance.
@@ -102,58 +102,6 @@ class KnowledgeFileGenerator:
         Ready for immediate template generation operations.
         """
         logger.info("KnowledgeFileGenerator initialized with full rebuild approach")
-    
-    def directory_needs_rebuild(self, directory_path: Path, kb_file_path: Path) -> Tuple[bool, str]:
-        """
-        [Class method intent]
-        Implements three-trigger timestamp-based change detection for comprehensive rebuild decisions.
-        Checks directory structure changes, individual file changes, and subdirectory KB changes
-        to determine if directory knowledge base file needs complete rebuild.
-
-        [Design principles]
-        Three-trigger system: directory mtime, source file mtime, subdirectory KB mtime comparisons.
-        Comprehensive change detection: catch all possible change scenarios with simple timestamp logic.
-        Fast filesystem operations: use stat() calls for efficient change detection.
-        Clear reasoning: return specific reason for rebuild decision to aid debugging.
-
-        [Implementation details]
-        Compares directory, source files, and subdirectory KB timestamps against KB file timestamp.
-        Returns tuple with rebuild decision and human-readable reason for logging.
-        Handles missing KB files, filesystem errors, and edge cases gracefully.
-        Uses case-insensitive file extension filtering for cross-platform compatibility.
-        """
-        try:
-            if not kb_file_path.exists():
-                return True, "KB file doesn't exist"
-            
-            kb_timestamp = kb_file_path.stat().st_mtime
-            
-            # TRIGGER 1: Directory structure changed (files added/deleted/renamed)
-            dir_timestamp = directory_path.stat().st_mtime
-            if dir_timestamp > kb_timestamp:
-                return True, f"Directory structure changed (dir: {dir_timestamp:.2f} > kb: {kb_timestamp:.2f})"
-            
-            # TRIGGER 2: Source file content changed
-            for source_file in directory_path.iterdir():
-                if self._should_process_file(source_file):
-                    file_timestamp = source_file.stat().st_mtime
-                    if file_timestamp > kb_timestamp:
-                        return True, f"Source file changed: {source_file.name} ({file_timestamp:.2f} > {kb_timestamp:.2f})"
-            
-            # TRIGGER 3: Subdirectory KB changed
-            for subdir in directory_path.iterdir():
-                if subdir.is_dir():
-                    subdir_kb = self._get_kb_path(subdir)
-                    if subdir_kb.exists():
-                        subdir_kb_timestamp = subdir_kb.stat().st_mtime
-                        if subdir_kb_timestamp > kb_timestamp:
-                            return True, f"Subdirectory KB changed: {subdir.name} ({subdir_kb_timestamp:.2f} > {kb_timestamp:.2f})"
-            
-            return False, "No changes detected"
-            
-        except Exception as e:
-            logger.error(f"Change detection failed for {directory_path}: {e}")
-            return True, f"Change detection error: {e}"
     
     def generate_complete_knowledge_file(
         self,

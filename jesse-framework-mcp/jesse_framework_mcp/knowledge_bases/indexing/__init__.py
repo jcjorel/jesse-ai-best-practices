@@ -30,7 +30,6 @@
 ###############################################################################
 # [Dependencies]
 # <codebase>: .hierarchical_indexer - Core indexing orchestrator
-# <codebase>: .change_detector - Change detection and timestamp comparison
 # <codebase>: .knowledge_builder - LLM-powered content summarization
 # <codebase>: .special_handlers - Git-clone and project-base special handling
 ###############################################################################
@@ -45,18 +44,16 @@
 Indexing subsystem for Knowledge Bases Hierarchical Indexing System.
 
 This package contains the core components for hierarchical knowledge base indexing,
-including the main orchestrator, change detection, content building, and special
-handling for git-clones and project-base scenarios.
+including the main orchestrator, content building, and special handling for 
+git-clones and project-base scenarios.
 """
 
 from .hierarchical_indexer import HierarchicalIndexer
-from .change_detector import ChangeDetector
 from .knowledge_builder import KnowledgeBuilder
 from .special_handlers import GitCloneHandler, ProjectBaseHandler
 
 __all__ = [
     "HierarchicalIndexer",
-    "ChangeDetector", 
     "KnowledgeBuilder",
     "GitCloneHandler",
     "ProjectBaseHandler"

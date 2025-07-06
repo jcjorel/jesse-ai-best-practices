@@ -234,7 +234,7 @@ def register_knowledge_bases_resources(server: FastMCP) -> None:
                 "key_components": {
                     "HierarchicalIndexer": "Core orchestrator coordinating indexing workflow",
                     "KnowledgeBuilder": "LLM-powered content analysis and knowledge file generation",
-                    "ChangeDetector": "Timestamp-based incremental processing optimization",
+                    "RebuildDecisionEngine": "Centralized decision-making for comprehensive change detection",
                     "SpecialHandlers": "Git-clone and project-base specialized processing"
                 },
                 "processing_patterns": {

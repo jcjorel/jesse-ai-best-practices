@@ -36,6 +36,11 @@
 # <system>: typing - Type annotations and validation
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-06T10:59:00Z : Fixed should_process_directory to actually check project_base_exclusions by CodeAssistant
+# * Enhanced should_process_directory to check project_base_exclusions when they exist
+# * Fixes issue where .clinerules, .coding_assistant, .knowledge directories were indexed despite being excluded
+# * Ensures proper directory exclusion for project-base handler type following hierarchical exclusion rules
+# * Complete fix for directory-level exclusion functionality ensuring cleanup works for all excluded directories
 # 2025-07-05T15:58:00Z : Added configuration manager integration and new parameters by CodeAssistant
 # * Added project_base_exclusions parameter for hierarchical exclusion system
 # * Added load_for_handler class method for configuration manager integration
@@ -46,10 +51,6 @@
 # * Modified __post_init__ to set knowledge_output_directory default to project_root/.knowledge when None
 # * Updated documentation to reflect new default behavior following JESSE Framework conventions
 # * Maintained backward compatibility with graceful fallback when project root cannot be detected
-# 2025-07-01T12:04:00Z : Initial configuration model creation by CodeAssistant
-# * Created IndexingConfig with Claude 4 Sonnet integration
-# * Set up comprehensive parameter validation
-# * Established immutable configuration pattern
 ###############################################################################
 
 """
@@ -413,11 +414,16 @@ class IndexingConfig:
 
         [Implementation details]
         Checks directory name against excluded_directories set for fast filtering.
+        For project-base handlers, also checks against project_base_exclusions.
         Directory name comparison is case-sensitive for precise control.
         Returns boolean decision for use in directory traversal algorithms.
         """
-        # Check if directory name is excluded
+        # Check if directory name is excluded in base exclusions
         if directory_path.name in self.excluded_directories:
+            return False
+        
+        # Check if directory name is excluded in project-base specific exclusions
+        if self.project_base_exclusions and directory_path.name in self.project_base_exclusions:
             return False
         
         return True
