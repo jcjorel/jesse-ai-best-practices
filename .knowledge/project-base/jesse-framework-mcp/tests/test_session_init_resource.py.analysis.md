@@ -1,56 +1,55 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/tests/test_session_init_resource.py -->
-<!-- Cached On: 2025-07-05T11:33:15.801991 -->
+<!-- Cached On: 2025-07-06T19:32:42.716523 -->
 <!-- Source Modified: 2025-07-01T08:59:29.269995 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This test script validates the `jesse://session/init-context` meta-resource functionality for the JESSE Framework MCP Server, specifically testing comprehensive session initialization for Cline AI assistant integration. The script provides automated validation of multi-section HTTP response formatting, resource aggregation correctness, and individual component isolation testing. Key semantic entities include `get_session_init_context`, `TestContext` class, `unwrap_fastmcp_function` utility, `asyncio` async execution, `fastmcp.Context` integration, and `jesse_framework_mcp.resources` module ecosystem. The testing framework enables developers to verify that all essential project resources (framework rules, project context, WIP tasks, workflows, knowledge, gitignore) are properly aggregated into a single meta-resource endpoint with appropriate HTTP Content-Type boundaries and criticality levels.
+This test script validates the `jesse://session/init-context` meta-resource functionality within the JESSE Framework MCP Server, specifically designed to verify comprehensive session initialization for Cline IDE integration. The script provides automated testing capabilities for multi-section HTTP response validation, resource aggregation verification, and individual component isolation testing. Key semantic entities include `get_session_init_context`, `TestContext` class, `unwrap_fastmcp_function` utility, `asyncio` async execution, `fastmcp.Context` integration, and `jesse_framework_mcp.resources` module imports. The testing framework implements progress reporting through emoji-based status indicators and detailed section analysis with criticality level validation (`CRITICAL`, `INFORMATIONAL`).
 
 ##### Main Components
 
-The script contains three primary async functions: `test_session_init_resource()` for comprehensive meta-resource validation, `test_individual_sections()` for isolated component testing, and `main()` for orchestrated test execution. A custom `TestContext` class provides mock context implementation with logging methods (`info`, `error`, `warning`, `debug`, `report_progress`) that simulate the MCP server context interface. The testing logic includes result analysis functionality that counts HTTP sections, verifies key resource sections, and provides detailed output sampling for debugging purposes.
+The script contains three primary async functions: `test_session_init_resource()` for comprehensive meta-resource testing, `test_individual_sections()` for isolated component validation, and `main()` for orchestrated test execution. A custom `TestContext` class provides mock context implementation with logging methods (`info`, `error`, `warning`, `debug`, `report_progress`). The testing logic includes result analysis functionality for HTTP section counting, key section verification against expected patterns, and sample output display for debugging purposes.
 
 ###### Architecture & Design
 
-The test architecture follows an isolation-first testing pattern where individual resource sections are validated before comprehensive integration testing. The design implements a mock context pattern using `TestContext` class to simulate the MCP server environment without requiring full server initialization. The script uses dynamic module importing and function unwrapping to test FastMCP-decorated functions directly, enabling unit-level testing of resource endpoints. Error handling is implemented at multiple levels with detailed traceback reporting and graceful degradation for individual section failures.
+The architecture follows an async testing pattern with mock context injection and progressive validation layers. The design implements separation of concerns through individual section testing followed by comprehensive integration testing. Error handling is structured with graceful degradation and detailed traceback reporting. The testing framework uses a hierarchical approach where individual components are validated before testing the complete meta-resource aggregation functionality.
 
 ####### Implementation Approach
 
-The testing strategy employs async/await patterns throughout with `asyncio.run()` orchestration for proper async context management. Function unwrapping is achieved through the `unwrap_fastmcp_function` utility to bypass FastMCP decorators and enable direct function testing. Result validation uses string analysis techniques including character counting, section boundary detection via "Content-Type:" markers, and pattern matching for expected resource sections. The implementation includes progress reporting simulation and detailed output sampling with truncated display for large responses.
+The implementation uses `unwrap_fastmcp_function()` to handle FastMCP decorator removal before function execution, enabling direct async function calls. Section verification employs pattern matching against predefined tuples containing section identifiers, criticality levels, and display names. Progress reporting utilizes percentage calculation for visual feedback during resource loading. The testing strategy implements both positive path validation and error isolation through individual component testing with exception handling and traceback capture.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.main:server` - MCP server instance for testing context
-- `jesse_framework_mcp.resources.session_init:get_session_init_context` - primary meta-resource function under test
-- `jesse_framework_mcp.resources.framework_rules:get_available_rule_names` - individual framework rules testing
+- `jesse_framework_mcp.main:server` - MCP server instance import
+- `jesse_framework_mcp.resources.session_init:get_session_init_context` - primary meta-resource function
+- `jesse_framework_mcp.resources.framework_rules:get_available_rule_names` - framework rules testing
 - `jesse_framework_mcp.resources.project_resources:get_project_context_summary` - project context validation
-- `jesse_framework_mcp.resources.wip_tasks:get_wip_tasks_inventory` - WIP tasks resource testing
-- `utils:unwrap_fastmcp_function` - FastMCP function unwrapping utility
-- `fastmcp.Context` (external library) - MCP context interface specification
-- `asyncio` (stdlib) - async execution framework
-- `pathlib.Path` (stdlib) - file system path manipulation
+- `jesse_framework_mcp.resources.wip_tasks:get_wip_tasks_inventory` - WIP tasks verification
+- `utils:unwrap_fastmcp_function` - FastMCP function wrapper utility
+- `fastmcp:Context` (external library) - MCP context interface
+- `asyncio` (external library) - async execution framework
 
 **← Outbound:**
-- Test execution reports consumed by developers for validation
-- Console output for debugging and verification purposes
-- Validation results for CI/CD pipeline integration
+- Console output for test results and debugging information
+- Test validation reports for CI/CD pipeline integration
+- Error logs and tracebacks for debugging workflows
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring MCP server resource endpoints function correctly before deployment
-- **Ecosystem Position**: Core testing infrastructure for JESSE Framework MCP server resource validation
-- **Integration Pattern**: Executed by developers during development and CI/CD pipelines for automated resource endpoint validation
+- **System Role**: Validation gateway ensuring session initialization meta-resource reliability before Cline IDE deployment
+- **Ecosystem Position**: Critical testing component for MCP server resource protocol compliance and multi-section HTTP response validation
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify resource aggregation functionality and individual component isolation
 
 ######### Edge Cases & Error Handling
 
-The script handles multiple error scenarios including missing resource sections, empty meta-resource responses, individual section failures, and FastMCP function unwrapping errors. Exception handling includes full traceback printing for debugging with specific error categorization (test failures vs unexpected errors). The testing framework gracefully handles keyboard interrupts and provides detailed failure analysis when resource sections are missing or malformed. Individual section testing isolates failures to specific resource types, enabling targeted debugging when the comprehensive meta-resource fails.
+Error handling covers FastMCP function unwrapping failures, missing resource sections, empty result responses, and individual component failures. The script handles `KeyboardInterrupt` for graceful user termination and captures unexpected exceptions with full traceback reporting. Edge cases include missing criticality markers in HTTP responses, zero-length resource sections, and module import failures during individual section testing. The testing framework provides detailed error context through emoji-based status indicators and section-by-section failure isolation.
 
 ########## Internal Implementation Details
 
-The `TestContext` class implements emoji-based logging (`ℹ️`, `❌`, `⚠️`, `🐛`, `📊`) for visual test output differentiation. Result analysis includes character counting with comma formatting, HTTP section boundary detection, and key section verification against expected patterns. The script uses dynamic module importing with `__import__` and `getattr` for flexible resource function testing. Progress reporting simulation includes percentage calculation and formatted output for testing the meta-resource's progress reporting capabilities.
+The `TestContext` class implements all required context methods as simple print statements with emoji prefixes for visual debugging. Section verification uses string containment checks with case-insensitive matching for robustness. The result analysis calculates character counts, HTTP section counts using `Content-Type:` markers, and displays truncated sample output for manual inspection. Individual section testing uses dynamic module imports with `__import__` and `getattr` for flexible function resolution.
 
 ########### Code Usage Examples
 
@@ -59,29 +58,21 @@ The `TestContext` class implements emoji-based logging (`ℹ️`, `❌`, `⚠️
 # Execute comprehensive session initialization test
 success = await test_session_init_resource()
 if success:
-    print("Meta-resource validation passed")
+    print("Session initialization meta-resource validated successfully")
 ```
 
-**Individual resource section testing for debugging:**
+**Individual component testing for debugging:**
 ```python
 # Test specific resource sections in isolation
-sections_to_test = [
-    ("Framework Rules", "framework_rules", "get_available_rule_names"),
-    ("Project Context", "project_resources", "get_project_context_summary")
-]
-for section_name, module_name, function_name in sections_to_test:
-    module = __import__(f'jesse_framework_mcp.resources.{module_name}', fromlist=[function_name])
-    test_func = getattr(module, function_name)
-    unwrapped_func = unwrap_fastmcp_function(test_func)
-    result = await unwrapped_func(ctx)
+await test_individual_sections()
+# Validates framework rules, project context, WIP tasks, and knowledge indexes separately
 ```
 
-**Custom test context implementation for MCP simulation:**
+**Custom context implementation for testing:**
 ```python
 class TestContext:
     async def info(self, message):
         print(f"ℹ️  {message}")
-    
     async def report_progress(self, current, total, message):
         percentage = (current / total) * 100
         print(f"📊 [{percentage:3.0f}%] {message}")

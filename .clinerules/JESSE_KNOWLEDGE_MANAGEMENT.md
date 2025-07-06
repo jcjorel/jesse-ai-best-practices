@@ -8,7 +8,7 @@
 ## Mandatory Session Initialization Command
 **EVERY JESSE FRAMEWORK DEVELOPMENT SESSION MUST START WITH:**
 ```bash
-uv run python jesse-framework-mcp/tests/test_project_root.py --dump
+cd jesse-framework-mcp && uv run python tests/test_project_root.py --dump
 ```
 
 **REQUIREMENT LEVEL**: 🔒 **HARD BLOCKING** - Development work cannot proceed without this  

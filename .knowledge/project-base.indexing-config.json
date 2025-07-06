@@ -1,0 +1,78 @@
+{
+  "handler_type": "project-base",
+  "description": "Whole project codebase indexing with system directory exclusions",
+  "file_processing": {
+    "max_file_size": 2097152,
+    "batch_size": 7,
+    "max_concurrent_operations": 3
+  },
+  "content_filtering": {
+    "excluded_extensions": [
+      ".log",
+      ".coverage",
+      "__pycache__",
+      ".mypy_cache",
+      ".orig",
+      ".bak",
+      ".tox",
+      ".swp",
+      ".pyc",
+      ".git",
+      ".cache",
+      ".rej",
+      ".swo",
+      ".tmp",
+      ".pytest_cache",
+      ".env",
+      ".pyo",
+      ".DS_Store"
+    ],
+    "excluded_directories": [
+      "coverage",
+      "venv",
+      "node_modules",
+      ".coverage",
+      "__pycache__",
+      "target",
+      ".mypy_cache",
+      "build",
+      "scratchpad",
+      ".venv",
+      ".tox",
+      "dist",
+      ".nyc_output",
+      ".git",
+      ".cache",
+      "bin",
+      ".pytest_cache",
+      "obj"
+    ],
+    "project_base_exclusions": [
+      ".clinerules",
+      ".coding_assistant",
+      ".knowledge"
+    ]
+  },
+  "llm_config": {
+    "llm_model": "us.anthropic.claude-sonnet-4-20250514-v1:0",
+    "temperature": 0.3,
+    "max_tokens": 20000
+  },
+  "change_detection": {
+    "indexing_mode": "incremental",
+    "timestamp_tolerance_seconds": 2
+  },
+  "error_handling": {
+    "max_retries": 3,
+    "retry_delay_seconds": 1.0,
+    "continue_on_file_errors": true
+  },
+  "output_config": {
+    "knowledge_output_directory": null
+  },
+  "debug_config": {
+    "debug_mode": false,
+    "debug_output_directory": null,
+    "enable_llm_replay": false
+  }
+}

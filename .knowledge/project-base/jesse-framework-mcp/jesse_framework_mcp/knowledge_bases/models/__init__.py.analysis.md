@@ -1,106 +1,135 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/models/__init__.py -->
-<!-- Cached On: 2025-07-05T13:52:20.094302 -->
-<!-- Source Modified: 2025-07-01T13:06:29.862746 -->
+<!-- Cached On: 2025-07-06T21:09:33.016153 -->
+<!-- Source Modified: 2025-07-06T20:16:25.338040 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file serves as the centralized package initialization module for the Knowledge Bases Hierarchical Indexing System data models, providing unified access to all configuration classes, runtime context structures, and processing state models used throughout the hierarchical indexing workflow and FastMCP integration. The module enables clean dependency management by exporting core data structures including configuration models, context tracking classes, and processing state enumerations through a standardized interface. Key semantic entities include `IndexingConfig` for system configuration, `IndexingMode` enumeration for processing modes, `DirectoryContext` for hierarchical directory processing state, `FileContext` for individual file processing tracking, `ChangeInfo` for incremental processing coordination, `IndexingStatus` for overall operation monitoring, `ProcessingStats` for comprehensive metrics collection, `ProcessingStatus` enumeration for workflow state management, `ChangeType` enumeration for change detection categories, and the `__all__` export list defining the public API surface. The system implements type-safe data structures with comprehensive validation, immutable configurations for thread safety, and clear separation between configuration and runtime context models supporting async operations throughout the indexing pipeline.
+This file serves as the models package initialization module for the Knowledge Bases Hierarchical Indexing System, providing centralized exports of all data models, configuration classes, and context structures used throughout the hierarchical indexing workflow and FastMCP integration. The module exports comprehensive model collections including `IndexingConfig` and `IndexingMode` for configuration management, `DirectoryContext` and `FileContext` for runtime context tracking, and specialized models like `DecisionReport`, `RebuildDecision`, and `ExecutionPlan` for decision-making and execution planning. Key semantic entities include the `__all__` list defining the public API surface with 19 exported classes, type-safe data structures supporting serialization through dataclasses or Pydantic models, and clear separation between configuration models and runtime context models. The system implements centralized model exports for clean dependency management, ensures immutable configurations for thread safety where possible, and provides comprehensive validation at initialization time for all configuration and runtime models.
 
 ##### Main Components
 
-The package exports nine core components through the `__all__` list, organized into two primary categories: configuration models and runtime context models. Configuration components include `IndexingConfig` class for system configuration management and `IndexingMode` enumeration for processing mode selection. Runtime context components encompass `DirectoryContext` for hierarchical directory processing state, `FileContext` for individual file processing tracking, `ChangeInfo` for incremental processing coordination, `IndexingStatus` for overall operation status monitoring, `ProcessingStats` for comprehensive metrics collection, `ProcessingStatus` enumeration for workflow state management, and `ChangeType` enumeration for change detection categorization. The module imports these components from two sibling modules: `.indexing_config` providing configuration data models and `.knowledge_context` supplying runtime context data models, establishing a clear architectural separation between configuration and operational state management.
+The file contains four primary import groups representing different model categories within the knowledge indexing system. The configuration models group includes `IndexingConfig` for system configuration and `IndexingMode` enumeration for processing mode selection. The runtime context models group encompasses `DirectoryContext` and `FileContext` for hierarchical processing state, along with supporting classes `ChangeInfo`, `IndexingStatus`, `ProcessingStats`, `ProcessingStatus`, and `ChangeType` for comprehensive state tracking. The decision models group provides `DecisionReport`, `RebuildDecision`, and `DeletionDecision` for centralized decision logic, with `DecisionOutcome` and `DecisionReason` enumerations for structured decision classification. The execution planning models group includes `ExecutionPlan`, `AtomicTask`, `TaskType`, and `ExecutionResults` for Plan-then-Execute architecture implementation. The `__all__` list explicitly defines 19 exported classes ensuring controlled public API surface and preventing accidental exposure of internal implementation details.
 
 ###### Architecture & Design
 
-The architecture implements a centralized export pattern with clear separation between configuration and runtime context models, enabling clean dependency management and preventing circular import issues. The design follows the package initialization pattern where all public components are imported from specialized modules and re-exported through a unified interface, providing consumers with a single import point for all data model requirements. The system uses explicit `__all__` declaration to control the public API surface and ensure only intended components are available through wildcard imports. The architectural separation between `.indexing_config` and `.knowledge_context` modules reflects the distinction between static configuration data and dynamic runtime state, supporting different lifecycle management patterns and serialization requirements throughout the indexing workflow.
+The architecture implements a centralized export pattern with clear separation between different model categories to prevent circular dependencies and enable clean dependency management. The design follows type-safe data structure principles using dataclasses or Pydantic models for comprehensive serialization support and validation capabilities. The package structure maintains immutable configurations where possible for thread safety, with configuration validation happening at initialization time to catch errors early. The export organization groups related models together while maintaining clear boundaries between configuration models, runtime context models, decision models, and execution planning models. The `__all__` declaration provides explicit control over the public API surface, ensuring only intended classes are exposed and preventing accidental imports of internal implementation details. The module structure supports async operations for runtime context models while maintaining synchronous interfaces for configuration models.
 
 ####### Implementation Approach
 
-The implementation uses Python's standard package initialization mechanism with explicit imports from sibling modules using relative import syntax (`.module_name`). The approach employs comprehensive export listing through `__all__` to define the public API surface and control component visibility. Import organization follows logical grouping with configuration models imported first from `.indexing_config`, followed by runtime context models from `.knowledge_context`, maintaining clear separation between static and dynamic data structures. The module maintains no internal state or business logic, serving purely as an aggregation and export point for data model components, ensuring lightweight initialization and minimal overhead during package import operations.
+The implementation uses selective imports from four internal modules with explicit public API definition through the comprehensive `__all__` list containing 19 model classes. The import strategy organizes models by functional category: configuration models from `indexing_config`, runtime context models from `knowledge_context`, decision models from `rebuild_decisions`, and execution planning models from `execution_plan`. The module follows Python package initialization conventions with comprehensive docstring documentation explaining the package purpose and model organization. The approach ensures all exported models support serialization requirements through dataclass or Pydantic model implementation, with validation occurring at initialization time for configuration models and runtime validation for context models. The implementation maintains strict separation between different model types to prevent circular dependencies while enabling comprehensive model access through a single import point.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `.indexing_config:IndexingConfig` - system configuration class with validation and processing parameters
-- `.indexing_config:IndexingMode` - enumeration defining processing modes for indexing operations
-- `.knowledge_context:DirectoryContext` - hierarchical directory processing state and context management
-- `.knowledge_context:FileContext` - individual file processing state tracking and metadata
-- `.knowledge_context:ChangeInfo` - incremental processing coordination and change detection information
-- `.knowledge_context:IndexingStatus` - overall operation status monitoring and progress tracking
-- `.knowledge_context:ProcessingStats` - comprehensive metrics collection and performance analysis
-- `.knowledge_context:ProcessingStatus` - workflow state management enumeration for processing coordination
-- `.knowledge_context:ChangeType` - change detection categorization enumeration for incremental processing
+- `.indexing_config.IndexingConfig` - System configuration data model with validation
+- `.indexing_config.IndexingMode` - Processing mode enumeration for configuration
+- `.knowledge_context.DirectoryContext` - Directory processing state and file context aggregation
+- `.knowledge_context.FileContext` - Individual file processing state and metadata
+- `.knowledge_context.ChangeInfo` - File change tracking information
+- `.knowledge_context.IndexingStatus` - Overall indexing status enumeration
+- `.knowledge_context.ProcessingStats` - Performance metrics and statistics
+- `.knowledge_context.ProcessingStatus` - Individual processing status enumeration
+- `.knowledge_context.ChangeType` - File change type classification
+- `.rebuild_decisions.DecisionReport` - Comprehensive decision analysis results
+- `.rebuild_decisions.RebuildDecision` - Individual rebuild decision outcomes
+- `.rebuild_decisions.DeletionDecision` - Individual deletion decision outcomes
+- `.rebuild_decisions.DecisionOutcome` - Decision outcome enumeration
+- `.rebuild_decisions.DecisionReason` - Decision reasoning classification
+- `.execution_plan.ExecutionPlan` - Complete execution planning with task dependencies
+- `.execution_plan.AtomicTask` - Individual atomic task representation
+- `.execution_plan.TaskType` - Task type enumeration for execution dispatch
+- `.execution_plan.ExecutionResults` - Execution outcome tracking and metrics
 
 **← Outbound:**
-- `jesse_framework_mcp/knowledge_bases/indexing/hierarchical_indexer.py:HierarchicalIndexer` - consumes data models for processing coordination
-- `jesse_framework_mcp/knowledge_bases/indexing/change_detector.py:ChangeDetector` - uses context models for change detection workflows
-- `jesse_framework_mcp/knowledge_bases/indexing/knowledge_builder.py:KnowledgeBuilder` - imports models for content generation operations
-- `jesse_framework_mcp/server.py:JesseFrameworkMCPServer` - uses models for MCP server operation and status reporting
-- External applications - import models through Jesse Framework MCP for knowledge base operations
+- `../indexing/hierarchical_indexer.py` - Primary consumer importing configuration and context models
+- `../indexing/knowledge_builder.py` - Consumer using context models for processing state
+- `../indexing/rebuild_decision_engine.py` - Consumer using decision models for structured outcomes
+- `../indexing/plan_generator.py` - Consumer using execution planning models for task creation
+- `../indexing/execution_engine.py` - Consumer using execution models for task processing
+- `../handlers/` - MCP handlers importing models for knowledge base operations
+- `external_consumers/` - External systems importing models for integration
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Central data model registry for the Jesse Framework MCP knowledge base system, providing unified access to all configuration and runtime context structures
-- **Ecosystem Position**: Core infrastructure component serving as the primary data contract interface between all indexing components and external consumers
-- **Integration Pattern**: Used by all indexing components through direct imports, consumed by MCP server for operation coordination, and integrated with external applications requiring knowledge base data model access
+- **System Role**: Central model registry within the Jesse Framework MCP knowledge indexing system, serving as the primary import interface for all data models, configuration classes, and context structures
+- **Ecosystem Position**: Foundational package providing the core data contracts and type definitions used throughout the hierarchical indexing workflow, ensuring consistent model usage across all components
+- **Integration Pattern**: Used by indexing components for model imports, consumed by MCP handlers for knowledge base operations, and integrated with external systems requiring structured data access to knowledge indexing models
 
 ######### Edge Cases & Error Handling
 
-Import failures from either `.indexing_config` or `.knowledge_context` modules result in package initialization failure, preventing the entire models package from becoming available to consumers. Missing or corrupted sibling modules cause import errors that propagate to consuming applications, requiring proper error handling at the application level. Circular dependency scenarios between the exported models and consuming components are prevented through the package structure but could emerge from future architectural changes. Version mismatches between the initialization module and sibling modules could lead to API inconsistencies or missing component exports. The package provides no error handling mechanisms itself, relying on Python's import system to surface module loading issues and individual model classes to handle their specific validation and error scenarios.
+The module handles import failures gracefully through Python's standard import mechanism, where missing dependencies would raise `ImportError` exceptions at package initialization time with clear error messages about missing model modules. Circular dependency prevention is managed through the clear separation of model categories and explicit import structure avoiding cross-references between different model types. The `__all__` list prevents accidental exposure of internal implementation details that could lead to dependency issues in consuming code, ensuring only intended model classes are available for import. Model validation errors are handled at the individual model level rather than at the package initialization level, ensuring that import failures provide clear error messages about specific model validation issues. The centralized export pattern enables consistent error handling across all model types while maintaining clear boundaries between configuration validation, runtime context validation, and execution model validation.
 
 ########## Internal Implementation Details
 
-The package uses Python's standard relative import mechanism with dot notation (`.module_name`) to reference sibling modules within the same package directory. Import statements are organized logically with configuration models imported first, followed by runtime context models, maintaining clear architectural separation. The `__all__` list uses explicit string literals for each exported component name, ensuring precise control over the public API surface and preventing accidental exposure of internal implementation details. Module-level imports are performed at package initialization time, making all components immediately available upon successful import without lazy loading or dynamic import mechanisms. The package maintains no internal state, configuration, or business logic, serving purely as an export aggregation point with minimal overhead and maximum compatibility across different Python environments.
+The package uses standard Python `__init__.py` conventions with explicit imports from four internal modules following the pattern `from .module_name import ClassName1, ClassName2`. The `__all__` list maintains exactly 19 exported model classes ensuring controlled public API surface and preventing internal implementation leakage through comprehensive class enumeration. The module header includes comprehensive GenAI tool directives with change history tracking and design principle documentation following the established Jesse Framework patterns. The import structure avoids wildcard imports (`from module import *`) in favor of explicit class imports for better dependency tracking, IDE support, and import error clarity. The docstring follows standard Python documentation conventions explaining the package purpose and model organization for both human developers and automated documentation generation tools. The export organization groups models logically while maintaining alphabetical ordering within each category for consistent and predictable import behavior.
 
 ########### Code Usage Examples
 
-Standard package import demonstrates the unified access pattern for all knowledge base data models. This approach provides clean dependency management and consistent API access across the indexing system.
+**Comprehensive model imports for knowledge indexing operations:** This example demonstrates importing all necessary models for complete knowledge base indexing workflows with proper model separation and usage patterns.
 
 ```python
-# Import all data models through unified package interface
 from jesse_framework_mcp.knowledge_bases.models import (
-    IndexingConfig,
-    IndexingMode,
-    DirectoryContext,
-    FileContext,
-    ProcessingStatus,
-    IndexingStatus
+    IndexingConfig, IndexingMode,
+    DirectoryContext, FileContext, ProcessingStatus,
+    DecisionReport, RebuildDecision, DecisionOutcome,
+    ExecutionPlan, AtomicTask, TaskType
 )
 
-# Initialize configuration with processing parameters
+# Configure indexing with validation
 config = IndexingConfig(
-    knowledge_output_directory=Path("./knowledge"),
-    indexing_mode=IndexingMode.INCREMENTAL
+    source_directory=Path("/project/src"),
+    indexing_mode=IndexingMode.INCREMENTAL,
+    max_concurrent_operations=4
 )
 ```
 
-Selective component import enables targeted usage for specific functionality requirements. This pattern supports modular development and reduces import overhead for specialized use cases.
+**Runtime context model usage for processing state tracking:** This example shows using context models for hierarchical processing state management with comprehensive status tracking and change detection.
 
 ```python
-# Import only required components for specific operations
-from jesse_framework_mcp.knowledge_bases.models import ProcessingStats, ChangeInfo, ChangeType
+from jesse_framework_mcp.knowledge_bases.models import (
+    DirectoryContext, FileContext, ChangeInfo, ChangeType
+)
 
-# Create processing statistics tracker
-stats = ProcessingStats()
-stats.total_files_discovered = 100
+# Create file context with change tracking
+file_context = FileContext(
+    file_path=Path("src/main.py"),
+    processing_status=ProcessingStatus.PENDING,
+    change_info=ChangeInfo(change_type=ChangeType.MODIFIED)
+)
 
-# Track change information for incremental processing
-change = ChangeInfo(
-    path=Path("src/component.py"),
-    change_type=ChangeType.MODIFIED
+# Build directory context with file aggregation
+directory_context = DirectoryContext(
+    directory_path=Path("src/"),
+    file_contexts=[file_context],
+    processing_status=ProcessingStatus.IN_PROGRESS
 )
 ```
 
-Package-level wildcard import brings in all components defined in `__all__` for comprehensive model access. This approach is suitable for development environments and comprehensive testing scenarios.
+**Decision and execution model integration for Plan-then-Execute workflows:** This example demonstrates integrating decision models with execution planning models for comprehensive workflow orchestration and audit trail maintenance.
 
 ```python
-# Wildcard import provides access to all exported models
-from jesse_framework_mcp.knowledge_bases.models import *
+from jesse_framework_mcp.knowledge_bases.models import (
+    DecisionReport, RebuildDecision, DecisionOutcome,
+    ExecutionPlan, AtomicTask, TaskType, ExecutionResults
+)
 
-# All nine components are now available in local namespace
-directory_context = DirectoryContext(directory_path=Path("src/"))
-file_context = FileContext(file_path=Path("src/main.py"), file_size=1024, last_modified=datetime.now())
-indexing_status = IndexingStatus(overall_status=ProcessingStatus.PROCESSING)
+# Create decision report with structured outcomes
+report = DecisionReport()
+decision = RebuildDecision(
+    path=Path("src/main.py"),
+    outcome=DecisionOutcome.REBUILD,
+    reasoning_text="File analysis cache is stale"
+)
+report.add_rebuild_decision(decision)
+
+# Generate execution plan from decisions
+plan = ExecutionPlan()
+task = AtomicTask(
+    task_id="analyze_main_py",
+    task_type=TaskType.ANALYZE_FILE_LLM,
+    target_path=Path("src/main.py")
+)
+plan.add_task(task)
 ```

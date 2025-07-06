@@ -1,94 +1,96 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/__init__.py -->
-<!-- Cached On: 2025-07-04T17:05:32.683658 -->
-<!-- Source Modified: 2025-07-01T12:07:56.905541 -->
+<!-- Cached On: 2025-07-06T21:03:05.283151 -->
+<!-- Source Modified: 2025-07-06T15:08:48.195853 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file serves as the centralized package initialization module for the Knowledge Bases Hierarchical Indexing System, providing unified access to core indexing components through standardized exports. The module enables clean dependency management by exposing `HierarchicalIndexer` for orchestration, `ChangeDetector` for timestamp-based change detection, `KnowledgeBuilder` for LLM-powered content summarization, `GitCloneHandler` for git repository processing, and `ProjectBaseHandler` for project-base scenario handling. Key semantic entities include the `__all__` export list defining public API surface, async-first architecture patterns supporting concurrent processing operations, and bottom-up hierarchical processing workflow without parent-to-child context dependencies. The initialization follows `JESSE_CODE_COMMENTS.md` standards and integrates with `strands_agent_driver` for LLM operations while maintaining circular dependency prevention through careful import organization.
+This file serves as the package initialization module for the Knowledge Bases Hierarchical Indexing System, providing centralized component exports and clean dependency management for hierarchical knowledge base maintenance. The module exports core indexing components including `HierarchicalIndexer` for orchestration, `KnowledgeBuilder` for LLM-powered content summarization, and specialized handlers `GitCloneHandler` and `ProjectBaseHandler` for scenario-specific processing. Key semantic entities include the `__all__` export list defining the public API surface, async-first architecture patterns supporting concurrent processing operations, and bottom-up hierarchical processing without parent-to-child context dependencies. The system integrates with `strands_agent_driver` for LLM operations and follows `FastMCP Context` patterns for all async operations, enabling automated content summarization and knowledge base maintenance workflows.
 
 ##### Main Components
 
-The package exports five core components through the `__all__` list: `HierarchicalIndexer` as the main orchestration component, `ChangeDetector` for change detection and timestamp comparison, `KnowledgeBuilder` for LLM-powered content summarization, `GitCloneHandler` for git-clone special handling, and `ProjectBaseHandler` for project-base special handling. Each component is imported from its respective module within the indexing package using relative imports. The module includes comprehensive header documentation with GenAI tool directives, source file intent, design principles, constraints, and change history tracking. The package structure follows centralized component exports pattern enabling clean dependency management across the hierarchical indexing system.
+The file contains four primary exported components accessible through the package interface. The `HierarchicalIndexer` serves as the core indexing orchestrator managing the overall workflow. The `KnowledgeBuilder` provides LLM-powered content summarization capabilities for generating structured knowledge files. The `GitCloneHandler` and `ProjectBaseHandler` classes offer specialized processing for git-clone and project-base scenarios respectively. The module structure includes import statements from three internal modules: `hierarchical_indexer`, `knowledge_builder`, and `special_handlers`, with the `__all__` list explicitly defining the public API surface for clean dependency management.
 
 ###### Architecture & Design
 
-The architecture implements centralized component exports enabling clean dependency management through a single import point for all indexing functionality. The design follows clear separation between orchestration components (`HierarchicalIndexer`), detection components (`ChangeDetector`), building components (`KnowledgeBuilder`), and special handling components (`GitCloneHandler`, `ProjectBaseHandler`). The async-first architecture supports concurrent processing operations through all exported components requiring `FastMCP Context` patterns. Bottom-up hierarchical processing design eliminates parent-to-child context dependencies, enabling independent processing of directory levels. The package maintains strict circular dependency prevention through careful import organization and component isolation.
+The architecture implements a centralized export pattern with clear separation between orchestration, detection, and building components to prevent circular dependencies. The design follows async-first principles where all exported components support concurrent processing operations through `FastMCP Context` patterns. The package structure maintains clean separation of concerns with orchestration handled by `HierarchicalIndexer`, content generation by `KnowledgeBuilder`, and specialized scenarios by dedicated handler classes. The bottom-up hierarchical processing design ensures no parent-to-child context dependencies, enabling independent processing of directory hierarchies. The export pattern uses explicit `__all__` declaration providing controlled public API surface and preventing accidental exposure of internal implementation details.
 
 ####### Implementation Approach
 
-The implementation uses relative imports from sibling modules within the indexing package to expose core functionality through a unified interface. The `__all__` list explicitly defines the public API surface, controlling which components are available for external consumption. Component organization follows functional separation with orchestration, detection, building, and special handling grouped into distinct modules. The package initialization maintains zero business logic, serving purely as an export aggregation point. All exported components follow async patterns and integrate with `strands_agent_driver` for LLM operations. The design ensures that importing this package provides complete access to the hierarchical indexing workflow without requiring knowledge of internal module structure.
+The implementation uses selective component imports from three internal modules with explicit public API definition through the `__all__` list. The import strategy brings in the main orchestrator class, the content building class, and two specialized handler classes for different processing scenarios. The module follows Python package initialization conventions with docstring documentation explaining the package purpose and component relationships. The approach ensures all exported components integrate with the broader Jesse Framework MCP system through consistent async patterns and LLM integration points. The implementation maintains strict adherence to `JESSE_CODE_COMMENTS.md` standards for all exported components, ensuring consistent documentation and maintenance patterns across the indexing subsystem.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `.hierarchical_indexer:HierarchicalIndexer` - core indexing orchestrator for directory processing workflow
-- `.change_detector:ChangeDetector` - change detection and timestamp comparison utilities
-- `.knowledge_builder:KnowledgeBuilder` - LLM-powered content summarization and knowledge file generation
-- `.special_handlers:GitCloneHandler` - specialized handling for git repository cloning scenarios
-- `.special_handlers:ProjectBaseHandler` - specialized handling for project-base indexing scenarios
+- `.hierarchical_indexer.HierarchicalIndexer` - Core indexing orchestrator for workflow management
+- `.knowledge_builder.KnowledgeBuilder` - LLM-powered content summarization component
+- `.special_handlers.GitCloneHandler` - Git-clone scenario specialized processing
+- `.special_handlers.ProjectBaseHandler` - Project-base scenario specialized processing
 
 **← Outbound:**
-- `jesse_framework_mcp/server.py:JesseFrameworkMCPServer` - MCP server consuming indexing components for resource endpoints
-- `jesse_framework_mcp/resources/` - resource handlers importing indexing components for knowledge base operations
-- `external_applications` - applications using Jesse Framework MCP for hierarchical knowledge base maintenance
-- `development_tools` - development and testing tools importing indexing components for workflow automation
+- `../handlers/project_base_handler.py` - Consumes `ProjectBaseHandler` for project-base knowledge indexing
+- `../handlers/git_clone_handler.py` - Consumes `GitCloneHandler` for git repository knowledge indexing
+- `../main.py` - Primary entry point importing indexing components for MCP server operations
+- `external_consumers/` - External systems importing indexing components for knowledge base automation
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Central API gateway for the hierarchical indexing subsystem, providing unified access to all indexing functionality within the Jesse Framework MCP architecture
-- **Ecosystem Position**: Core infrastructure component enabling knowledge base maintenance workflows, essential for MCP server resource endpoints and external application integration
-- **Integration Pattern**: Used by MCP server components through direct imports, consumed by external applications through Jesse Framework MCP protocol, and integrated with development tools for automated knowledge base maintenance workflows
+- **System Role**: Package initialization gateway for the Knowledge Bases Hierarchical Indexing System, serving as the primary import interface for all indexing-related components within the Jesse Framework MCP architecture
+- **Ecosystem Position**: Central package interface providing controlled access to core indexing functionality, orchestrating the integration between LLM-powered content generation and specialized scenario handling
+- **Integration Pattern**: Used by MCP server handlers for knowledge base operations, consumed by external automation systems requiring hierarchical indexing capabilities, and integrated with FastMCP Context patterns for async processing workflows
 
 ######### Edge Cases & Error Handling
 
-Import failures from any of the five core modules result in package initialization failure, preventing the entire indexing subsystem from becoming available. Missing or corrupted module files within the indexing package cause import errors that propagate to consuming applications. Circular dependency scenarios between exported components are prevented through careful module organization but could emerge from future modifications. Version mismatches between component modules and the package initialization could lead to API inconsistencies. The package provides no error handling mechanisms itself, relying on individual component modules to handle their specific error conditions. Import-time exceptions from component modules are not caught, allowing them to propagate to the importing application for appropriate handling.
+The module handles import failures gracefully through Python's standard import mechanism, where missing dependencies would raise `ImportError` exceptions at package initialization time. Circular dependency prevention is managed through the clear separation of component responsibilities and the explicit import structure avoiding cross-references between exported classes. The `__all__` list prevents accidental exposure of internal implementation details that could lead to dependency issues in consuming code. Component integration errors are handled at the individual class level rather than at the package initialization level, ensuring that import failures provide clear error messages about missing dependencies. The async-first architecture requires proper error handling in all exported components to prevent unhandled promise rejections in concurrent processing scenarios.
 
 ########## Internal Implementation Details
 
-The package uses Python's standard `__all__` mechanism to control public API exposure, ensuring only intended components are available through wildcard imports. Relative imports use dot notation (`.module_name`) to reference sibling modules within the same package directory. The import order follows dependency hierarchy with orchestration components first, followed by detection, building, and special handling components. Module-level imports are performed at package initialization time, making all components immediately available upon successful import. The package maintains no internal state or configuration, serving purely as an export aggregation mechanism. Component availability depends entirely on successful import of underlying modules, with no fallback or graceful degradation mechanisms.
+The package uses standard Python `__init__.py` conventions with explicit imports from three internal modules following the pattern `from .module_name import ClassName`. The `__all__` list maintains exactly four exported components ensuring controlled public API surface and preventing internal implementation leakage. The module header includes comprehensive GenAI tool directives with change history tracking and design principle documentation following the established Jesse Framework patterns. The import structure avoids wildcard imports (`from module import *`) in favor of explicit class imports for better dependency tracking and IDE support. The docstring follows standard Python documentation conventions explaining the package purpose and component relationships for both human developers and automated documentation generation tools.
 
 ########### Code Usage Examples
 
-**Standard package import for accessing all indexing components:**
+**Basic package import for hierarchical indexing operations:** This example demonstrates importing the core indexing components for setting up knowledge base processing workflows with proper component separation.
+
 ```python
-# Import all indexing components through unified package interface
 from jesse_framework_mcp.knowledge_bases.indexing import (
     HierarchicalIndexer,
-    ChangeDetector,
     KnowledgeBuilder,
     GitCloneHandler,
     ProjectBaseHandler
 )
 
-# Initialize core indexing workflow
+# Initialize components for knowledge base processing
 indexer = HierarchicalIndexer(config)
-change_detector = ChangeDetector(config)
-knowledge_builder = KnowledgeBuilder(config)
-```
-
-**Selective component import for specific functionality:**
-```python
-# Import only required components for specialized use cases
-from jesse_framework_mcp.knowledge_bases.indexing import HierarchicalIndexer, ChangeDetector
-
-# Use specific components for targeted operations
-async def process_directory_changes(directory_path, config):
-    detector = ChangeDetector(config)
-    indexer = HierarchicalIndexer(config)
-    
-    if await detector.has_changes(directory_path):
-        await indexer.process_directory(directory_path)
-```
-
-**Package-level wildcard import for development environments:**
-```python
-# Wildcard import brings in all components defined in __all__
-from jesse_framework_mcp.knowledge_bases.indexing import *
-
-# All five components are now available in local namespace
-git_handler = GitCloneHandler(config)
-project_handler = ProjectBaseHandler(config)
 builder = KnowledgeBuilder(config)
+```
+
+**Specialized handler usage for different scenarios:** This example shows how to use the specialized handlers for git-clone and project-base scenarios with proper async context management.
+
+```python
+from jesse_framework_mcp.knowledge_bases.indexing import GitCloneHandler, ProjectBaseHandler
+
+# Use specialized handlers based on processing scenario
+if is_git_clone_scenario:
+    handler = GitCloneHandler(config)
+else:
+    handler = ProjectBaseHandler(config)
+
+await handler.process_directory(source_path, ctx)
+```
+
+**Complete indexing workflow integration:** This example demonstrates integrating all exported components for a complete knowledge base indexing workflow with proper error handling and async patterns.
+
+```python
+from jesse_framework_mcp.knowledge_bases.indexing import (
+    HierarchicalIndexer,
+    KnowledgeBuilder
+)
+
+# Complete indexing workflow
+async def process_knowledge_base(source_root, config, ctx):
+    indexer = HierarchicalIndexer(config)
+    builder = KnowledgeBuilder(config)
+    
+    await indexer.process_hierarchy(source_root, builder, ctx)
 ```

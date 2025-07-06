@@ -1,80 +1,81 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/uv.lock -->
-<!-- Cached On: 2025-07-05T14:57:23.492683 -->
-<!-- Source Modified: 2025-07-03T11:11:35.454291 -->
+<!-- Cached On: 2025-07-06T12:31:54.517724 -->
+<!-- Source Modified: 2025-07-06T00:52:40.692511 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file implements the UV package manager lock file for the Jesse Framework MCP Server project, providing deterministic dependency resolution and version pinning for reproducible builds across development, testing, and production environments. The lock file ensures consistent package versions and dependency trees while enabling secure and reliable package installation through cryptographic hash verification. Key semantic entities include lock file format `version = 1` and `revision = 1` for UV compatibility, Python version constraint `requires-python = ">=3.10"` for runtime compatibility, package entries with `[[package]]` sections containing dependency metadata, source registry `https://pypi.org/simple` for package distribution, hash verification through `sha256` checksums for security validation, wheel distribution files with platform-specific variants for cross-platform compatibility, dependency relationships through `dependencies` arrays linking packages, version specifications using semantic versioning patterns like `~=2.9.2` and `>=1.38.46`, development dependencies through `[package.optional-dependencies]` and `[package.dev-dependencies]` sections, editable package installation `source = { editable = "." }` for local development, and comprehensive package ecosystem including `fastmcp`, `boto3`, `strands-agents`, `mistletoe`, `pytest`, `black`, `isort`, `mypy`, and supporting libraries. The system implements UV's deterministic dependency resolution with cryptographic integrity verification ensuring reproducible and secure package installations.
+This file serves as the dependency lock file for the Jesse Framework MCP Server project, providing deterministic package resolution and version pinning for all direct and transitive dependencies across the Python ecosystem. The lock file ensures reproducible builds and consistent development environments by specifying exact versions, checksums, and source locations for every package required by the project. Key semantic entities include `uv.lock` format with `version = 1` and `revision = 1` metadata, `requires-python = ">=3.10"` compatibility specification, `jesse-framework-mcp` as the main package with `version = "0.1.0"` and `source = { editable = "." }` configuration, comprehensive dependency graph including `fastmcp~=2.9.2` for MCP protocol implementation, `boto3>=1.38.46` for AWS integration, `strands-agents>=0.1.0` for agent framework support, `mistletoe>=1.4.0` for markdown processing, `PyYAML>=6.0` for YAML handling, development dependencies including `pytest>=8.4.1`, `black>=25.1.0`, `mypy>=1.16.1`, and `flake8>=7.3.0`, with detailed package metadata containing SHA256 hashes, wheel URLs, and source distribution information ensuring cryptographic verification and supply chain security for all dependencies.
 
 ##### Main Components
 
-The lock file contains comprehensive package dependency specifications organized into multiple categories providing complete development and runtime environment definition. The runtime dependencies section includes core packages `fastmcp~=2.9.2` for MCP protocol implementation, `boto3>=1.38.46` for AWS service integration, `strands-agents>=0.1.0` for agent framework functionality, and `mistletoe>=1.4.0` for Markdown processing. The development dependencies section encompasses testing tools `pytest>=8.4.1` and `pytest-asyncio>=1.0.0`, code formatting tools `black>=22.0.0` and `isort>=5.10.0`, type checking `mypy>=0.950`, and linting `flake8>=4.0.0`. The transitive dependencies section includes supporting libraries for HTTP communication, cryptography, authentication, configuration management, and system utilities. The package metadata section defines the local `jesse-framework-mcp` package with editable installation and optional dependency groups. Each package entry contains source information, version constraints, dependency relationships, and distribution file specifications with cryptographic hashes.
+The lock file contains 77 distinct package entries organized into a flat dependency structure with comprehensive metadata for each package. Primary components include the main project package `jesse-framework-mcp` with editable source configuration and optional development dependencies, core runtime dependencies such as `fastmcp`, `boto3`, `strands-agents`, `mistletoe`, and `pyyaml`, development tooling packages including `pytest`, `pytest-asyncio`, `black`, `isort`, `flake8`, and `mypy`, and extensive transitive dependencies covering cryptography (`cryptography`, `cffi`), HTTP clients (`httpx`, `httpcore`, `h11`), async frameworks (`anyio`, `starlette`, `uvicorn`), data validation (`pydantic`, `pydantic-core`), and utility libraries (`click`, `rich`, `typer`). Each package entry includes version specifications, source registry information, dependency relationships, and cryptographic verification data through SHA256 hashes for both source distributions and wheel files.
 
 ###### Architecture & Design
 
-The architecture implements UV's lock file format with deterministic dependency resolution, following reproducible build principles with cryptographic integrity verification and cross-platform compatibility support. The design emphasizes security through hash-based verification of all package distributions, reproducibility through exact version pinning and dependency tree specification, and flexibility through optional dependency groups and platform-specific wheel selection. Key design patterns include the deterministic resolution pattern ensuring identical dependency trees across environments, cryptographic verification pattern using SHA256 hashes for package integrity validation, platform compatibility pattern providing multiple wheel variants for different operating systems and architectures, dependency graph pattern explicitly defining relationships between packages, and optional dependency pattern separating development tools from runtime requirements. The system uses UV's native lock file format with structured TOML syntax for human readability and machine processing.
+The architecture implements a comprehensive dependency resolution system using the `uv` package manager format with deterministic version locking and cryptographic verification. The design employs a flat package structure where each dependency is explicitly listed with complete metadata including version constraints, source locations, and integrity checksums. The system uses semantic versioning with compatible version ranges (`~=` for patch-level updates, `>=` for minimum versions) while locking to specific versions for reproducibility. The architectural pattern includes conditional dependencies based on Python version markers (`python_full_version < '3.11'`, `python_full_version < '3.13'`) and platform-specific markers (`sys_platform == 'win32'`, `platform_python_implementation != 'PyPy'`), comprehensive wheel distribution support across multiple platforms (macOS, Linux, Windows) and architectures (x86_64, ARM64, i686), and development dependency separation through optional dependency groups enabling different installation profiles.
 
 ####### Implementation Approach
 
-The implementation uses UV's lock file format version 1 with revision 1 for compatibility and feature support. Package resolution employs semantic versioning with tilde and caret constraints for compatible updates while maintaining stability. The approach implements comprehensive hash verification using SHA256 checksums for all distribution files ensuring package integrity and security. Cross-platform support uses multiple wheel variants targeting different operating systems including macOS, Linux, and Windows with architecture-specific builds. Dependency resolution follows topological sorting with conflict resolution and version constraint satisfaction. Optional dependencies use marker-based conditional installation for development and testing environments. Source specification includes both PyPI registry and local editable installation for development workflows.
+The implementation uses the `uv` lock file format version 1 with revision 1, providing structured dependency resolution with exact version pinning and cryptographic verification through SHA256 hashes. The approach employs comprehensive package metadata including source registry URLs (`https://pypi.org/simple`), wheel and source distribution URLs with integrity hashes, and dependency relationship mapping with conditional markers. Version resolution implements semantic versioning constraints while locking to specific versions ensuring reproducible builds across different environments. The system handles platform-specific dependencies through conditional markers, supports both wheel and source distribution installations, and maintains separate dependency groups for development and runtime requirements. Package verification uses SHA256 checksums for both wheel files and source distributions, ensuring supply chain security and preventing dependency tampering.
 
 ######## External Dependencies & Integration Points
 
 **→ References:**
-- `https://pypi.org/simple` - Python Package Index registry for package distribution and metadata retrieval
-- `fastmcp~=2.9.2` (external library) - FastMCP framework for Model Context Protocol server implementation
-- `boto3>=1.38.46` (external library) - AWS SDK for cloud service integration and resource management
-- `strands-agents>=0.1.0` (external library) - agent framework for AI assistant functionality and workflow management
-- `mistletoe>=1.4.0` (external library) - Markdown parsing and processing for documentation handling
-- `pytest>=8.4.1` (external library) - testing framework for unit and integration test execution
-- `black>=22.0.0` (external library) - code formatting tool for consistent Python code style
-- `mypy>=0.950` (external library) - static type checker for Python code validation
+- `https://pypi.org/simple` - primary package index registry for all external dependencies and package resolution
+- `https://files.pythonhosted.org/packages/` - CDN hosting wheel and source distribution files with SHA256 verification
+- `fastmcp~=2.9.2` (external library) - FastMCP framework for MCP protocol implementation and server functionality
+- `boto3>=1.38.46` (external library) - AWS SDK for Python enabling cloud service integration and API access
+- `strands-agents>=0.1.0` (external library) - agent framework for AI assistant coordination and management capabilities
+- `mistletoe>=1.4.0` (external library) - markdown parser and renderer for processing framework documentation
+- `PyYAML>=6.0` (external library) - YAML processing library for configuration and data serialization operations
 
 **← Referenced By:**
-- UV package manager - consuming lock file for deterministic package installation and environment setup
-- Development environments - using lock file for consistent dependency resolution across team members
-- CI/CD pipelines - referencing lock file for reproducible build environments and testing consistency
-- Container builds - utilizing lock file for identical package versions in containerized deployments
-- Production deployments - ensuring exact dependency versions match development and testing environments
+- `uv` package manager - consumes lock file for deterministic dependency resolution and installation operations
+- CI/CD build systems - reference lock file for consistent dependency installation across build environments
+- Development environments - use lock file to ensure consistent package versions across team members
+- Docker containers - leverage lock file for reproducible container builds with exact dependency versions
+- Package distribution systems - reference dependency specifications for package metadata and requirements
+- Security scanning tools - analyze lock file for vulnerability detection and dependency audit procedures
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Dependency specification and resolution authority for Jesse Framework MCP Server ecosystem, ensuring reproducible builds and consistent package versions across all deployment environments
-- **Ecosystem Position**: Critical infrastructure component serving as single source of truth for package dependencies, enabling deterministic builds and secure package installation through cryptographic verification
-- **Integration Pattern**: Used by UV package manager for environment setup, consumed by development tools for consistent dependency resolution, integrated with CI/CD systems for reproducible builds, and coordinated with container systems for identical deployment environments
+- **System Role**: Central dependency management artifact for the Jesse Framework MCP Server, ensuring deterministic package resolution and reproducible builds across all deployment environments
+- **Ecosystem Position**: Critical infrastructure component that defines the complete dependency graph for the project, enabling consistent development, testing, and production deployments
+- **Integration Pattern**: Consumed by package managers for installation, referenced by CI/CD systems for build reproducibility, and used by security tools for vulnerability scanning while maintaining cryptographic verification of all dependencies through SHA256 checksums
 
 ######### Edge Cases & Error Handling
 
-The lock file addresses package resolution conflicts through UV's constraint satisfaction algorithm ensuring compatible version selection across the dependency graph. Hash verification failures are managed through package re-download and integrity checking preventing corrupted or tampered packages. Platform compatibility issues are handled through multiple wheel variants ensuring appropriate distribution selection for target environments. Network connectivity problems during package installation are addressed through retry mechanisms and fallback strategies. Version constraint conflicts between direct and transitive dependencies are resolved through UV's resolution algorithm with preference for explicit constraints. Missing package distributions are handled through alternative source selection and version fallback mechanisms. Development dependency isolation prevents runtime environment contamination through optional dependency groups and marker-based installation.
+The lock file addresses dependency resolution conflicts through exact version pinning and comprehensive constraint satisfaction across the entire dependency graph. Platform compatibility issues are handled through conditional dependency markers and multiple wheel distributions supporting different operating systems and architectures. Python version compatibility constraints prevent installation on unsupported Python versions through `requires-python = ">=3.10"` specification. Package integrity failures are detected through SHA256 hash verification for both wheel and source distributions. The system handles missing optional dependencies through conditional markers and graceful degradation patterns. Network connectivity issues during package installation are mitigated through multiple mirror support and cached wheel distributions. Version constraint conflicts are resolved through the lock file's deterministic resolution ensuring all transitive dependencies are compatible.
 
 ########## Internal Implementation Details
 
-The lock file uses TOML format with structured sections for package metadata, dependency relationships, and distribution information. Package entries include name, version, source registry, dependencies array, and distribution files with cryptographic hashes. Version constraints employ semantic versioning patterns with tilde `~=` for compatible releases and greater-than-equal `>=` for minimum versions. Hash verification uses SHA256 algorithm for all wheel and source distribution files ensuring package integrity. Platform-specific wheels target multiple architectures including x86_64, arm64, and universal builds for comprehensive compatibility. Dependency markers use PEP 508 syntax for conditional installation based on Python version and platform characteristics. Optional dependency groups separate development tools from runtime requirements enabling minimal production installations.
+The lock file format uses TOML syntax with structured package entries containing comprehensive metadata including version specifications, source registry information, dependency relationships, and cryptographic verification data. Each package entry includes `name`, `version`, `source` registry information, `dependencies` array with conditional markers, `sdist` source distribution metadata with URL and SHA256 hash, and `wheels` array containing platform-specific wheel files with URLs and integrity checksums. Dependency resolution implements constraint satisfaction algorithms ensuring all version requirements are met across the entire dependency graph. Platform-specific handling uses conditional markers like `python_full_version < '3.11'` and `sys_platform == 'win32'` for targeted dependency inclusion. The system maintains separate dependency groups through `optional-dependencies` and `dev-dependencies` sections enabling different installation profiles for development and production environments.
 
-########### Usage Examples
+########### Code Usage Examples
 
-Package installation demonstrates the primary usage pattern for UV package manager with deterministic dependency resolution. This approach ensures identical package versions across all environments using the lock file specification.
+This example demonstrates installing dependencies using the lock file for reproducible development environment setup. The lock file ensures exact versions are installed matching the project's tested configuration.
 
 ```bash
-# Install packages using UV lock file for deterministic dependency resolution
-# Ensures identical package versions across development, testing, and production environments
+# Install dependencies using uv with lock file for exact version matching
 uv sync
-
-# Install with development dependencies for complete development environment setup
-# Includes testing tools, code formatters, and type checkers for comprehensive development workflow
-uv sync --dev
+# Installs all dependencies with exact versions specified in uv.lock
 ```
 
-Lock file validation showcases the integrity verification pattern for secure package installation. This pattern ensures package authenticity and prevents supply chain attacks through cryptographic hash verification.
+This example shows how to install only production dependencies excluding development tools. The lock file supports selective installation based on dependency groups and optional requirements.
 
 ```bash
-# Validate lock file integrity and package hashes for security verification
-# Ensures all packages match expected cryptographic signatures preventing tampering
-uv lock --check
+# Install production dependencies only using lock file specifications
+uv sync --no-dev
+# Excludes development dependencies like pytest, black, mypy from installation
+```
 
-# Update lock file with latest compatible versions while maintaining constraints
-# Refreshes dependency resolution while respecting semantic versioning boundaries
-uv lock --upgrade
+This example illustrates adding a new dependency while maintaining lock file integrity. The lock file must be updated to include new dependencies with proper version resolution and hash verification.
+
+```bash
+# Add new dependency and update lock file with resolved versions
+uv add requests
+uv lock
+# Updates uv.lock with new dependency and all transitive requirements
 ```

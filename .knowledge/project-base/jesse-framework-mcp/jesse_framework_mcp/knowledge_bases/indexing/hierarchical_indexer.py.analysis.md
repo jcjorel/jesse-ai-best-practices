@@ -1,105 +1,106 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/hierarchical_indexer.py -->
-<!-- Cached On: 2025-07-05T20:26:50.354928 -->
-<!-- Source Modified: 2025-07-05T20:00:15.203738 -->
+<!-- Cached On: 2025-07-06T20:56:51.157555 -->
+<!-- Source Modified: 2025-07-06T20:36:29.172897 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file implements the core orchestrator for hierarchical knowledge base indexing within the Jesse Framework MCP system, providing leaf-first processing strategy for building structured knowledge files throughout directory hierarchies. The system coordinates change detection, content building, and special handling to maintain `.knowledge/` directory structures using bottom-up assembly patterns. Key semantic entities include `HierarchicalIndexer` class, `index_hierarchy` method, `ChangeDetector` integration, `KnowledgeBuilder` delegation, `OrphanedAnalysisCleanup` component, `DirectoryContext` and `FileContext` models, `ProcessingStatus` enumeration, `IndexingConfig` configuration, `FastMCP` context integration, `asyncio` concurrency patterns, and `leaf-first` processing algorithms. The implementation enables developers to orchestrate comprehensive knowledge base generation with concurrent processing, progress reporting, and error recovery mechanisms across complex project directory structures.
+This module implements the core orchestrator for hierarchical knowledge base indexing using a Plan-then-Execute architecture that separates decision-making from execution for perfect debuggability. The functional intent centers on coordinating leaf-first processing strategies to build hierarchical knowledge files throughout directory structures using bottom-up assembly approaches. Key semantic entities include `HierarchicalIndexer` class implementing the main orchestration logic, `RebuildDecisionEngine` for centralized decision-making, `PlanGenerator` for converting decisions into atomic tasks, `ExecutionEngine` for dependency-aware task execution, and integration with `FastMCP` `Context` for real-time progress reporting. The module provides comprehensive change detection through `DirectoryContext` and `FileContext` models, supports concurrent processing with configurable limits, and implements defensive error handling enabling graceful degradation and partial processing recovery for large-scale knowledge base maintenance operations.
 
 ##### Main Components
 
-The file contains the `HierarchicalIndexer` class with core orchestration methods: `index_hierarchy()` for complete hierarchical processing coordination, `_discover_directory_structure()` for recursive directory traversal and context building, `_detect_changes()` and `_apply_comprehensive_change_detection()` for incremental processing optimization, `_process_directory_hierarchy()` and `_process_directory_leaf_first()` for leaf-first processing execution, `_process_directory_files()` and `_process_single_file()` for concurrent file processing, `_generate_directory_knowledge_file()` for directory summary generation, and utility methods `_get_all_directories()` for hierarchy analysis and `cleanup()` for resource management. Supporting components include initialization with `ChangeDetector`, `KnowledgeBuilder`, and `OrphanedAnalysisCleanup` dependencies, processing coordination through `asyncio.Semaphore`, and status tracking via `IndexingStatus` objects.
+The module contains the `HierarchicalIndexer` class as the primary orchestrator with methods for complete indexing workflow coordination, `index_hierarchy()` method implementing the five-phase Plan-then-Execute architecture, `_discover_directory_structure()` and `_build_directory_context()` methods for recursive directory structure discovery, `_detect_changes()` and `_apply_comprehensive_change_detection()` methods for change detection using `RebuildDecisionEngine` integration, `_generate_execution_plan()`, `_preview_execution_plan()`, and `_execute_plan_with_progress()` methods for atomic task planning and execution, and utility methods including `_get_all_directories()` for hierarchy traversal and `_create_final_status()` for result mapping to `IndexingStatus` format.
 
 ###### Architecture & Design
 
-The architecture implements a modular orchestration pattern with clear separation of concerns between change detection, content building, and processing coordination. The design uses dependency injection for `ChangeDetector`, `KnowledgeBuilder`, and `OrphanedAnalysisCleanup` components, enabling testability and component modularity. The leaf-first processing strategy ensures child contexts complete before parent processing, eliminating parent-to-child dependencies and enabling bottom-up knowledge assembly. The system employs async-first architecture with `asyncio.Semaphore` for concurrency control, `FastMCP.Context` for progress reporting, and immutable context management through `DirectoryContext` and `FileContext` updates. Error handling follows defensive programming principles with configurable error recovery and comprehensive statistics tracking.
+The architecture implements Plan-then-Execute pattern separating decision-making from execution through distinct phases: Discovery builds complete `DirectoryContext` hierarchy, Decision Analysis generates comprehensive `DecisionReport` with change detection, Plan Generation converts decisions into atomic `ExecutionPlan` with dependencies, Plan Preview provides detailed execution analysis for debuggability, and Atomic Execution performs dependency-aware task execution. Design principles emphasize leaf-first hierarchical processing ensuring child completion before parent processing, bottom-up assembly aggregating child summaries into parent knowledge files, async-first architecture supporting concurrent operations with `FastMCP` `Context` integration, modular component delegation to specialized handlers, and defensive programming with comprehensive error handling and recovery mechanisms.
 
 ####### Implementation Approach
 
-The implementation uses recursive directory traversal with `_build_directory_context()` creating hierarchical context structures, comprehensive change detection through `check_comprehensive_directory_change()` for incremental processing optimization, and leaf-first processing via depth-first traversal ensuring child completion before parent processing. Concurrent processing employs batch-based file processing with `asyncio.gather()` and semaphore-controlled concurrency limits. The system implements three processing modes: `incremental` with change detection, `full_kb_rebuild` with file analysis caching, and `full` nuclear rebuild bypassing all caches. Context immutability ensures proper state management through `DirectoryContext` and `FileContext` reconstruction rather than mutation. Processing statistics track files discovered, processed, completed, failed, and skipped with detailed error collection.
+The implementation utilizes recursive directory discovery building complete hierarchy context through `_build_directory_context()` with configuration filtering via `should_process_file()` and `should_process_directory()` methods. Change detection employs `RebuildDecisionEngine.should_rebuild_directory()` for centralized decision-making with comprehensive constituent dependency checking. The Plan-then-Execute workflow delegates to `PlanGenerator.create_execution_plan()` for atomic task generation, `ExecutionEngine.preview_plan()` for detailed execution analysis, and `ExecutionEngine.execute_plan()` for dependency-aware task execution. Processing coordination maintains `IndexingStatus` with real-time progress updates, `ProcessingStats` for performance metrics, and error handling enabling graceful degradation through configurable `continue_on_file_errors` behavior.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models.indexing_config:IndexingConfig` - configuration and filtering logic for processing behavior
-- `..models.knowledge_context:DirectoryContext` - hierarchical directory context structures
-- `..models.knowledge_context:FileContext` - individual file processing context
-- `..models.knowledge_context:ProcessingStatus` - processing state enumeration
-- `.change_detector:ChangeDetector` - comprehensive change detection and timestamp comparison
-- `.knowledge_builder:KnowledgeBuilder` - LLM-powered content summarization and knowledge generation
-- `.orphaned_cleanup:OrphanedAnalysisCleanup` - cleanup of orphaned analysis and knowledge files
-- `fastmcp:Context` (external library) - progress reporting and logging interface
-- `asyncio` (external library) - async programming patterns and concurrency control
-- `pathlib.Path` (external library) - cross-platform path operations
+- `..models.IndexingConfig` - Configuration and filtering logic for processing rules and limits
+- `..models.DirectoryContext` - Directory structure representation with processing status tracking
+- `..models.FileContext` - File metadata and processing state management
+- `..models.ProcessingStatus` - Status enumeration for processing state tracking
+- `..models.IndexingStatus` - Comprehensive indexing operation status reporting
+- `.rebuild_decision_engine.RebuildDecisionEngine` - Centralized decision-making for change detection
+- `.knowledge_builder.KnowledgeBuilder` - LLM-powered content summarization and knowledge file generation
+- `.special_handlers.ProjectBaseHandler` - Project-base specialized processing for whole codebase indexing
+- `.special_handlers.GitCloneHandler` - Git-clone specialized processing for read-only repository handling
+- `.plan_generator.PlanGenerator` - Decision-to-task conversion for atomic execution planning
+- `.execution_engine.ExecutionEngine` - Dependency-aware atomic task execution with progress reporting
+- `fastmcp.Context` (external library) - Real-time progress reporting and user interaction
+- `asyncio` (standard library) - Async programming patterns and concurrency control
+- `pathlib.Path` (standard library) - Cross-platform path operations and filesystem interaction
 
 **← Outbound:**
-- `jesse_framework_mcp.main:main` - primary entry point for hierarchical indexing operations
-- `jesse_framework_mcp.resources.knowledge:knowledge_resources` - MCP resource endpoints consuming generated knowledge
-- `.knowledge/` directory structure - hierarchically organized knowledge files and analysis cache
+- Knowledge base indexing tools consuming `HierarchicalIndexer.index_hierarchy()` method
+- MCP server implementations requiring hierarchical processing coordination
+- JESSE Framework components needing structured knowledge base maintenance
+- Monitoring systems accessing `current_status` property for real-time progress tracking
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Central orchestrator coordinating all aspects of hierarchical knowledge base generation within the Jesse Framework MCP ecosystem
-- **Ecosystem Position**: Core component that integrates change detection, content building, and cleanup operations for comprehensive knowledge base maintenance
-- **Integration Pattern**: Used by MCP server initialization, CLI tools, and automated indexing workflows requiring structured knowledge generation across project hierarchies
+- **System Role**: Serves as the central orchestrator for the Knowledge Bases Hierarchical Indexing System, coordinating all phases of directory discovery, change detection, plan generation, and atomic task execution
+- **Ecosystem Position**: Core component bridging high-level indexing requests with specialized processing engines, decision systems, and execution frameworks
+- **Integration Pattern**: Consumed by MCP tools requiring hierarchical knowledge base maintenance, integrating with specialized handlers for git-clones and project-base scenarios, and coordinating with LLM-powered content generation through structured Plan-then-Execute workflows
 
 ######### Edge Cases & Error Handling
 
-The system handles various error scenarios including inaccessible directories and files through `OSError` and `PermissionError` catching with continued processing, individual file processing failures with configurable `continue_on_file_errors` behavior, change detection failures with conservative fallback to processing mode, and truncated LLM responses through `None` return handling that completely omits files from processing. Memory constraints are managed through batch processing and semaphore-controlled concurrency limits. The system provides comprehensive error logging with `logger.error()` calls including stack traces, detailed error statistics collection through `ProcessingStats.add_error()`, and graceful degradation enabling partial processing completion when individual components fail.
+Error handling implements comprehensive exception catching with detailed logging through `logger.error()` calls including stack traces and graceful degradation options. Edge cases include filesystem access failures handled through `OSError` and `PermissionError` catching with continued processing, change detection failures triggering conservative fallback marking directories for processing, execution failures managed through configurable `continue_on_file_errors` behavior, and resource cleanup errors handled gracefully in `cleanup()` method. The system provides defensive programming patterns including validation of root path existence and directory status, comprehensive error statistics tracking through `ProcessingStats.add_error()`, and status determination based on execution success rates with configurable thresholds for partial success scenarios.
 
 ########## Internal Implementation Details
 
-Internal mechanisms include `_processing_semaphore` for concurrency control using `asyncio.Semaphore(config.max_concurrent_operations)`, `_current_status` tracking through `IndexingStatus` objects with real-time updates, and `_source_root` storage for knowledge file path calculations. The leaf-first algorithm uses recursive depth-first traversal with child processing completion before parent directory knowledge generation. Context immutability is maintained through `DirectoryContext` and `FileContext` reconstruction with updated fields rather than in-place mutation. Processing phases include discovery, cache preparation, orphaned cleanup, optional change detection, and leaf-first processing execution. Statistics tracking covers files discovered, processed, completed, failed, directories discovered and completed, with detailed error collection and processing timing measurements.
+Internal mechanisms utilize `datetime.now()` for processing timing and performance metrics, recursive directory traversal through `_get_all_directories()` for comprehensive hierarchy analysis, and status mapping between `ExecutionResults` and `IndexingStatus` formats for API compatibility. The implementation maintains processing coordination through `_current_status` updates with real-time operation tracking, component initialization with dependency injection for `RebuildDecisionEngine`, `PlanGenerator`, and `ExecutionEngine`, and resource management through `cleanup()` method delegating to `ExecutionEngine._cleanup_execution_resources()`. Processing statistics include accurate file and directory counts, error tracking with detailed messages, and performance metrics including LLM call counts and execution duration measurements.
 
 ########### Code Usage Examples
 
-Essential hierarchical indexing orchestration pattern for complete directory processing:
+**Basic hierarchical indexing initialization and execution:** This example demonstrates how to initialize the indexer with configuration and execute hierarchical processing with progress reporting capabilities.
 
 ```python
-# This pattern demonstrates complete hierarchical indexing with progress reporting and error handling
-# The orchestrator coordinates all phases of knowledge base generation with comprehensive status tracking
+from pathlib import Path
+from fastmcp import Context
+from jesse_framework_mcp.knowledge_bases.models import IndexingConfig
+from jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer import HierarchicalIndexer
+
+# Initialize indexer with configuration
+config = IndexingConfig()
 indexer = HierarchicalIndexer(config)
-status = await indexer.index_hierarchy(project_root, ctx)
-print(f"Processing completed: {status.processing_stats.files_completed}/{status.processing_stats.total_files_discovered} files")
+
+# Execute hierarchical indexing with progress reporting
+async def run_indexing():
+    ctx = Context()
+    root_path = Path(".knowledge/")
+    status = await indexer.index_hierarchy(root_path, ctx)
+    return status
 ```
 
-Leaf-first processing coordination ensuring proper dependency order:
+**Real-time status monitoring during indexing operations:** This pattern enables monitoring of indexing progress with real-time status updates and progress percentage tracking.
 
 ```python
-# This pattern shows how leaf-first processing ensures child contexts complete before parent processing
-# The recursive approach eliminates parent-to-child dependencies enabling bottom-up knowledge assembly
-async def _process_directory_leaf_first(self, directory_context, ctx):
-    # Step 1: Process all subdirectories first (leaf-first)
-    updated_subdirectory_contexts = []
-    for subdir_context in directory_context.subdirectory_contexts:
-        updated_subdir_context = await self._process_directory_leaf_first(subdir_context, ctx)
-        updated_subdirectory_contexts.append(updated_subdir_context)
-    
-    # Step 2: Process files in current directory
-    updated_directory_context = await self._process_directory_files(directory_context, ctx)
-    
-    # Step 3: Generate directory knowledge file from child summaries
-    return await self._generate_directory_knowledge_file(complete_directory_context, ctx)
+# Monitor indexing progress in real-time
+async def monitor_indexing_progress(indexer):
+    while indexer.current_status.overall_status == ProcessingStatus.PROCESSING:
+        status = indexer.current_status
+        print(f"Operation: {status.current_operation}")
+        print(f"Progress: {status.processing_stats.progress_percentage:.1f}%")
+        await asyncio.sleep(1)
 ```
 
-Concurrent file processing with semaphore control and error handling:
+**Plan-then-Execute architecture component access:** This example shows how to access the internal components of the Plan-then-Execute architecture and perform proper resource cleanup.
 
 ```python
-# This pattern demonstrates concurrent file processing with proper resource management and error recovery
-# Batch processing with semaphore control prevents resource exhaustion while maximizing throughput
-async def _process_single_file(self, file_context, ctx):
-    async with self._processing_semaphore:
-        try:
-            updated_context = await self.knowledge_builder.build_file_knowledge(
-                file_context, ctx, source_root=self._source_root
-            )
-            # Handle truncation detection - None means omit file completely
-            if updated_context is None:
-                return None
-            return updated_context
-        except Exception as e:
-            logger.error(f"File processing failed: {e}", exc_info=True)
-            return FileContext(..., processing_status=ProcessingStatus.FAILED, error_message=str(e))
+# Access Plan-then-Execute architecture components
+indexer = HierarchicalIndexer(config)
+decision_engine = indexer.rebuild_decision_engine
+plan_generator = indexer.plan_generator
+execution_engine = indexer.execution_engine
+
+# Cleanup resources after processing
+await indexer.cleanup()
 ```

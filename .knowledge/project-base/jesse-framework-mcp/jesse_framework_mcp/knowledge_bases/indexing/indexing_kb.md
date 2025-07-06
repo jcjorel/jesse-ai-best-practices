@@ -8,407 +8,323 @@
 
 #### Functional Intent & Features
 
-This directory implements the comprehensive hierarchical indexing subsystem for the Jesse Framework MCP knowledge base system, providing orchestrated LLM-powered analysis and structured knowledge generation from source code repositories through leaf-first processing strategies. The subsystem enables automated documentation generation, incremental processing optimization, specialized scenario handling, and comprehensive maintenance operations while maintaining synchronized knowledge representations of codebases. Key semantic entities include `HierarchicalIndexer` orchestrator class with `index_hierarchy` method, `KnowledgeBuilder` for Claude 4 Sonnet integration, `ChangeDetector` for timestamp-based incremental processing, `FileAnalysisCache` for performance optimization, `OrphanedAnalysisCleanup` for maintenance operations, `EnhancedPrompts` for structured LLM prompt generation, `DebugHandler` for interaction replay, `MarkdownParser` for AST-based document manipulation, specialized handlers (`GitCloneHandler`, `ProjectBaseHandler`) for unique scenarios, `DirectoryContext` and `FileContext` data structures, `ProcessingStatus` enumeration, `FastMCP` context integration, and `asyncio` semaphore-based concurrency control. The system implements bottom-up assembly patterns aggregating child summaries into parent knowledge files while supporting both full and incremental indexing modes with comprehensive error handling, progress reporting, and artifact prevention through truncation detection.
+Comprehensive hierarchical knowledge base indexing system implementing Plan-then-Execute architecture for the Jesse Framework MCP Server, providing automated content analysis, structured knowledge file generation, and intelligent caching for large-scale codebase documentation. The system orchestrates LLM-powered content summarization through `HierarchicalIndexer`, `KnowledgeBuilder`, and `RebuildDecisionEngine` components with bottom-up assembly strategies ensuring child completion before parent processing. Enables developers to maintain synchronized knowledge bases through change detection, selective rebuilds, and atomic task execution with comprehensive error handling and performance optimization. Key semantic entities include `HierarchicalIndexer` for workflow orchestration, `FileAnalysisCache` for performance optimization, `ExecutionEngine` for dependency-aware task execution, `PlanGenerator` for decision-to-task translation, `StrandsClaude4Driver` for LLM integration, `IndexingConfig` for configuration management, `DirectoryContext` and `FileContext` for structure representation, `DecisionReport` and `ExecutionPlan` for workflow coordination, `EnhancedPrompts` for specialized analysis templates, and `DebugHandler` for development workflow support using async-first architecture patterns with `FastMCP` context integration.
 
 ##### Main Components
 
-The directory contains eleven core implementation files providing comprehensive indexing functionality: `hierarchical_indexer.py` as the primary orchestrator coordinating all processing phases, `knowledge_builder.py` implementing LLM-powered content generation with Claude 4 Sonnet integration, `change_detector.py` providing timestamp-based incremental processing optimization, `file_analysis_cache.py` delivering high-performance caching with staleness detection, `orphaned_cleanup.py` managing maintenance operations for stale artifacts, `enhanced_prompts.py` supplying structured LLM prompt templates, `debug_handler.py` enabling interaction capture and replay functionality, `markdown_parser.py` providing AST-based document manipulation, `special_handlers.py` implementing git-clone and project-base scenario handling, `knowledge_file_generator.py` offering template-based knowledge file creation, and `__init__.py` centralizing component exports. The `image/` subdirectory provides specialized image processing capabilities with `knowledge_builder/` and `hierarchical_indexer/` subdirectories for visual content analysis and hierarchical organization. Supporting infrastructure includes comprehensive error handling, concurrent processing with semaphore control, progress reporting through `FastMCP` context, and detailed statistics tracking throughout all operations.
+Core orchestration components include `HierarchicalIndexer` class providing five-phase Plan-then-Execute workflow coordination, `KnowledgeBuilder` implementing LLM-powered content analysis with cache-first processing, and `ExecutionEngine` managing atomic task execution with dependency resolution. Decision-making infrastructure encompasses `RebuildDecisionEngine` for centralized rebuild logic, `PlanGenerator` for converting decisions into executable tasks, and `DecisionReport` structures for comprehensive audit trails. Content generation components feature `KnowledgeFileGenerator` for template-based markdown creation, `EnhancedPrompts` for specialized LLM analysis workflows, and `MarkdownParser` for AST-based document manipulation. Performance optimization includes `FileAnalysisCache` with timestamp-based staleness detection, upfront cache structure preparation, and metadata separation preventing contamination. Configuration management provides `IndexingConfigManager` with auto-generation capabilities, `defaults.py` with handler-specific templates, and specialized handlers `ProjectBaseHandler` and `GitCloneHandler` for scenario-specific processing. Development support includes `DebugHandler` for LLM interaction capture and replay, comprehensive error handling with graceful degradation, and structured logging throughout all components.
 
 ###### Architecture & Design
 
-The architecture implements a modular orchestration pattern with clear separation of concerns across discovery, change detection, processing, content generation, and maintenance phases. The design follows leaf-first processing strategy ensuring child contexts are completely processed before parent directory knowledge file generation, eliminating parent-to-child dependencies and enabling bottom-up assembly. The system uses dependency injection for component initialization, async-first architecture for concurrent operations, and immutable context management ensuring proper state updates throughout processing workflows. Key design patterns include the orchestrator pattern for workflow coordination, builder pattern delegation for content generation, cache-first processing for performance optimization, template-based prompt generation for structured LLM interactions, AST-based document manipulation for reliable markdown editing, and comprehensive error handling with graceful degradation capabilities. The architecture integrates specialized handlers for unique scenarios while maintaining consistent processing patterns across all components.
+Implements Plan-then-Execute architecture separating decision-making from execution through distinct phases: Discovery builds complete `DirectoryContext` hierarchy, Decision Analysis generates comprehensive `DecisionReport` with change detection, Plan Generation converts decisions into atomic `ExecutionPlan` with dependencies, and Atomic Execution performs dependency-aware task execution. Uses leaf-first hierarchical processing ensuring proper dependency ordering where parent directories wait for all child directories and files through bottom-up assembly patterns. Employs centralized decision architecture consolidating scattered logic into `RebuildDecisionEngine` with file-first optimization preventing unnecessary directory rebuilds. Implements cache-first processing strategy through `FileAnalysisCache` integration with selective bypass mechanisms for rebuild scenarios. Uses template-based knowledge file generation replacing complex incremental updates with straightforward string template assembly and alphabetical sorting. Follows async-first design principles with `FastMCP` context integration enabling concurrent operations and real-time progress reporting throughout all processing phases.
 
 ####### Implementation Approach
 
-The implementation uses multi-phase processing workflows starting with directory structure discovery, followed by optional change detection for incremental mode, cache structure preparation, orphaned file cleanup, and leaf-first hierarchical processing with concurrent file operations. The system implements recursive directory traversal with `DirectoryContext` creation, comprehensive change detection using constituent dependency checking, batch-based concurrent file processing with configurable limits, and continuation-based retry mechanisms for LLM truncation handling. Key algorithms include depth-first traversal for leaf identification, timestamp-based staleness detection with configurable tolerance, reverse path calculation for orphaned artifact identification, AST-based markdown manipulation for document editing, and intelligent response merging for truncation recovery. The approach integrates high-performance caching through `FileAnalysisCache`, structured prompt generation through `EnhancedPrompts`, debug capture and replay through `DebugHandler`, and comprehensive statistics tracking throughout all operations while maintaining detailed audit trails and error recovery mechanisms.
+Executes recursive directory discovery building complete hierarchy context through `_build_directory_context()` with configuration filtering via `should_process_file()` and `should_process_directory()` methods. Implements four-phase decision analysis workflow: individual file staleness checking, directory rebuild analysis, orphaned content detection, and selective cascading propagation up hierarchy. Uses decision-driven task generation matching `RebuildDecisionEngine` decisions to appropriate `TaskType` instances with comprehensive metadata embedding for independent execution. Employs continuation-based retry mechanisms maintaining conversation context across truncation recovery attempts providing significant token savings. Implements timestamp-based staleness detection through direct comparison without tolerance for consistent behavior across components. Uses AST-based markdown parsing through `mistletoe` for reliable document structure understanding and safe content editing. Provides comprehensive path mapping between source files and knowledge base structure using project-base directory mirroring with portable path handling for cross-platform compatibility.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models:IndexingConfig` - configuration and filtering logic for processing behavior and LLM parameters
-- `..models:DirectoryContext` - directory structure representation and processing state management
-- `..models:FileContext` - file metadata and processing context structures with status tracking
-- `..models:ProcessingStatus` - enumeration for processing state management and coordination
-- `..models:ProcessingStats` - statistics tracking and performance metrics collection
-- `..models:IndexingStatus` - overall indexing operation status representation and reporting
-- `..models:ChangeInfo` - change information structure for incremental processing coordination
-- `..models:ChangeType` - enumeration of change types for processing optimization
-- `...llm.strands_agent_driver:StrandsClaude4Driver` - Claude 4 Sonnet LLM integration and conversation management
-- `...llm.strands_agent_driver:Claude4SonnetConfig` - LLM configuration optimization for analysis tasks
-- `...helpers.path_utils:get_portable_path` - cross-platform path conversion for knowledge base compatibility
-- `...helpers.mistletoe_spacing` - spacing preservation utilities for LLM-generated content formatting
-- `fastmcp:Context` - MCP context for progress reporting and user interaction throughout processing
-- `mistletoe` (external library) - AST-based markdown parsing and rendering for document manipulation
-- `asyncio` (external library) - async programming patterns and concurrency control for performance
-- `pathlib` (external library) - cross-platform path operations and filesystem access
-- `logging` (external library) - structured logging and error reporting throughout all operations
-- `datetime` (external library) - timestamp comparison and manipulation for change detection
-- `json` (external library) - debug metadata serialization and structured data persistence
-- `hashlib` (external library) - content hashing for duplicate detection and interaction identification
-- `dataclasses` (external library) - statistics containers and structured data representation
+- `fastmcp.Context` - FastMCP framework context interface for async progress reporting and user interaction throughout indexing workflows
+- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - Claude 4 Sonnet LLM integration for content analysis and knowledge generation
+- `jesse_framework_mcp.llm.strands_agent_driver:Claude4SonnetConfig` - LLM configuration optimization for analysis tasks and conversation management
+- `jesse_framework_mcp.knowledge_bases.models:IndexingConfig` - Configuration management providing processing parameters and filtering rules
+- `jesse_framework_mcp.knowledge_bases.models:DirectoryContext` - Directory structure representation with file and subdirectory contexts
+- `jesse_framework_mcp.knowledge_bases.models:FileContext` - Individual file metadata including path, size, and modification timestamps
+- `jesse_framework_mcp.knowledge_bases.models.rebuild_decisions` - Decision model classes for structured outcomes and comprehensive reasoning
+- `jesse_framework_mcp.knowledge_bases.models.execution_plan` - Execution planning models for atomic task management and dependency resolution
+- `jesse_framework_mcp.helpers.path_utils:get_portable_path` - Cross-platform path conversion utility for consistent path formatting
+- `mistletoe` (external library) - AST-based markdown parsing and rendering for reliable document manipulation
+- `asyncio` (external library) - Async programming patterns and concurrency control for performance optimization
+- `pathlib.Path` (external library) - Cross-platform path operations and filesystem metadata access
+- `datetime` (external library) - Timestamp comparison and decision timing calculations
+- `json` (external library) - Configuration serialization and debug metadata persistence
+- `pydantic` (external library) - Configuration validation and type safety for indexing parameters
 
 **← Outbound:**
-- `jesse_framework_mcp/server.py:JesseFrameworkMCPServer` - MCP server consuming indexing components for resource endpoints
-- `jesse_framework_mcp/resources/` - resource handlers importing indexing functionality for knowledge base operations
-- `knowledge_base_files/*.md` - generated markdown knowledge base files following hierarchical semantic tree structure
-- `cache_files/.knowledge/project-base/` - stored analysis results for performance optimization and replay functionality
-- `debug_artifacts/llm_debug/` - captured LLM interactions organized by pipeline stages for debugging workflows
-- External applications - consuming Jesse Framework MCP for automated knowledge base maintenance and documentation generation
-- Development tools - importing indexing components for workflow automation and testing scenarios
+- `jesse_framework_mcp/knowledge_bases/handlers/` - Knowledge base handlers consuming indexing services for different content types
+- `{PROJECT_ROOT}/.knowledge/project-base/` - Generated knowledge base files with hierarchical structure mirroring
+- `{PROJECT_ROOT}/.knowledge/git-clones/` - Specialized knowledge structures for git repository processing
+- `debug_output/llm_debug/` - Debug interaction capture files for development workflow support
+- `cache_files/*.analysis.md` - Cached analysis files for performance optimization and staleness detection
+- MCP server implementations - Hierarchical processing coordination for knowledge base maintenance workflows
+- Monitoring systems - Performance statistics and decision audit trails for system reliability tracking
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core hierarchical indexing subsystem within Jesse Framework MCP, orchestrating all phases of knowledge base generation from source code repositories through LLM-powered analysis and structured documentation creation
-- **Ecosystem Position**: Central component in the knowledge base management pipeline, integrating LLM capabilities with filesystem operations while providing comprehensive workflow coordination and performance optimization
-- **Integration Pattern**: Used by MCP server endpoints for knowledge base resource operations, consumed by external applications through Jesse Framework MCP protocol, integrated with development tools for automated documentation workflows, and providing specialized processing capabilities for git-clone and project-base scenarios with comprehensive error handling and maintenance operations
+- **System Role**: Core knowledge base indexing infrastructure for the Jesse Framework MCP Server, serving as the central orchestrator for automated content analysis, structured documentation generation, and intelligent caching across large-scale codebases
+- **Ecosystem Position**: Central component bridging file system analysis with LLM processing capabilities, coordinating between specialized handlers, decision systems, and execution frameworks while maintaining comprehensive audit trails and performance optimization
+- **Integration Pattern**: Used by MCP server handlers requiring hierarchical knowledge base maintenance, integrating with specialized scenario handlers for git-clones and project-base processing, coordinating with LLM-powered content generation through structured Plan-then-Execute workflows, and providing comprehensive debugging and monitoring capabilities for development and production environments
 
 ######### Edge Cases & Error Handling
 
-The system handles comprehensive error scenarios including filesystem access failures during directory traversal with graceful skipping and continued processing, individual file processing failures with configurable continuation modes through `continue_on_file_errors` setting, LLM truncation detection through dual strategy combining programmatic marker checking with reviewer validation, and change detection failures with conservative fallback to processing mode. Error handling includes permission errors during file and directory operations with comprehensive logging, concurrent processing failures with semaphore-based recovery, component initialization failures preventing construction errors, and malformed directory structures with defensive programming approaches. The implementation provides specialized error handling for git-clone access restrictions, project-base exclusion rule failures, cache corruption scenarios, debug capture failures, markdown parsing exceptions, and orphaned file cleanup errors. Advanced error scenarios include continuation-based retry mechanism failures, conversation context pollution prevention, AST manipulation errors during document editing, and race condition handling during concurrent cache operations with comprehensive error statistics tracking and detailed logging throughout all operations.
+Implements comprehensive truncation detection through `TruncationDetectedError` preventing any artifact creation when LLM responses are incomplete, ensuring knowledge base integrity through fail-fast approaches. Handles empty directories by detecting contentless directories and skipping knowledge file generation to prevent infinite rebuild loops through `_is_directory_empty_of_processable_content()`. Manages filesystem access restrictions with `OSError` and `PermissionError` catching enabling continued processing when individual items are inaccessible. Provides graceful degradation for cache failures ensuring cache operations never break core knowledge building processes through conservative fallback decisions. Implements bounded loop reviewer workflows preventing infinite loops through maximum iteration limits while preserving LLM work through forced caching. Handles missing dependencies by logging warnings and skipping task creation when `DecisionReport` lacks decisions for specific files or directories. Uses consolidated error handling patterns through `_handle_decision_error()` creating standardized error decisions with detailed context information for debugging and recovery. Manages circular dependency prevention by avoiding sibling dependencies in directory task generation using parent-child relationships exclusively.
 
 ########## Internal Implementation Details
 
-Internal mechanics include semaphore-based concurrency control with `_processing_semaphore` limiting concurrent operations, immutable context management creating new `DirectoryContext` instances for state updates, and comprehensive statistics tracking through `ProcessingStats` with timing, counts, and error collection. The implementation uses recursive context building with nested structure creation, leaf-first processing order ensuring child completion before parent processing, and batch processing with configurable sizes for performance optimization. Key internal patterns include source root storage for cache integration, conversation-specific LLM caching preventing cross-conversation pollution, HTML comment-based metadata blocks for clean content extraction, AST-based document manipulation preserving structure integrity, and reverse path calculation algorithms for orphaned artifact identification. The system maintains processing timing with start and end timestamps, handles component lifecycle through initialization and cleanup phases, provides thread-safe status access through properties, implements intelligent response merging with overlap detection, and uses predictable filename generation for deterministic debug workflows while supporting comprehensive audit trails and maintenance operations.
+Maintains performance tracking through `_decisions_made`, `_filesystem_operations`, and `_decision_start_time` counters for optimization monitoring across all indexing phases. Uses cached `_project_base_root` path for performance optimization in repeated path calculations throughout decision-making processes. Implements consolidated helper methods eliminating DRY violations including timestamp retrieval, path calculation, and decision creation patterns. Employs direct timestamp comparison without tolerance aligning with `FileAnalysisCache` behavior for consistent staleness detection. Uses `asyncio.Semaphore` for concurrency control limiting parallel operations to `config.max_concurrent_operations` with proper resource management. Maintains execution state through three sets tracking completed, failed, and running tasks for comprehensive workflow monitoring. Implements cache files with HTML comment metadata blocks using `CACHE_VERSION = "1.0"` for future compatibility and migration support. Uses hash-based interaction identification combining prompt content hashes with timestamps for unique interaction IDs enabling efficient debug replay functionality. Employs path normalization algorithms converting filesystem paths into underscore-separated filename components for cross-platform debug file compatibility.
 
 ########### Usage Examples
 
-Basic hierarchical indexing workflow demonstrates the complete knowledge base generation process with comprehensive error handling and progress reporting. This pattern provides the foundation for automated documentation generation from source code repositories.
+Essential hierarchical indexing initialization and execution workflow demonstrates the complete Plan-then-Execute architecture. This pattern shows how to coordinate all indexing components for comprehensive knowledge base generation with progress reporting and error handling.
 
 ```python
-# Complete hierarchical indexing workflow with configuration and error handling
-from jesse_framework_mcp.knowledge_bases.indexing import (
-    HierarchicalIndexer, ChangeDetector, KnowledgeBuilder
-)
-from jesse_framework_mcp.knowledge_bases.models import IndexingConfig, IndexingMode
-from fastmcp import Context
+# Initialize complete indexing workflow with Plan-then-Execute architecture
+from jesse_framework_mcp.knowledge_bases.indexing import HierarchicalIndexer
+from jesse_framework_mcp.knowledge_bases.models import IndexingConfig
 
-# Initialize indexing components with optimized configuration
-config = IndexingConfig(
-    knowledge_output_directory=Path("./knowledge"),
-    indexing_mode=IndexingMode.INCREMENTAL,
-    continue_on_file_errors=True,
-    max_concurrent_operations=4,
-    batch_size=10,
-    debug_mode=True
-)
-
+config = IndexingConfig(handler_type="project-base", debug_mode=True)
 indexer = HierarchicalIndexer(config)
-change_detector = ChangeDetector(config)
-knowledge_builder = KnowledgeBuilder(config)
 
-# Execute comprehensive indexing with progress monitoring
-async with Context() as ctx:
-    try:
-        await knowledge_builder.initialize()  # Setup Claude 4 Sonnet driver
-        
-        status = await indexer.index_hierarchy(Path("./source"), ctx)
-        
-        if status.overall_status == ProcessingStatus.COMPLETED:
-            print(f"Success: {status.processing_stats.files_completed} files processed")
-            print(f"Duration: {status.processing_stats.processing_duration:.2f}s")
-        else:
-            print(f"Partial completion: {len(status.processing_stats.errors)} errors")
-            
-    finally:
-        await indexer.cleanup()
-        await knowledge_builder.cleanup()
+# Execute five-phase indexing workflow with comprehensive progress reporting
+async def run_complete_indexing(source_root, ctx):
+    status = await indexer.index_hierarchy(source_root, ctx)
+    print(f"Processing: {status.processing_stats.progress_percentage:.1f}%")
+    print(f"LLM calls: {status.processing_stats.llm_calls_made}")
+    return status
 ```
 
-Advanced caching and debug workflow demonstrates high-performance processing with comprehensive debugging capabilities and cache optimization. This approach maximizes efficiency while providing detailed debugging support for development workflows.
+Cache-first processing with debug capture demonstrates performance optimization and development workflow support. This approach shows how to leverage caching for efficiency while maintaining comprehensive debugging capabilities.
 
 ```python
-# Advanced caching workflow with debug capture and performance optimization
-from jesse_framework_mcp.knowledge_bases.indexing import (
-    FileAnalysisCache, DebugHandler, OrphanedAnalysisCleanup
-)
+# Cache-first processing with debug capture for development workflows
+from jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder import KnowledgeBuilder
+from jesse_framework_mcp.knowledge_bases.indexing.debug_handler import DebugHandler
 
-# Initialize performance optimization components
-cache = FileAnalysisCache(config)
-debug_handler = DebugHandler(
-    debug_enabled=True,
-    debug_output_directory=Path(".knowledge"),
-    enable_replay=True
-)
-cleanup = OrphanedAnalysisCleanup(config)
+builder = KnowledgeBuilder(config)
+debug_handler = DebugHandler(debug_enabled=True, enable_replay=True)
 
-# Execute optimized processing with debug capture
-async with Context() as ctx:
-    # Prepare cache structure for concurrent operations
-    await cache.prepare_cache_structure(root_context, source_root, ctx)
-    
-    # Load existing debug interactions for replay
-    debug_handler.load_existing_interactions()
-    
-    # Check for cached analysis before LLM processing
-    cached_content = await cache.get_cached_analysis(file_path, source_root)
-    if cached_content:
-        analysis_result = cached_content
-    else:
-        # Check for debug replay response
-        replay_response = debug_handler.get_stage_replay_response(
-            stage="stage_1_file_analysis", file_path=file_path
-        )
-        
-        if replay_response:
-            analysis_result = replay_response
-        else:
-            # Perform fresh LLM analysis and capture
-            analysis_result = await llm_client.analyze(prompt)
-            debug_handler.capture_stage_llm_output(
-                stage="stage_1_file_analysis",
-                prompt=prompt,
-                response=analysis_result,
-                file_path=file_path
-            )
-            
-        # Cache successful analysis for future use
-        await cache.cache_analysis(file_path, analysis_result, source_root)
-    
-    # Perform maintenance cleanup
-    cleanup_stats = await cleanup.cleanup_orphaned_files(
-        knowledge_root, source_root, ctx
+# Process with cache-first strategy and debug capture
+async def process_with_caching_and_debug(file_context, ctx):
+    # Check for cached analysis first
+    cached_analysis = await builder.analysis_cache.get_cached_analysis(
+        file_context.file_path, source_root
     )
-    print(f"Cleanup: {cleanup_stats.total_items_deleted} items removed")
+    
+    if cached_analysis:
+        return cached_analysis
+    
+    # Perform LLM analysis with debug capture
+    analysis = await builder.build_file_knowledge(file_context, ctx)
+    debug_handler.capture_stage_llm_output("file_analysis", prompt, analysis, file_context.file_path)
+    return analysis
+```
+
+Decision-driven execution planning showcases the Plan-then-Execute architecture with atomic task generation. This pattern demonstrates how high-level decisions are converted into executable tasks with comprehensive dependency management.
+
+```python
+# Decision-driven execution planning with atomic task generation
+from jesse_framework_mcp.knowledge_bases.indexing.rebuild_decision_engine import RebuildDecisionEngine
+from jesse_framework_mcp.knowledge_bases.indexing.plan_generator import PlanGenerator
+from jesse_framework_mcp.knowledge_bases.indexing.execution_engine import ExecutionEngine
+
+# Generate comprehensive decision report and execution plan
+decision_engine = RebuildDecisionEngine(config)
+plan_generator = PlanGenerator(config)
+execution_engine = ExecutionEngine(config)
+
+async def execute_plan_then_execute_workflow(root_context, source_root, ctx):
+    # Phase 1: Generate comprehensive decision report
+    decision_report = await decision_engine.analyze_hierarchy(root_context, source_root, ctx)
+    
+    # Phase 2: Convert decisions to atomic execution plan
+    execution_plan = await plan_generator.create_execution_plan(
+        root_context, decision_report, source_root, ctx
+    )
+    
+    # Phase 3: Execute plan with dependency resolution
+    results = await execution_engine.execute_plan(execution_plan, ctx)
+    print(f"Completed: {len(results.completed_tasks)}, Failed: {len(results.failed_tasks)}")
+    return results
 ```
 
 ## Subdirectory Knowledge Integration
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/image/
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
-This directory represents the image processing subsystem within the Jesse Framework MCP knowledge base indexing pipeline, designed to handle visual content analysis and knowledge extraction from image assets within source code repositories. The directory serves as a specialized processing hub that extends the core indexing capabilities to support image-specific operations, including visual content analysis, metadata extraction, and hierarchical organization of image-related knowledge artifacts. Key semantic entities include `ImageKnowledgeBuilder` classes for content processing, `HierarchicalImageIndexer` components for structured traversal, image processing pipelines, visual content analysis algorithms, directory structure mapping, and integration with the broader `IndexingConfig` and knowledge base management systems. The subsystem provides specialized capabilities for discovering, analyzing, and generating knowledge representations from image content while maintaining consistency with Jesse Framework MCP knowledge base schemas.
-
-##### Main Components
-
-The directory contains two primary subdirectories representing distinct functional areas within image processing operations. The `knowledge_builder/` subdirectory focuses on image content analysis and knowledge artifact generation, while the `hierarchical_indexer/` subdirectory handles structured directory traversal and hierarchical organization of image content. Both subdirectories currently contain no implemented files, indicating planned or reserved functionality within the Jesse Framework MCP system. Expected components across both areas include image analysis modules, knowledge extraction processors, metadata builders, hierarchical traversal modules, directory structure analyzers, index builders, and integration adapters for connecting with parent indexing systems.
-
-###### Architecture & Design
-
-The architectural design follows the established Jesse Framework MCP pattern of nested component specialization with clear separation of concerns between knowledge building and hierarchical indexing operations. The structure implements a modular approach where image processing capabilities are divided into specialized subsystems that can operate independently while integrating seamlessly with the broader indexing architecture. The design pattern emphasizes builder patterns for knowledge artifact construction and hierarchical indexing patterns for structured content organization, with each subsystem maintaining focused responsibility for specific image processing operations while supporting integration with parent indexing workflows.
-
-####### Implementation Approach
-
-The implementation strategy involves dual-track processing approaches that handle both content analysis and structural organization of image assets. Knowledge building operations focus on image format detection, visual content analysis, metadata extraction, and knowledge artifact generation processes that produce structured representations consistent with Jesse Framework MCP schemas. Hierarchical indexing operations implement tree-based directory traversal algorithms that systematically process image content within repository hierarchies, extract contextual information, and generate structured index representations. Both approaches integrate with existing indexing workflows and handle various image formats while maintaining consistency with knowledge base formatting requirements.
-
-######## External Dependencies & Integration Points
-
-**→ Inbound:**
-- `jesse_framework_mcp/knowledge_bases/indexing/` - parent indexing system integration and core infrastructure
-- `jesse_framework_mcp/knowledge_bases/models/` - configuration and data models for indexing operations
-- Image processing libraries - expected external dependencies for visual analysis and format handling
-- Directory traversal libraries - filesystem operations for hierarchical processing
-- File system operations - image discovery and processing capabilities
-
-**← Outbound:**
-- Knowledge base artifacts - generated image analysis outputs and structured knowledge representations
-- Hierarchical index artifacts - structured image indexes and directory organization data
-- Indexing pipeline - integration with broader knowledge building and image processing workflows
-- Analysis reports - image-specific knowledge contributions and processing results
-
-**⚡ System role and ecosystem integration:**
-- **System Role**: Specialized image processing subsystem within the Jesse Framework MCP indexing pipeline providing visual content analysis and hierarchical organization capabilities
-- **Ecosystem Position**: Peripheral component extending core indexing functionality with domain-specific image processing capabilities
-- **Integration Pattern**: Invoked by the main indexing orchestrator when image content is detected in source repositories, with dual processing paths for content analysis and structural organization
-
-######### Edge Cases & Error Handling
-
-Edge case scenarios include handling unsupported image formats during content analysis, processing corrupted or incomplete image files, managing large image files that exceed memory constraints, and dealing with images lacking meaningful contextual information for knowledge extraction. Hierarchical processing edge cases involve deeply nested directory structures exceeding system limits, directories with circular symbolic links, mixed content types during image-focused indexing, and permission-restricted directories during traversal operations. Error handling strategies address file access permissions, image decoding failures, filesystem access failures, infinite recursion scenarios in directory traversal, and integration failures with parent indexing systems.
-
-########## Internal Implementation Details
-
-Internal mechanics involve image format detection pipelines, visual content analysis algorithms, metadata extraction processes, and knowledge artifact generation workflows that maintain consistency with Jesse Framework MCP knowledge base schemas. Hierarchical processing implements recursive directory traversal algorithms, image file discovery and filtering processes, hierarchical index structure generation, and metadata aggregation across directory levels. Both subsystems handle concurrent processing scenarios, provide appropriate logging and monitoring capabilities for debugging operations, and maintain integration consistency with parent indexing workflows while supporting maintenance and troubleshooting requirements.
-
-########### Usage Examples
-
-This code demonstrates the expected integration pattern for image knowledge building within the indexing workflow. The pattern shows how image processing components would be initialized and executed within the broader system architecture.
-
-```python
+The `image/` directory represents a placeholder or reserved namespace within the Jesse Framework MCP knowledge base indexing system, designed to accommodate future image processing and visual content analysis capabilities. This directory exists as part of the hierarchical indexing architecture but currently contains no implementation, indicating either planned functionality for image-based knowledge extraction or a structural placeholder for visual content handling within the broader knowledge management ecosystem. The empty state suggests this component is either under development, deprecated, or represents a future extension point for multimedia content processing within the `HierarchicalIndexer` system. Key semantic entities that would be expected in this context include image processing handlers, visual content analyzers, OCR integration points, metadata extraction utilities, and multimedia knowledge base generation components, though none are currently present in the directory structure.
 
 ## File Knowledge Integration
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/__init__.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This file serves as the centralized package initialization module for the Knowledge Bases Hierarchical Indexing System, providing unified access to core indexing components through standardized exports. The module enables clean dependency management by exposing `HierarchicalIndexer` for orchestration, `ChangeDetector` for timestamp-based change detection, `KnowledgeBuilder` for LLM-powered content summarization, `GitCloneHandler` for git repository processing, and `ProjectBaseHandler` for project-base scenario handling. Key semantic entities include the `__all__` export list defining public API surface, async-first architecture patterns supporting concurrent processing operations, and bottom-up hierarchical processing workflow without parent-to-child context dependencies. The initialization follows `JESSE_CODE_COMMENTS.md` standards and integrates with `strands_agent_driver` for LLM operations while maintaining circular dependency prevention through careful import organization.
+This file serves as the package initialization module for the Knowledge Bases Hierarchical Indexing System, providing centralized component exports and clean dependency management for hierarchical knowledge base maintenance. The module exports core indexing components including `HierarchicalIndexer` for orchestration, `KnowledgeBuilder` for LLM-powered content summarization, and specialized handlers `GitCloneHandler` and `ProjectBaseHandler` for scenario-specific processing. Key semantic entities include the `__all__` export list defining the public API surface, async-first architecture patterns supporting concurrent processing operations, and bottom-up hierarchical processing without parent-to-child context dependencies. The system integrates with `strands_agent_driver` for LLM operations and follows `FastMCP Context` patterns for all async operations, enabling automated content summarization and knowledge base maintenance workflows.
 
 ##### Main Components
 
-The package exports five core components through the `__all__` list: `HierarchicalIndexer` as the main orchestration component, `ChangeDetector` for change detection and timestamp comparison, `KnowledgeBuilder` for LLM-powered content summarization, `GitCloneHandler` for git-clone special handling, and `ProjectBaseHandler` for project-base special handling. Each component is imported from its respective module within the indexing package using relative imports. The module includes comprehensive header documentation with GenAI tool directives, source file intent, design principles, constraints, and change history tracking. The package structure follows centralized component exports pattern enabling clean dependency management across the hierarchical indexing system.
+The file contains four primary exported components accessible through the package interface. The `HierarchicalIndexer` serves as the core indexing orchestrator managing the overall workflow. The `KnowledgeBuilder` provides LLM-powered content summarization capabilities for generating structured knowledge files. The `GitCloneHandler` and `ProjectBaseHandler` classes offer specialized processing for git-clone and project-base scenarios respectively. The module structure includes import statements from three internal modules: `hierarchical_indexer`, `knowledge_builder`, and `special_handlers`, with the `__all__` list explicitly defining the public API surface for clean dependency management.
 
 ###### Architecture & Design
 
-The architecture implements centralized component exports enabling clean dependency management through a single import point for all indexing functionality. The design follows clear separation between orchestration components (`HierarchicalIndexer`), detection components (`ChangeDetector`), building components (`KnowledgeBuilder`), and special handling components (`GitCloneHandler`, `ProjectBaseHandler`). The async-first architecture supports concurrent processing operations through all exported components requiring `FastMCP Context` patterns. Bottom-up hierarchical processing design eliminates parent-to-child context dependencies, enabling independent processing of directory levels. The package maintains strict circular dependency prevention through careful import organization and component isolation.
+The architecture implements a centralized export pattern with clear separation between orchestration, detection, and building components to prevent circular dependencies. The design follows async-first principles where all exported components support concurrent processing operations through `FastMCP Context` patterns. The package structure maintains clean separation of concerns with orchestration handled by `HierarchicalIndexer`, content generation by `KnowledgeBuilder`, and specialized scenarios by dedicated handler classes. The bottom-up hierarchical processing design ensures no parent-to-child context dependencies, enabling independent processing of directory hierarchies. The export pattern uses explicit `__all__` declaration providing controlled public API surface and preventing accidental exposure of internal implementation details.
 
 ####### Implementation Approach
 
-The implementation uses relative imports from sibling modules within the indexing package to expose core functionality through a unified interface. The `__all__` list explicitly defines the public API surface, controlling which components are available for external consumption. Component organization follows functional separation with orchestration, detection, building, and special handling grouped into distinct modules. The package initialization maintains zero business logic, serving purely as an export aggregation point. All exported components follow async patterns and integrate with `strands_agent_driver` for LLM operations. The design ensures that importing this package provides complete access to the hierarchical indexing workflow without requiring knowledge of internal module structure.
+The implementation uses selective component imports from three internal modules with explicit public API definition through the `__all__` list. The import strategy brings in the main orchestrator class, the content building class, and two specialized handler classes for different processing scenarios. The module follows Python package initialization conventions with docstring documentation explaining the package purpose and component relationships. The approach ensures all exported components integrate with the broader Jesse Framework MCP system through consistent async patterns and LLM integration points. The implementation maintains strict adherence to `JESSE_CODE_COMMENTS.md` standards for all exported components, ensuring consistent documentation and maintenance patterns across the indexing subsystem.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `.hierarchical_indexer:HierarchicalIndexer` - core indexing orchestrator for directory processing workflow
-- `.change_detector:ChangeDetector` - change detection and timestamp comparison utilities
-- `.knowledge_builder:KnowledgeBuilder` - LLM-powered content summarization and knowledge file generation
-- `.special_handlers:GitCloneHandler` - specialized handling for git repository cloning scenarios
-- `.special_handlers:ProjectBaseHandler` - specialized handling for project-base indexing scenarios
+- `.hierarchical_indexer.HierarchicalIndexer` - Core indexing orchestrator for workflow management
+- `.knowledge_builder.KnowledgeBuilder` - LLM-powered content summarization component
+- `.special_handlers.GitCloneHandler` - Git-clone scenario specialized processing
+- `.special_handlers.ProjectBaseHandler` - Project-base scenario specialized processing
 
 **← Outbound:**
-- `jesse_framework_mcp/server.py:JesseFrameworkMCPServer` - MCP server consuming indexing components for resource endpoints
-- `jesse_framework_mcp/resources/` - resource handlers importing indexing components for knowledge base operations
-- `external_applications` - applications using Jesse Framework MCP for hierarchical knowledge base maintenance
-- `development_tools` - development and testing tools importing indexing components for workflow automation
+- `../handlers/project_base_handler.py` - Consumes `ProjectBaseHandler` for project-base knowledge indexing
+- `../handlers/git_clone_handler.py` - Consumes `GitCloneHandler` for git repository knowledge indexing
+- `../main.py` - Primary entry point importing indexing components for MCP server operations
+- `external_consumers/` - External systems importing indexing components for knowledge base automation
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Central API gateway for the hierarchical indexing subsystem, providing unified access to all indexing functionality within the Jesse Framework MCP architecture
-- **Ecosystem Position**: Core infrastructure component enabling knowledge base maintenance workflows, essential for MCP server resource endpoints and external application integration
-- **Integration Pattern**: Used by MCP server components through direct imports, consumed by external applications through Jesse Framework MCP protocol, and integrated with development tools for automated knowledge base maintenance workflows
+- **System Role**: Package initialization gateway for the Knowledge Bases Hierarchical Indexing System, serving as the primary import interface for all indexing-related components within the Jesse Framework MCP architecture
+- **Ecosystem Position**: Central package interface providing controlled access to core indexing functionality, orchestrating the integration between LLM-powered content generation and specialized scenario handling
+- **Integration Pattern**: Used by MCP server handlers for knowledge base operations, consumed by external automation systems requiring hierarchical indexing capabilities, and integrated with FastMCP Context patterns for async processing workflows
 
 ######### Edge Cases & Error Handling
 
-Import failures from any of the five core modules result in package initialization failure, preventing the entire indexing subsystem from becoming available. Missing or corrupted module files within the indexing package cause import errors that propagate to consuming applications. Circular dependency scenarios between exported components are prevented through careful module organization but could emerge from future modifications. Version mismatches between component modules and the package initialization could lead to API inconsistencies. The package provides no error handling mechanisms itself, relying on individual component modules to handle their specific error conditions. Import-time exceptions from component modules are not caught, allowing them to propagate to the importing application for appropriate handling.
+The module handles import failures gracefully through Python's standard import mechanism, where missing dependencies would raise `ImportError` exceptions at package initialization time. Circular dependency prevention is managed through the clear separation of component responsibilities and the explicit import structure avoiding cross-references between exported classes. The `__all__` list prevents accidental exposure of internal implementation details that could lead to dependency issues in consuming code. Component integration errors are handled at the individual class level rather than at the package initialization level, ensuring that import failures provide clear error messages about missing dependencies. The async-first architecture requires proper error handling in all exported components to prevent unhandled promise rejections in concurrent processing scenarios.
 
 ########## Internal Implementation Details
 
-The package uses Python's standard `__all__` mechanism to control public API exposure, ensuring only intended components are available through wildcard imports. Relative imports use dot notation (`.module_name`) to reference sibling modules within the same package directory. The import order follows dependency hierarchy with orchestration components first, followed by detection, building, and special handling components. Module-level imports are performed at package initialization time, making all components immediately available upon successful import. The package maintains no internal state or configuration, serving purely as an export aggregation mechanism. Component availability depends entirely on successful import of underlying modules, with no fallback or graceful degradation mechanisms.
+The package uses standard Python `__init__.py` conventions with explicit imports from three internal modules following the pattern `from .module_name import ClassName`. The `__all__` list maintains exactly four exported components ensuring controlled public API surface and preventing internal implementation leakage. The module header includes comprehensive GenAI tool directives with change history tracking and design principle documentation following the established Jesse Framework patterns. The import structure avoids wildcard imports (`from module import *`) in favor of explicit class imports for better dependency tracking and IDE support. The docstring follows standard Python documentation conventions explaining the package purpose and component relationships for both human developers and automated documentation generation tools.
 
 ########### Code Usage Examples
 
-**Standard package import for accessing all indexing components:**
+**Basic package import for hierarchical indexing operations:** This example demonstrates importing the core indexing components for setting up knowledge base processing workflows with proper component separation.
+
 ```python
-# Import all indexing components through unified package interface
 from jesse_framework_mcp.knowledge_bases.indexing import (
     HierarchicalIndexer,
-    ChangeDetector,
     KnowledgeBuilder,
     GitCloneHandler,
     ProjectBaseHandler
 )
 
-# Initialize core indexing workflow
+# Initialize components for knowledge base processing
 indexer = HierarchicalIndexer(config)
-change_detector = ChangeDetector(config)
-knowledge_builder = KnowledgeBuilder(config)
-```
-
-**Selective component import for specific functionality:**
-```python
-# Import only required components for specialized use cases
-from jesse_framework_mcp.knowledge_bases.indexing import HierarchicalIndexer, ChangeDetector
-
-# Use specific components for targeted operations
-async def process_directory_changes(directory_path, config):
-    detector = ChangeDetector(config)
-    indexer = HierarchicalIndexer(config)
-    
-    if await detector.has_changes(directory_path):
-        await indexer.process_directory(directory_path)
-```
-
-**Package-level wildcard import for development environments:**
-```python
-# Wildcard import brings in all components defined in __all__
-from jesse_framework_mcp.knowledge_bases.indexing import *
-
-# All five components are now available in local namespace
-git_handler = GitCloneHandler(config)
-project_handler = ProjectBaseHandler(config)
 builder = KnowledgeBuilder(config)
 ```
 
-### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/change_detector.py
+**Specialized handler usage for different scenarios:** This example shows how to use the specialized handlers for git-clone and project-base scenarios with proper async context management.
 
-*Last Updated: 2025-07-05T11:47:12Z*
+```python
+from jesse_framework_mcp.knowledge_bases.indexing import GitCloneHandler, ProjectBaseHandler
+
+# Use specialized handlers based on processing scenario
+if is_git_clone_scenario:
+    handler = GitCloneHandler(config)
+else:
+    handler = ProjectBaseHandler(config)
+
+await handler.process_directory(source_path, ctx)
+```
+
+**Complete indexing workflow integration:** This example demonstrates integrating all exported components for a complete knowledge base indexing workflow with proper error handling and async patterns.
+
+```python
+from jesse_framework_mcp.knowledge_bases.indexing import (
+    HierarchicalIndexer,
+    KnowledgeBuilder
+)
+
+# Complete indexing workflow
+async def process_knowledge_base(source_root, config, ctx):
+    indexer = HierarchicalIndexer(config)
+    builder = KnowledgeBuilder(config)
+    
+    await indexer.process_hierarchy(source_root, builder, ctx)
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/config_manager.py
+
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This module implements timestamp-based change detection for incremental hierarchical indexing in the Jesse Framework MCP's knowledge base system. It provides comprehensive change identification by comparing source file modification times with existing knowledge file timestamps to minimize unnecessary LLM processing and enable efficient incremental updates. The system offers hierarchical dependency tracking, ensuring parent directory updates when children change, comprehensive constituent dependency checking through `FileAnalysisCache` integration, and detailed change analysis for debugging optimization. Key semantic entities include `ChangeDetector` class, `detect_changes()` method, `check_comprehensive_directory_change()` method, `ChangeInfo` model, `ChangeType` enum, `DirectoryContext` and `FileContext` models, `IndexingConfig` configuration, `FileAnalysisCache` integration, `timestamp_tolerance` configuration, and `datetime` timestamp comparison with configurable tolerance handling filesystem precision variations.
+The `config_manager.py` file serves as the central configuration management system for the Jesse Framework MCP's knowledge base indexing operations, providing auto-generation of missing JSON configuration files from centralized Python defaults and comprehensive `Pydantic` validation for type-safe configuration management. This module enables user-customizable JSON configuration files while maintaining immutable configuration loading that prevents runtime modifications, evidenced by the `IndexingConfigManager` class with its `load_config()` method and configuration caching via `_config_cache`. Key semantic entities include `HandlerType` enum with values `PROJECT_BASE`, `GIT_CLONES`, and `PDF_KNOWLEDGE`, hierarchical `Pydantic` models like `FileProcessingConfigModel`, `ContentFilteringConfigModel`, and `LLMConfigModel`, plus integration with `.defaults` module through `get_default_config()` and `validate_handler_type()` functions. The system bridges centralized Python defaults with runtime JSON configurations through the `IndexingConfigModel` class that validates handler-specific parameters and converts to `IndexingConfig` instances via `from_dict()` method.
 
 ##### Main Components
 
-The module contains the `ChangeDetector` class as the primary component with initialization accepting `IndexingConfig` for timestamp tolerance configuration. Core detection methods include `detect_changes()` for comprehensive hierarchy traversal, `_detect_directory_changes()` for single directory processing, `_check_file_change()` with enhanced heuristic-based detection, `_check_directory_change()` for directory-level timestamp comparison, and `_detect_dependency_changes()` for hierarchical change propagation. Advanced analysis methods include `check_comprehensive_directory_change()` using `FileAnalysisCache` for complete staleness checking, `get_detailed_change_analysis()` providing debugging information, and `get_stale_knowledge_files()` for orphaned knowledge file detection. Utility methods include `is_file_newer_than_knowledge()` for binary timestamp comparison, `_get_parent_directories()` for hierarchical path collection, and `_get_directory_knowledge_file_path()` for consistent knowledge file location determination.
+The file contains the `IndexingConfigManager` class as the primary configuration orchestrator, seven specialized `Pydantic` validation models (`FileProcessingConfigModel`, `ContentFilteringConfigModel`, `LLMConfigModel`, `ChangeDetectionConfigModel`, `ErrorHandlingConfigModel`, `OutputConfigModel`, `DebugConfigModel`), the comprehensive `IndexingConfigModel` that aggregates all validation models, and the `HandlerType` enum defining supported indexing handler types. The manager provides core methods including `load_config()` for configuration loading with auto-generation, `_generate_default_config()` for JSON file creation, `_load_json_config()` for validation and loading, and `_convert_to_indexing_config()` for model transformation.
 
 ###### Architecture & Design
 
-The architecture implements a hierarchical change detection pattern with breadth-first directory traversal and recursive subdirectory processing. The design uses timestamp-based comparison with configurable tolerance to handle filesystem precision variations, defensive programming patterns for graceful handling of missing or corrupted knowledge files, and comprehensive dependency tracking ensuring parent updates when children change. The system integrates with `FileAnalysisCache` for sophisticated constituent dependency checking including source files, cached analyses, and subdirectory knowledge files. Error handling follows a graceful degradation approach where individual failures don't break the entire change detection process, and conservative fallback behavior assumes changes when detection fails to ensure processing completeness.
+The architecture follows a hierarchical validation pattern with nested `Pydantic` models that mirror the configuration structure, enabling comprehensive type safety and validation at each level. The design implements an auto-generation strategy where missing JSON configuration files are created from centralized defaults, combined with immutable configuration loading that prevents runtime modifications through caching and conversion to `IndexingConfig` instances. The system uses a bridge pattern between Python defaults and JSON runtime configurations, with the `IndexingConfigManager` serving as the facade that coordinates between the defaults module, file system operations, and validation models.
 
 ####### Implementation Approach
 
-The implementation uses async/await patterns throughout for non-blocking change detection operations and efficient I/O handling. Change detection employs intelligent heuristics based on file modification recency rather than the MVP "process everything" approach, with files modified within 24 hours flagged for processing and very recent modifications (within 1 hour) automatically marked as changed. The system maintains processed path tracking using `Set[Path]` to avoid duplicate change detection and implements hierarchical dependency propagation by collecting parent directories from changed items up to the root. Timestamp comparison uses `datetime.fromtimestamp()` with configurable `timedelta` tolerance, and comprehensive staleness checking leverages `FileAnalysisCache.is_knowledge_file_stale()` for complete constituent dependency analysis.
+The implementation employs `Pydantic` model validation with custom field validators like `validate_indexing_mode()` and `validate_project_base_exclusions()` that enforce handler-specific constraints and cross-field validation rules. Configuration loading uses a multi-stage approach: handler type validation, cache checking, auto-generation of missing files, JSON loading with UTF-8 encoding, `Pydantic` validation, and conversion to `IndexingConfig` instances. The system implements configuration caching through the `_config_cache` dictionary to optimize repeated loads, and uses atomic file operations with proper error handling for configuration generation and loading operations.
 
 ######## External Dependencies & Integration Points
 
-**→ Inbound:**
-- `..models.indexing_config:IndexingConfig` - configuration and timestamp tolerance settings
-- `..models.knowledge_context:DirectoryContext` - directory structure representation with file contexts
-- `..models.knowledge_context:FileContext` - file metadata and processing status tracking
-- `..models.knowledge_context:ChangeInfo` - change information structure for processing coordination
-- `..models.knowledge_context:ChangeType` - enumeration of change types (NEW, MODIFIED, DELETED)
-- `.file_analysis_cache:FileAnalysisCache` - sophisticated constituent dependency checking and staleness detection
-- `fastmcp:Context` - logging and debugging context for change detection operations
-- `pathlib` (external library) - cross-platform path operations and file metadata access
-- `datetime` (external library) - timestamp comparison and manipulation with tolerance handling
-- `logging` (external library) - structured logging for change detection operations
+**→ Inbound:** [configuration management dependencies]
+- `.defaults:get_default_config` - centralized configuration template retrieval
+- `.defaults:validate_handler_type` - handler type validation logic
+- `..models.indexing_config:IndexingConfig` - target configuration class for conversion
+- `json` (external library) - JSON serialization and parsing operations
+- `pathlib` (external library) - cross-platform file system path operations
+- `pydantic` (external library) - configuration validation and type safety
 
-**← Outbound:**
-- `knowledge_bases/indexing/hierarchical_indexer.py:HierarchicalIndexer` - consumes change detection results for incremental processing
-- `knowledge_bases/builders/knowledge_builder.py` - uses change information for targeted knowledge file updates
-- Processing coordination systems that consume `ChangeInfo` objects for incremental update strategies
+**← Outbound:** [configuration consumers]
+- `knowledge_bases/indexing/` - indexing operations consuming validated configurations
+- `*.indexing-config.json` - generated JSON configuration files for user customization
+- `IndexingConfig` instances - validated configuration objects for indexing workflows
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core change detection engine enabling efficient incremental processing in the hierarchical knowledge indexing system
-- **Ecosystem Position**: Central component bridging file system monitoring with knowledge base processing, essential for performance optimization
-- **Integration Pattern**: Used by `HierarchicalIndexer` for incremental processing decisions, integrated with `FileAnalysisCache` for comprehensive staleness checking, and consumed by knowledge builders for targeted update strategies
+- **System Role**: Central configuration hub that bridges Python defaults with JSON runtime configurations for the knowledge base indexing system, ensuring type-safe configuration management across all indexing operations
+- **Ecosystem Position**: Core infrastructure component that enables zero-configuration startup while supporting user customization through JSON files
+- **Integration Pattern**: Used by indexing handlers during initialization to load validated configurations, with auto-generation ensuring seamless deployment and user customization through standard JSON editing workflows
 
 ######### Edge Cases & Error Handling
 
-The system handles missing knowledge files by treating them as new content requiring processing, with `_check_directory_change()` returning `ChangeType.NEW` when knowledge files don't exist. Timestamp access failures are handled gracefully with conservative fallback behavior assuming changes are required when comparison fails. Filesystem precision variations are accommodated through configurable `timestamp_tolerance` using `timedelta` objects for reliable comparison. Individual file or directory change detection failures are logged as warnings but don't break the overall change detection process, ensuring comprehensive coverage even with partial failures. Race condition scenarios during concurrent file modifications are handled through defensive timestamp comparison and conservative change assumptions. The system provides detailed error logging with specific file paths and error messages for debugging filesystem access issues.
+The system handles JSON parsing errors through `JSONDecodeError` catching with descriptive error messages, `Pydantic` validation failures with detailed field-level error reporting via `ValidationError.errors()`, and file system permission errors during configuration generation and loading. Handler type validation prevents unsupported configuration loading with comprehensive error messages listing supported types from `get_supported_handler_types()`. The manager handles missing configuration files through automatic generation, directory creation failures with graceful error propagation, and provides configuration cache clearing via `clear_cache()` for dynamic configuration updates.
 
 ########## Internal Implementation Details
 
-The change detection process maintains a `processed_paths` set to track already-processed items and prevent duplicate analysis during recursive traversal. Knowledge file path generation follows the convention of placing `{dirname}_kb.md` files in parent directories for consistent hierarchical organization. Timestamp tolerance is implemented using `timedelta(seconds=config.timestamp_tolerance_seconds)` for precise comparison control. The comprehensive directory change detection integrates with `FileAnalysisCache.is_knowledge_file_stale()` which checks source files, cached analyses, and subdirectory knowledge files for complete staleness determination. Hierarchical dependency tracking uses `_get_parent_directories()` to collect all parent paths from changed items to the root, ensuring complete change propagation. The system implements intelligent file change heuristics with 24-hour and 1-hour modification windows for performance optimization while maintaining processing completeness.
+The `_config_cache` dictionary provides performance optimization for repeated configuration loads, keyed by handler type strings. Configuration file naming follows the pattern `{handler_type}.indexing-config.json` within the knowledge directory structure. The `_convert_to_indexing_config()` method handles hierarchical to flat dictionary conversion using `model_dump()` and delegates to `IndexingConfig.from_dict()` for final object creation. File operations use UTF-8 encoding with proper exception handling, and JSON generation includes indentation and ASCII escaping configuration for human-readable output. The validation system supports cross-field validation through `field_validator` decorators with access to other field values via the `info` parameter.
 
 ########### Code Usage Examples
 
-**Basic change detection initialization and execution:**
+This example demonstrates initializing the configuration manager and loading a validated configuration for project-base indexing operations:
+
 ```python
-# Initialize change detector with configuration and execute comprehensive change detection
-config = IndexingConfig(timestamp_tolerance_seconds=2)
-detector = ChangeDetector(config)
-changes = await detector.detect_changes(root_context, ctx)
+from pathlib import Path
+from jesse_framework_mcp.knowledge_bases.indexing.config_manager import IndexingConfigManager
+
+# Initialize configuration manager with knowledge directory
+config_manager = IndexingConfigManager(Path("./knowledge_bases"))
+
+# Load configuration for project-base handler (auto-generates if missing)
+config = config_manager.load_config("project-base")
+
+# Access validated configuration parameters
+print(f"Max file size: {config.max_file_size}")
+print(f"Batch size: {config.batch_size}")
+print(f"LLM model: {config.llm_model}")
 ```
 
-**Comprehensive directory change checking with FileAnalysisCache integration:**
-```python
-# Check if directory needs rebuilding using comprehensive constituent dependency analysis
-change_info = await detector.check_comprehensive_directory_change(
-    directory_context, source_root, ctx
-)
-if change_info:
-    print(f"Directory needs rebuild: {change_info.change_type}")
-```
+This example shows how to clear the configuration cache and reload updated configurations:
 
-**Detailed change analysis for debugging and optimization:**
 ```python
-# Get detailed information about why directory requires rebuilding
-analysis = await detector.get_detailed_change_analysis(
-    directory_context, source_root, ctx
-)
-print(f"Staleness reason: {analysis.get('staleness_reason')}")
-```
+# Clear cache to force reload of updated configurations
+config_manager.clear_cache()
 
-**Simple file timestamp comparison for binary change detection:**
-```python
-# Check if source file is newer than corresponding knowledge file
-needs_update = detector.is_file_newer_than_knowledge(
-    source_file_path, knowledge_file_path
-)
+# Get configuration file path for manual editing
+config_path = config_manager.get_config_file_path("pdf-knowledge")
+print(f"Edit configuration at: {config_path}")
+
+# Reload configuration after manual changes
+updated_config = config_manager.load_config("pdf-knowledge")
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/debug_handler.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
@@ -507,492 +423,662 @@ else:
     debug_handler.capture_stage_llm_output(stage, prompt, analysis_result, file_path)
 ```
 
-### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/enhanced_prompts.py
+### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/defaults.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This file provides specialized LLM prompt templates for generating hierarchical semantic trees within the JESSE Framework Knowledge Bases Hierarchical Indexing System, focusing on architectural analysis and design pattern extraction. The file enables structured knowledge base generation through the `EnhancedPrompts` class which contains prompt templates for file analysis, directory analysis, global summaries, and structural compliance review. Key semantic entities include `EnhancedPrompts` class for prompt management, `file_analysis_prompt` template for individual file processing, `directory_analysis_prompt` template for module organization analysis, `global_summary_prompt` template for system-wide synthesis, reviewer prompt templates for quality assurance, `get_portable_path()` function for cross-platform path compatibility, `logging` module for operational tracking, and `pathlib.Path` for modern path handling. The technical architecture implements a hierarchical semantic tree specification with 8 levels (headers 4-11) ensuring progressive knowledge loading from high-level purpose to detailed implementation specifics.
+This file provides centralized default configurations for the Jesse Framework MCP's Knowledge Bases Hierarchical Indexing System, specifically supporting three handler types: `project-base`, `git-clones`, and `pdf-knowledge`. The module enables automatic JSON configuration file generation when configurations don't exist, featuring the `get_default_config()`, `get_supported_handler_types()`, and `validate_handler_type()` functions. Key semantic entities include `PROJECT_BASE_DEFAULT_CONFIG`, `GIT_CLONES_DEFAULT_CONFIG`, `PDF_KNOWLEDGE_DEFAULT_CONFIG`, `BASE_EXCLUDED_EXTENSIONS`, `BASE_EXCLUDED_DIRECTORIES`, `Claude4SonnetModel`, and the `DEFAULT_CONFIGS` registry. The configuration templates provide production-ready defaults with hierarchical exclusion systems, LLM integration via `Claude4SonnetModel.CLAUDE_4_SONNET`, and comprehensive parameter coverage including `file_processing`, `content_filtering`, `llm_config`, `change_detection`, `error_handling`, `output_config`, and `debug_config` sections.
 
 ##### Main Components
 
-The file contains the `EnhancedPrompts` class with six primary prompt template attributes: `file_analysis_prompt` for individual file architectural analysis, `directory_analysis_prompt` for module organization and design relationships, `global_summary_prompt` for system-wide architectural synthesis, `file_analysis_reviewer_prompt` for structural compliance checking, `directory_analysis_reviewer_prompt` for directory analysis validation, and `global_summary_reviewer_prompt` for global summary compliance verification. The class includes two shared specification constants: `SEMANTIC_ENTITY_USAGE_SPEC` defining technical entity naming requirements and `LEVEL_8_FORMATTING_SPEC` standardizing external dependency documentation format. Six public methods provide formatted prompt generation: `get_file_analysis_prompt()`, `get_directory_analysis_prompt()`, `get_global_summary_prompt()`, and three corresponding reviewer prompt methods for quality assurance validation.
+The file contains three primary configuration dictionaries (`PROJECT_BASE_DEFAULT_CONFIG`, `GIT_CLONES_DEFAULT_CONFIG`, `PDF_KNOWLEDGE_DEFAULT_CONFIG`), base exclusion sets (`BASE_EXCLUDED_EXTENSIONS`, `BASE_EXCLUDED_DIRECTORIES`), project-specific exclusions (`PROJECT_BASE_EXCLUSIONS`), a configuration registry (`DEFAULT_CONFIGS`), and three utility functions (`get_default_config()`, `get_supported_handler_types()`, `validate_handler_type()`). Each configuration template includes seven hierarchical sections covering handler identification, file processing limits, content filtering rules, LLM configuration, change detection settings, error handling parameters, output configuration, and debug options.
 
 ###### Architecture & Design
 
-The architecture follows a template-based prompt generation pattern with shared specification components ensuring consistency across all prompt types. The design implements a hierarchical semantic tree specification with strict level organization (4-11) and no-redundancy rules between levels, enabling progressive knowledge loading based on developer needs. The class uses composition over inheritance with shared specification constants (`SEMANTIC_ENTITY_USAGE_SPEC`, `LEVEL_8_FORMATTING_SPEC`) applied across all prompt templates through string formatting. The reviewer pattern implements structural compliance checking with binary output (COMPLIANT/corrected version) for automated quality assurance. The portable path integration ensures cross-platform compatibility through `get_portable_path()` function usage in all path-related prompt generation.
+The architecture implements a template-based configuration system with handler-specific optimization and hierarchical exclusion inheritance. The design separates base exclusions (applied universally) from handler-specific exclusions (applied selectively), enabling configuration reuse while maintaining handler specialization. The configuration registry pattern provides centralized access to all handler types through the `DEFAULT_CONFIGS` dictionary, while deep copying ensures template immutability. The hierarchical structure groups related configuration parameters into logical sections (`file_processing`, `content_filtering`, etc.) for improved maintainability and discoverability.
 
 ####### Implementation Approach
 
-The implementation uses Python string formatting with template placeholders (`{file_path}`, `{file_content}`, `{directory_path}`, `{assembled_content}`) for dynamic prompt generation. Error handling employs try-catch blocks with fallback to original paths when portable path conversion fails, ensuring robust operation across different environments. The prompt templates include comprehensive formatting specifications with markdown header requirements (####-###########), code snippet formatting rules with language identifiers, and directory name trailing slash requirements. The class initialization logs successful setup and each method logs debug information for operational tracking. The reviewer prompts implement structural-only validation with explicit scope limitations preventing semantic assessment while ensuring formatting compliance.
+The implementation uses dictionary-based configuration templates with type annotations and deep copying for safe template access. Each handler configuration optimizes parameters for specific use cases: `project-base` uses larger batch sizes (7 files) and higher file size limits (2MB), `git-clones` uses conservative settings with smaller batches (5 files) and 1MB limits, while `pdf-knowledge` supports larger documents (10MB) with smaller batches (3 files). The exclusion system combines base exclusions with handler-specific additions, and the `copy.deepcopy()` approach prevents accidental template modification during configuration generation.
+
+######## External Dependencies & Integration Points
+
+**→ Inbound:** [dependencies this file requires]
+- `jesse_framework_mcp.llm.strands_agent_driver.models:Claude4SonnetModel` - LLM model configuration for all handler types
+- `typing` (external library) - type annotations for configuration templates and function signatures
+- `copy` (external library) - deep copying functionality for template immutability
+
+**← Outbound:** [systems that consume this file's configurations]
+- `knowledge_bases/indexing/` - indexing handlers consume these default configurations
+- `*.json` - generated configuration files based on these templates
+- Configuration validation systems that use `validate_handler_type()` and `get_supported_handler_types()`
+
+**⚡ System role and ecosystem integration:**
+- **System Role**: Central configuration provider for the Jesse Framework MCP's indexing system, serving as the authoritative source for handler default configurations
+- **Ecosystem Position**: Core infrastructure component that enables the indexing system's configuration management and auto-generation capabilities
+- **Integration Pattern**: Used by indexing handlers during initialization to generate missing JSON configurations, and by validation systems to ensure handler type compliance
+
+######### Edge Cases & Error Handling
+
+The `get_default_config()` function raises `ValueError` for unsupported handler types with clear error messaging including the list of supported types. The configuration templates include comprehensive error handling parameters: `max_retries` (2-5 depending on handler), `retry_delay_seconds` (0.5-2.0), and `continue_on_file_errors: True` for resilient processing. Edge cases addressed include filesystem timestamp comparison tolerance (2-10 seconds), concurrent operation limits (2-3), and file size constraints (1-10MB) tailored to each handler's processing characteristics.
+
+########## Internal Implementation Details
+
+The module maintains backward compatibility with existing `IndexingConfig` structure through complete parameter coverage in all templates. The `BASE_EXCLUDED_DIRECTORIES` includes system directories (`.git`, `__pycache__`, `node_modules`) and the `scratchpad` directory added for universal exclusion. Configuration templates use nested dictionary structures with consistent key naming patterns, and the `DEFAULT_CONFIGS` registry enables O(1) lookup for handler type validation. The deep copying mechanism in `get_default_config()` prevents template pollution while maintaining reference efficiency for read-only operations.
+
+########### Code Usage Examples
+
+This example demonstrates retrieving and customizing a default configuration for the project-base handler. The deep copy ensures template safety while allowing configuration customization.
+
+```python
+from jesse_framework_mcp.knowledge_bases.indexing.defaults import get_default_config
+
+# Get default configuration for project-base handler
+config = get_default_config("project-base")
+config["file_processing"]["batch_size"] = 10  # Customize batch size
+config["llm_config"]["temperature"] = 0.5     # Adjust LLM temperature
+```
+
+This example shows handler type validation and supported types discovery for configuration management workflows.
+
+```python
+from jesse_framework_mcp.knowledge_bases.indexing.defaults import validate_handler_type, get_supported_handler_types
+
+# Validate handler type before processing
+if validate_handler_type("git-clones"):
+    config = get_default_config("git-clones")
+
+# Get all supported handler types for UI generation
+supported_handlers = get_supported_handler_types()  # Returns ['git-clones', 'pdf-knowledge', 'project-base']
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/execution_engine.py
+
+*Last Updated: 2025-07-06T23:05:36Z*
+
+#### Functional Intent & Features
+
+The `ExecutionEngine` class serves as the core execution orchestrator for the Jesse Framework's Plan-then-Execute architecture within the Knowledge Bases Hierarchical Indexing System. This component transforms `ExecutionPlan` objects containing atomic tasks into concrete file system operations, LLM-powered analysis, and knowledge base generation. The engine provides concurrent task execution with dependency resolution, comprehensive progress reporting, and robust error handling for reliable knowledge base construction. Key semantic entities include `ExecutionEngine`, `AtomicTask`, `TaskType`, `ExecutionResults`, `KnowledgeBuilder`, `FileAnalysisCache`, `DirectoryContext`, `FileContext`, `ProcessingStatus`, `IndexingConfig`, and `asyncio` semaphore-based concurrency control. The implementation leverages task dispatch patterns with specialized handlers for nine distinct task types including `ANALYZE_FILE_LLM`, `CREATE_DIRECTORY_KB`, and orphaned file cleanup operations.
+
+##### Main Components
+
+The execution engine contains several primary components: the `ExecutionEngine` class as the main orchestrator, task execution handlers dictionary (`_task_handlers`) mapping `TaskType` enum values to specialized async methods, concurrency control through `_execution_semaphore` limiting parallel operations, execution state tracking sets (`_completed_tasks`, `_failed_tasks`, `_running_tasks`), integrated `KnowledgeBuilder` for LLM-powered content analysis, and `FileAnalysisCache` for performance optimization. The engine includes nine specialized task handlers: `_execute_analyze_file_llm`, `_execute_skip_file_cached`, `_execute_create_directory_kb`, `_execute_skip_directory_fresh`, `_execute_delete_orphaned_file`, `_execute_delete_orphaned_directory`, `_execute_create_cache_structure`, `_execute_verify_cache_freshness`, and `_execute_verify_kb_freshness`. Additional utility components include `_strip_cache_metadata` for content cleaning, `_load_cached_analysis_content` for cache integration, and `_cleanup_execution_resources` for resource management.
+
+###### Architecture & Design
+
+The architecture implements a Plan-then-Execute pattern with atomic task execution ensuring complete task isolation and independent processing. The design uses dependency-aware execution respecting task prerequisites through `_are_dependencies_satisfied` validation, concurrent execution optimization via `asyncio.Semaphore` for resource utilization, and comprehensive progress reporting providing real-time execution status. The system employs a task dispatch pattern routing different `TaskType` values to specialized handlers, maintains execution state through set-based tracking of task completion status, and integrates existing components (`KnowledgeBuilder`, `FileAnalysisCache`) for seamless operation. Error handling enables graceful degradation with configurable `continue_on_file_errors` behavior, while resource management prevents memory leaks through proper cleanup procedures. The architecture supports both preview mode for plan analysis and full execution mode with performance metrics collection.
+
+####### Implementation Approach
+
+The implementation uses `asyncio` for concurrent task execution with semaphore-based concurrency control limiting parallel operations to `config.max_concurrent_operations`. Task execution follows dependency resolution through `plan.get_execution_order()` providing topologically sorted task sequences, with each task validated via `_are_dependencies_satisfied` before execution. The engine employs task dispatch using a handler dictionary mapping `TaskType` enum values to specialized async methods, maintaining execution state through three sets tracking completed, failed, and running tasks. Content processing involves reconstructing `FileContext` and `DirectoryContext` objects from task metadata, loading cached analysis content via `_load_cached_analysis_content`, and stripping metadata contamination through `_strip_cache_metadata`. Performance optimization includes bypass cache flags for stale content, parallel execution opportunities through dependency analysis, and comprehensive metrics collection in `ExecutionResults` objects. Error handling implements configurable failure behavior with detailed logging and graceful task failure recovery.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.helpers.path_utils:get_portable_path` - cross-platform path conversion for prompt compatibility
-- `logging` (external library) - operational tracking and debug information for prompt generation
-- `typing.Dict` (external library) - type hints for method parameters and return values
-- `typing.Any` (external library) - flexible type annotations for prompt template parameters
-- `typing.List` (external library) - type annotations for collection parameters
-- `pathlib.Path` (external library) - modern path handling for file and directory operations
+- `..models.IndexingConfig` - Configuration parameters for execution behavior and resource limits
+- `..models.DirectoryContext` - Directory processing context with file relationships and metadata
+- `..models.FileContext` - File processing context with analysis results and status tracking
+- `..models.ProcessingStatus` - Enumeration for tracking processing state transitions
+- `..models.execution_plan.ExecutionPlan` - Plan objects containing atomic tasks and dependencies
+- `..models.execution_plan.AtomicTask` - Individual task definitions with metadata and requirements
+- `..models.execution_plan.TaskType` - Task type enumeration for handler dispatch
+- `..models.execution_plan.ExecutionResults` - Results collection with performance metrics
+- `.knowledge_builder.KnowledgeBuilder` - LLM-powered content analysis and KB generation
+- `.file_analysis_cache.FileAnalysisCache` - Caching system for performance optimization
+- `fastmcp.Context` - FastMCP context for progress reporting and logging
+- `asyncio` (external library) - Async programming patterns and concurrency control
+- `pathlib.Path` (external library) - Cross-platform path operations and file metadata
+- `logging` (external library) - Structured logging for execution analysis
 
 **← Outbound:**
-- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder:KnowledgeBuilder` - consumes generated prompts for LLM processing
-- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - uses prompts for directory structure analysis
-- `LLM processing systems` - consume formatted prompts for hierarchical semantic tree generation
-- `knowledge base files` - generated content follows prompt specifications for structured knowledge storage
+- `jesse_framework_mcp/knowledge_bases/indexing/hierarchical_indexer.py:HierarchicalIndexer` - Main indexer consuming execution results
+- `generated/knowledge_base_files/*.md` - Generated knowledge base files from directory processing
+- `generated/cache_files/*.analysis.md` - Cached analysis files from LLM processing
+- `logging_system` - Structured execution logs for debugging and monitoring
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core prompt template provider for JESSE Framework Knowledge Bases Hierarchical Indexing System, defining the structured analysis approach for all knowledge generation
-- **Ecosystem Position**: Central component that standardizes knowledge extraction methodology across file analysis, directory analysis, and global summary generation workflows
-- **Integration Pattern**: Used by knowledge building components during indexing operations, LLM processing systems for structured analysis, and quality assurance systems for compliance validation
+- **System Role**: Core execution engine transforming declarative execution plans into concrete file system operations and knowledge base generation within the Jesse Framework's hierarchical indexing workflow
+- **Ecosystem Position**: Central component bridging high-level planning (`ExecutionPlan`) with low-level operations (`KnowledgeBuilder`, `FileAnalysisCache`) in the Plan-then-Execute architecture
+- **Integration Pattern**: Used by `HierarchicalIndexer` for executing complex indexing workflows, consuming plans from planning components, and coordinating with FastMCP for progress reporting to human operators
 
 ######### Edge Cases & Error Handling
 
-Error handling includes portable path conversion failures with graceful fallback to original paths and warning logging, ensuring prompt generation continues even when cross-platform path conversion encounters issues. The implementation handles missing or invalid file content through template parameter validation and comprehensive error logging with specific failure context. Prompt generation failures raise `RuntimeError` with detailed error context for debugging and operational monitoring. The reviewer prompts handle truncation detection through mandatory end-of-output markers, returning "TRUNCATED" when output is incomplete. Template formatting errors are caught and re-raised with enhanced context information including the specific prompt type and parameters that caused the failure.
+The engine handles multiple error scenarios including dependency validation failures where tasks cannot execute due to unsatisfied prerequisites, individual task execution failures with configurable `continue_on_file_errors` behavior allowing workflow continuation, and resource exhaustion through semaphore-based concurrency limiting. Cache-related edge cases include missing cached analysis content handled by `_load_cached_analysis_content` with fallback to placeholder text, metadata contamination prevented by `_strip_cache_metadata` stripping XML tags, and stale cache detection triggering LLM re-analysis. File system edge cases cover orphaned file deletion with safety checks via `is_safe_to_delete` metadata, empty directory removal using `rmdir()` for non-empty directory protection, and missing file handling during verification tasks. The system provides comprehensive error reporting through `ExecutionResults.failed_tasks` with detailed error messages, graceful degradation allowing partial execution completion, and proper resource cleanup via `_cleanup_execution_resources` preventing memory leaks. Debugging support includes detailed logging at multiple levels, execution state tracking through running/completed/failed task sets, and preview mode for plan analysis without side effects.
 
 ########## Internal Implementation Details
 
-The class uses class-level constants for shared specifications to implement DRY principles and ensure consistency across all prompt templates. String formatting employs Python's `str.format()` method with named placeholders for clear parameter mapping and maintainable template structure. The logging implementation uses module-level logger with debug-level messages for operational tracking without performance impact in production. Error handling uses chained exceptions (`raise ... from e`) to preserve original error context while providing enhanced debugging information. The portable path integration includes exception handling with fallback behavior, ensuring robust operation when path conversion utilities encounter filesystem or permission issues. Template validation occurs during formatting with immediate error reporting for missing or invalid parameters.
+The execution engine maintains internal state through three sets: `_completed_tasks`, `_failed_tasks`, and `_running_tasks` for tracking task lifecycle progression. Concurrency control uses `asyncio.Semaphore(config.max_concurrent_operations)` with async context manager pattern in `_execute_single_task` for resource management. Task metadata reconstruction involves complex object rebuilding from serialized task data, particularly for `DirectoryContext` objects requiring `knowledge_file_path` assignment and `FileContext` objects needing cached content loading. The `_strip_cache_metadata` method uses regex pattern `r'\s*'` with `DOTALL` flag for multiline metadata block removal. Cache integration through `_load_cached_analysis_content` handles file system errors gracefully, returning `None` for missing content to enable fallback behavior. Performance metrics collection in `ExecutionResults` tracks `llm_calls_made`, `files_processed`, `directories_processed`, and `files_deleted` with execution duration calculation. Resource cleanup involves `knowledge_builder.cleanup()` for connection management and execution state clearing for memory management. The task handler dispatch system uses dictionary lookup with runtime error handling for missing handlers, ensuring robust task execution even with configuration errors.
 
 ########### Code Usage Examples
 
-Basic file analysis prompt generation demonstrates the standard workflow for creating structured analysis prompts. This pattern provides the foundation for all file-based knowledge extraction in the indexing system.
-
+**Basic execution engine initialization and plan execution:**
 ```python
-# Generate file analysis prompt with portable path support
-enhanced_prompts = EnhancedPrompts()
-file_path = Path("src/components/Button.tsx")
-file_content = "export default function Button() { return <button>Click</button>; }"
-file_size = len(file_content.encode('utf-8'))
+# Initialize execution engine with configuration
+config = IndexingConfig(max_concurrent_operations=4, continue_on_file_errors=True)
+engine = ExecutionEngine(config)
 
-prompt = enhanced_prompts.get_file_analysis_prompt(
-    file_path=file_path,
-    file_content=file_content,
-    file_size=file_size
-)
-# Returns formatted prompt ready for LLM processing with hierarchical structure requirements
+# Execute a complete plan with progress reporting
+async def execute_indexing_plan(plan: ExecutionPlan, ctx: Context):
+    results = await engine.execute_plan(plan, ctx)
+    print(f"Completed: {len(results.completed_tasks)}, Failed: {len(results.failed_tasks)}")
+    print(f"LLM calls: {results.llm_calls_made}, Duration: {results.total_duration:.1f}s")
+    return results
 ```
 
-Directory analysis prompt generation enables module-level architectural analysis with child content integration. This approach supports bottom-up knowledge building from individual files to complete system understanding.
-
+**Plan preview for debugging and analysis:**
 ```python
-# Generate directory analysis prompt with child content summary
-directory_path = Path("src/components/")
-file_count = 15
-subdirectory_count = 3
-child_content_summary = "React components with TypeScript definitions and styling"
-
-prompt = enhanced_prompts.get_directory_analysis_prompt(
-    directory_path=directory_path,
-    file_count=file_count,
-    subdirectory_count=subdirectory_count,
-    child_content_summary=child_content_summary
-)
-# Returns structured prompt for hierarchical directory analysis
+# Preview execution plan without executing tasks
+async def preview_execution_strategy(plan: ExecutionPlan, ctx: Context):
+    await engine.preview_plan(plan, ctx)
+    # Shows task dependencies, execution order, and resource requirements
 ```
 
-Quality assurance workflow demonstrates the reviewer pattern for ensuring structural compliance. This pattern enables automated validation and correction of generated content without manual intervention.
-
+**Custom task execution with error handling:**
 ```python
-# Quality assurance workflow with automatic compliance checking
-generated_analysis = "#### Functional Intent & Features\nFile analysis content..."
-reviewer_prompt = enhanced_prompts.get_file_analysis_reviewer_prompt(generated_analysis)
-
-# LLM processes reviewer prompt and returns either "COMPLIANT" or corrected version
-review_result = llm_process(reviewer_prompt)
-if review_result != "COMPLIANT":
-    corrected_content = review_result  # Use corrected version
+# Execute individual tasks with dependency validation
+async def execute_with_validation(task: AtomicTask, ctx: Context):
+    if engine._are_dependencies_satisfied(task):
+        await engine._execute_single_task(task, ctx)
+        print(f"Task {task.task_id} completed successfully")
+    else:
+        print(f"Dependencies not satisfied for {task.task_id}")
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/file_analysis_cache.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This file implements a high-performance caching system for individual LLM analysis outputs in the Jesse Framework MCP knowledge building system, providing significant performance improvements by avoiding recomputation of file analyses when source files remain unchanged. The `FileAnalysisCache` class manages timestamp-based freshness checking, clean metadata separation, and project-base directory structure mirroring using `IndexingConfig`, `DirectoryContext`, `FileContext`, `get_portable_path()`, HTML comment delimiters (`METADATA_START`, `METADATA_END`), and `.analysis.md` cache file suffixes. Key semantic entities include `datetime` timestamp comparison with configurable tolerance, `pathlib.Path` operations, comprehensive staleness detection through `is_knowledge_file_stale()`, constituent dependency checking, and cache structure preparation via `prepare_cache_structure()` for concurrent operation safety.
+The `FileAnalysisCache` class provides high-performance caching capabilities for individual LLM file analysis outputs within the Jesse Framework MCP knowledge building system. This cache manager eliminates redundant LLM API calls by storing and retrieving analysis results for unchanged source files, implementing timestamp-based staleness detection with `is_cache_fresh()` method returning detailed reasoning tuples. Key semantic entities include `FileAnalysisCache` class, `IndexingConfig` configuration model, `DirectoryContext` and `FileContext` data structures, `get_portable_path()` utility function, HTML comment metadata delimiters (`METADATA_START`, `METADATA_END`), project-base directory mirroring strategy, `.analysis.md` cache file suffix, `prepare_cache_structure()` method for concurrent operation safety, and `RebuildDecisionEngine` integration for staleness determination. The system provides clean metadata separation ensuring no cache artifacts contaminate final knowledge files through `_extract_analysis_content()` method, comprehensive error handling with graceful degradation on cache failures, and rich debugging capabilities with detailed timestamp comparisons and constituent staleness analysis.
 
 ##### Main Components
 
-The file contains the `FileAnalysisCache` class with core methods including `get_cached_analysis()` for retrieving clean cached content, `cache_analysis()` for storing analysis results with metadata, `is_cache_fresh()` for timestamp-based freshness validation, `get_cache_path()` for project-base path calculation, `is_knowledge_file_stale()` for comprehensive directory knowledge file staleness checking, `get_constituent_staleness_info()` for detailed debugging analysis, `prepare_cache_structure()` for upfront directory creation, and `clear_cache()` for cache invalidation. Supporting utility methods include `_extract_analysis_content()` for metadata removal, `_create_metadata_header()` for portable path metadata generation, `_collect_all_files_recursive()` for hierarchy traversal, and `get_cache_stats()` for monitoring.
+The module contains the primary `FileAnalysisCache` class with core caching operations including `get_cached_analysis()` for retrieval, `cache_analysis()` for storage, and `is_cache_fresh()` for staleness checking. Cache path management is handled by `get_cache_path()` following project-base directory structure mirroring. Knowledge file operations include `get_knowledge_file_path()` and `is_knowledge_file_stale()` for directory-level rebuild decisions. Metadata management components include `_create_metadata_header()` for rich cache tracking and `_extract_analysis_content()` for clean content extraction. Utility methods provide `get_constituent_staleness_info()` for detailed debugging analysis, `prepare_cache_structure()` for concurrent operation safety, `clear_cache()` for cache invalidation, and `get_cache_stats()` for monitoring. Helper methods include `_collect_all_files_recursive()` for directory traversal and `_is_handler_root_directory()` for consistent path generation across knowledge base handler types.
 
 ###### Architecture & Design
 
-The architecture implements a cache-first processing strategy with clean metadata separation ensuring no cache artifacts contaminate final knowledge files. The design follows project-base indexing business rules with mirror directory structure organization and standardized `.analysis.md` file naming conventions. HTML comment-based metadata blocks enable reliable content extraction while maintaining backward compatibility. The system uses immutable timestamp-based freshness checking with configurable tolerance for filesystem precision handling. Upfront cache structure preparation eliminates race conditions during concurrent operations through pre-created directory hierarchies.
+The architecture implements a cache-first processing strategy with clean metadata separation using HTML comment delimiters to prevent cache artifacts from contaminating final knowledge files. The design follows project-base directory structure mirroring as mandated by indexing business rules, creating `.analysis.md` cache files that mirror source file organization. Timestamp-based freshness checking uses direct filesystem timestamp comparison without tolerance for reliability and simplicity. The system employs upfront cache structure preparation through `prepare_cache_structure()` to eliminate race conditions during concurrent operations. Error handling follows graceful degradation principles where cache failures never break core knowledge building processes. The metadata system uses structured HTML comments with `CACHE_VERSION` for future compatibility and includes portable path references using `get_portable_path()` for cross-environment compatibility.
 
 ####### Implementation Approach
 
-The implementation uses timestamp comparison with `datetime.fromtimestamp()` and configurable tolerance through `timedelta` for reliable freshness detection. Cache path calculation follows project-base subdirectory mirroring using `Path.relative_to()` and structured path reconstruction. Metadata management uses HTML comment delimiters for clean content extraction without markdown parsing conflicts. Comprehensive staleness checking evaluates cached analyses, subdirectory knowledge files, and source file timestamps against knowledge file modification times. Concurrent safety is achieved through upfront directory structure creation and atomic file operations with graceful error handling.
+The implementation uses direct timestamp comparison between source files and cache files without tolerance, where cache is fresh if `cache_mtime >= source_mtime`. Cache files combine metadata headers with analysis content using clear HTML comment delimiters for reliable extraction. The system implements two-layer processing flow: source files trigger individual file reprocessing when changed, while knowledge files rebuild only when cached analyses or subdirectory knowledge files are newer. Directory structure preparation uses recursive `DirectoryContext` traversal to identify all files requiring cache directories, then creates unique cache directory sets atomically. Path calculation follows project-base indexing rules with relative path preservation and standardized `.analysis.md` suffix application. The staleness checking system specifically excludes cached analyses from directory rebuild decisions to prevent infinite rebuild loops, focusing only on source files and subdirectory knowledge files for directory-level staleness determination.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models.indexing_config:IndexingConfig` - Cache configuration and knowledge output directory paths
-- `..models.knowledge_context:DirectoryContext` - Directory structure context for cache preparation
-- `..models.knowledge_context:FileContext` - Individual file metadata and processing status
-- `...helpers.path_utils:get_portable_path` - Portable path generation for cross-environment compatibility
-- `fastmcp:Context` - Progress reporting during cache structure preparation
-- `pathlib` (external library) - Cross-platform path operations and file metadata access
-- `datetime` (external library) - Timestamp comparison and cache freshness determination
-- `logging` (external library) - Structured logging for cache operations and debugging
+- `..models.IndexingConfig` - Configuration model providing cache paths and timestamp tolerance settings
+- `..models.DirectoryContext` - Hierarchical directory structure representation for cache preparation
+- `..models.FileContext` - Individual file metadata with timestamps for staleness checking
+- `...helpers.path_utils:get_portable_path` - Portable path generation using JESSE path variables
+- `fastmcp.Context` - MCP framework context for progress reporting and user communication
+- `pathlib.Path` (standard library) - Cross-platform path operations and file metadata access
+- `datetime.datetime` (standard library) - Timestamp comparison and cache freshness determination
+- `logging` (standard library) - Structured logging for cache operations and debugging
 
 **← Outbound:**
-- `knowledge_builder.py:KnowledgeBuilder` - Cache retrieval and storage during file analysis
-- `hierarchical_indexer.py:HierarchicalIndexer` - Cache structure preparation and staleness checking
-- `change_detector.py:ChangeDetector` - Knowledge file staleness evaluation for incremental processing
-- `generated/.knowledge/project-base/` - Cache file storage following mirror directory structure
+- `knowledge_building/rebuild_decision_engine.py` - Consumes staleness checking methods for rebuild decisions
+- `knowledge_building/knowledge_builder.py` - Uses cache retrieval and storage during file processing
+- `indexing/hierarchical_indexer.py` - Integrates cache structure preparation in processing workflow
+- `{PROJECT_ROOT}/jesse-framework-mcp/knowledge-base/project-base/` - Generated cache files with metadata headers
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical performance optimization component providing LLM analysis caching to eliminate redundant processing and reduce API costs in the knowledge building pipeline
-- **Ecosystem Position**: Core infrastructure component supporting the hierarchical indexing system with cache-first processing strategy and comprehensive staleness detection
-- **Integration Pattern**: Used by knowledge builders for cache retrieval/storage, hierarchical indexers for structure preparation, and change detectors for staleness evaluation with concurrent operation safety
+- **System Role**: Core performance optimization component in the Jesse Framework MCP knowledge building pipeline, serving as the primary cache layer between source file analysis and knowledge file generation
+- **Ecosystem Position**: Central infrastructure component that significantly impacts system performance by reducing LLM API costs and processing time through intelligent caching
+- **Integration Pattern**: Used by knowledge builders during file processing workflows, integrated with rebuild decision engines for staleness determination, and consumed by hierarchical indexers for structure preparation during batch operations
 
 ######### Edge Cases & Error Handling
 
-The system handles missing cache files by returning `None` to trigger fresh LLM analysis rather than failing operations. Filesystem access errors during timestamp comparison are treated conservatively as requiring fresh analysis to prevent stale content usage. Cache extraction failures fall back to original content for backward compatibility with cache files lacking metadata delimiters. Concurrent directory creation race conditions are eliminated through upfront structure preparation with fallback to on-demand creation. Portable path conversion failures use absolute paths as fallback in metadata headers. Cache write failures are logged but don't break core processing through graceful degradation patterns.
+The system handles missing cache files by returning `None` from `get_cached_analysis()` to trigger fresh LLM analysis. Filesystem access errors during timestamp comparison result in conservative staleness assumptions, treating files as requiring fresh analysis. Cache write failures are logged but never propagate to break core knowledge building processes. Path calculation errors fall back to flat structure in project-base directory to ensure cache operations continue. Metadata extraction failures return original content for backward compatibility with cache files lacking metadata delimiters. Concurrent access scenarios are handled through upfront directory structure preparation, with fallback to on-demand directory creation if preparation fails. The system treats cache freshness check failures conservatively by assuming staleness to trigger rebuilds rather than risk serving stale content. Directory structure preparation failures are logged but don't prevent processing, as individual cache operations fall back to on-demand directory creation.
 
 ########## Internal Implementation Details
 
-The `METADATA_START` and `METADATA_END` HTML comment delimiters use `<!-- CACHE_METADATA_START -->` and `<!-- CACHE_METADATA_END -->` for reliable content extraction without markdown conflicts. Cache versioning uses `CACHE_VERSION = "1.0"` for future compatibility and migration support. Timestamp tolerance is calculated as `timedelta(seconds=config.timestamp_tolerance_seconds)` for consistent freshness checking. The `get_cache_path()` method applies project-base subdirectory structure with `.analysis.md` suffix following `Path("project-base") / relative_path.parent / f"{file_path.name}.analysis.md"` pattern. Staleness checking uses `cache_mtime > knowledge_mtime + self.timestamp_tolerance` comparison logic for all constituent dependencies.
+Cache files use HTML comment metadata blocks with `CACHE_VERSION = "1.0"` for future compatibility and migration support. The metadata header includes portable source file paths using `get_portable_path()`, cache timestamp, source modification time, and cache version. Content extraction uses string operations to locate `METADATA_START` and `METADATA_END` delimiters, removing everything up to and including the end delimiter. Timestamp tolerance is calculated from `IndexingConfig.timestamp_tolerance_seconds` but currently unused in direct comparison logic. The `_is_handler_root_directory()` method implements identical logic to `KnowledgeBuilder` for consistent path generation across project-base, git-clones, and PDF-knowledge handlers. Cache statistics collection traverses the cache directory using `rglob("*.analysis.md")` pattern matching. The constituent staleness analysis builds comprehensive dictionaries with ISO timestamp formatting and detailed reasoning for debugging purposes. Directory structure preparation uses set operations to eliminate duplicate directory creation and batch processing for atomic structure creation.
 
 ########### Code Usage Examples
 
-**Basic cache retrieval with freshness checking demonstrates how to check for cached analysis content before triggering expensive LLM operations. This pattern provides immediate performance benefits by avoiding redundant processing when files haven't changed.**
+**Basic cache retrieval and storage pattern:**
 ```python
+# Initialize cache with configuration
 cache = FileAnalysisCache(config)
+
+# Check for cached analysis
 cached_content = await cache.get_cached_analysis(file_path, source_root)
 if cached_content:
-    print(f"Cache hit: {len(cached_content)} characters")
+    # Use cached analysis directly
+    analysis_result = cached_content
 else:
-    print("Cache miss - fresh analysis required")
+    # Perform fresh LLM analysis
+    analysis_result = await perform_llm_analysis(file_path)
+    # Cache the result for future use
+    await cache.cache_analysis(file_path, analysis_result, source_root)
 ```
 
-**Caching analysis results with metadata shows how to store LLM analysis outputs with portable path metadata for future retrieval. This enables persistent caching across different environments and working directories.**
+**Cache structure preparation for concurrent operations:**
 ```python
-analysis_result = "# File Analysis\nThis file implements..."
-await cache.cache_analysis(file_path, analysis_result, source_root)
-print(f"Cached analysis for {file_path.name}")
+# Prepare entire cache structure upfront to eliminate race conditions
+await cache.prepare_cache_structure(root_context, source_root, ctx)
+
+# Now safe to perform concurrent caching operations
+tasks = [cache.cache_analysis(file_path, analysis, source_root) 
+         for file_path, analysis in file_analyses]
+await asyncio.gather(*tasks)
 ```
 
-**Comprehensive staleness checking for directory knowledge files demonstrates how to evaluate whether knowledge files need rebuilding based on constituent dependencies. This enables efficient incremental processing by only rebuilding when necessary.**
+**Knowledge file staleness checking:**
 ```python
+# Check if directory knowledge file needs rebuilding
 is_stale, reason = cache.is_knowledge_file_stale(
     directory_path, source_root, file_contexts, subdirectory_paths
 )
 if is_stale:
-    print(f"Knowledge file needs rebuild: {reason}")
+    logger.info(f"Rebuilding knowledge file: {reason}")
+    # Trigger knowledge file rebuild
 ```
 
-**Upfront cache structure preparation for concurrent safety shows how to pre-create directory hierarchies before concurrent operations begin. This eliminates race conditions and ensures consistent cache state during parallel processing.**
+**Detailed staleness analysis for debugging:**
 ```python
-await cache.prepare_cache_structure(root_context, source_root, ctx)
-print("Cache directories pre-created for safe concurrent operations")
+# Get comprehensive staleness information
+staleness_info = await cache.get_constituent_staleness_info(
+    directory_path, source_root, file_contexts, subdirectory_paths, ctx
+)
+# Access detailed timestamp comparisons and reasoning
+for file_info in staleness_info['source_files']:
+    print(f"File: {file_info['name']}, Modified: {file_info['mtime']}")
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/hierarchical_indexer.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This file implements the core orchestrator for hierarchical knowledge base indexing within the Jesse Framework MCP system, designed to coordinate leaf-first processing of directory hierarchies for building structured knowledge files throughout the `.knowledge/` directory structure. The module provides comprehensive indexing capabilities including change detection, content building, special handling, and orphaned file cleanup to maintain synchronized knowledge representations of source code repositories. Key semantic entities include `HierarchicalIndexer` class with `index_hierarchy` method, `ChangeDetector` for incremental processing, `KnowledgeBuilder` for LLM-powered content generation, `GitCloneHandler` and `ProjectBaseHandler` for special cases, `OrphanedAnalysisCleanup` for maintenance, `DirectoryContext` and `FileContext` data structures, `ProcessingStatus` and `IndexingStatus` enums, `FastMCP` context integration, and `asyncio` semaphore-based concurrency control. The system implements bottom-up assembly patterns aggregating child summaries into parent knowledge files while supporting both full and incremental indexing modes with comprehensive error handling and progress reporting.
+This module implements the core orchestrator for hierarchical knowledge base indexing using a Plan-then-Execute architecture that separates decision-making from execution for perfect debuggability. The functional intent centers on coordinating leaf-first processing strategies to build hierarchical knowledge files throughout directory structures using bottom-up assembly approaches. Key semantic entities include `HierarchicalIndexer` class implementing the main orchestration logic, `RebuildDecisionEngine` for centralized decision-making, `PlanGenerator` for converting decisions into atomic tasks, `ExecutionEngine` for dependency-aware task execution, and integration with `FastMCP` `Context` for real-time progress reporting. The module provides comprehensive change detection through `DirectoryContext` and `FileContext` models, supports concurrent processing with configurable limits, and implements defensive error handling enabling graceful degradation and partial processing recovery for large-scale knowledge base maintenance operations.
 
 ##### Main Components
 
-The file contains the `HierarchicalIndexer` class as the primary orchestrator with key methods including `index_hierarchy` for complete workflow coordination, `_discover_directory_structure` for recursive directory analysis, `_detect_changes` for incremental processing, `_process_directory_hierarchy` for leaf-first execution, `_process_directory_leaf_first` for recursive directory processing, `_process_directory_files` for concurrent file handling, `_process_single_file` for individual file analysis, and `_generate_directory_knowledge_file` for summary generation. The class integrates specialized components including `ChangeDetector` for timestamp-based change detection, `KnowledgeBuilder` for LLM content generation, `GitCloneHandler` and `ProjectBaseHandler` for special directory handling, and `OrphanedAnalysisCleanup` for maintenance operations. Supporting infrastructure includes processing semaphore for concurrency control, status tracking with `IndexingStatus`, and comprehensive error handling with configurable failure modes.
+The module contains the `HierarchicalIndexer` class as the primary orchestrator with methods for complete indexing workflow coordination, `index_hierarchy()` method implementing the five-phase Plan-then-Execute architecture, `_discover_directory_structure()` and `_build_directory_context()` methods for recursive directory structure discovery, `_detect_changes()` and `_apply_comprehensive_change_detection()` methods for change detection using `RebuildDecisionEngine` integration, `_generate_execution_plan()`, `_preview_execution_plan()`, and `_execute_plan_with_progress()` methods for atomic task planning and execution, and utility methods including `_get_all_directories()` for hierarchy traversal and `_create_final_status()` for result mapping to `IndexingStatus` format.
 
 ###### Architecture & Design
 
-The architecture implements a modular orchestration pattern with clear separation of concerns between discovery, change detection, processing, and content generation phases. The design follows leaf-first processing strategy ensuring child contexts are completely processed before parent directory knowledge file generation, eliminating parent-to-child dependencies and enabling bottom-up assembly. The system uses dependency injection for component initialization, async-first architecture for concurrent operations, and immutable context management ensuring proper state updates throughout processing workflows. Key design patterns include the orchestrator pattern for workflow coordination, builder pattern delegation for content generation, semaphore-based concurrency control for performance optimization, and comprehensive error handling with graceful degradation capabilities.
+The architecture implements Plan-then-Execute pattern separating decision-making from execution through distinct phases: Discovery builds complete `DirectoryContext` hierarchy, Decision Analysis generates comprehensive `DecisionReport` with change detection, Plan Generation converts decisions into atomic `ExecutionPlan` with dependencies, Plan Preview provides detailed execution analysis for debuggability, and Atomic Execution performs dependency-aware task execution. Design principles emphasize leaf-first hierarchical processing ensuring child completion before parent processing, bottom-up assembly aggregating child summaries into parent knowledge files, async-first architecture supporting concurrent operations with `FastMCP` `Context` integration, modular component delegation to specialized handlers, and defensive programming with comprehensive error handling and recovery mechanisms.
 
 ####### Implementation Approach
 
-The implementation uses a multi-phase processing approach starting with directory structure discovery, followed by optional change detection for incremental mode, then leaf-first hierarchical processing with concurrent file operations. The system implements recursive directory traversal with `_build_directory_context` creating nested `DirectoryContext` structures, comprehensive change detection using `check_comprehensive_directory_change` for constituent dependency checking, and batch-based concurrent file processing with configurable batch sizes and semaphore limits. Key algorithms include depth-first traversal for leaf identification, bottom-up assembly aggregating child summaries, and truncation detection handling where `None` returns from `KnowledgeBuilder` completely omit files from processing. The approach integrates caching through `FileAnalysisCache` for performance optimization and maintains detailed processing statistics throughout all operations.
+The implementation utilizes recursive directory discovery building complete hierarchy context through `_build_directory_context()` with configuration filtering via `should_process_file()` and `should_process_directory()` methods. Change detection employs `RebuildDecisionEngine.should_rebuild_directory()` for centralized decision-making with comprehensive constituent dependency checking. The Plan-then-Execute workflow delegates to `PlanGenerator.create_execution_plan()` for atomic task generation, `ExecutionEngine.preview_plan()` for detailed execution analysis, and `ExecutionEngine.execute_plan()` for dependency-aware task execution. Processing coordination maintains `IndexingStatus` with real-time progress updates, `ProcessingStats` for performance metrics, and error handling enabling graceful degradation through configurable `continue_on_file_errors` behavior.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models:IndexingConfig` - configuration and filtering logic for processing behavior
-- `..models:DirectoryContext` - directory structure representation and processing state
-- `..models:FileContext` - file metadata and processing context structures
-- `..models:ProcessingStatus` - enumeration for processing state management
-- `..models:ProcessingStats` - statistics tracking and performance metrics
-- `..models:IndexingStatus` - overall indexing operation status representation
-- `.change_detector:ChangeDetector` - timestamp-based change detection and incremental processing
-- `.knowledge_builder:KnowledgeBuilder` - LLM-powered content summarization and analysis
-- `.special_handlers:GitCloneHandler` - specialized handling for git-clone directories
-- `.special_handlers:ProjectBaseHandler` - specialized handling for project-base scenarios
-- `.orphaned_cleanup:OrphanedAnalysisCleanup` - maintenance operations for orphaned files
-- `fastmcp:Context` - MCP context for progress reporting and user interaction
-- `asyncio` (external library) - async programming patterns and concurrency control
-- `pathlib` (external library) - cross-platform path operations and filesystem access
-- `logging` (external library) - structured logging and error reporting
+- `..models.IndexingConfig` - Configuration and filtering logic for processing rules and limits
+- `..models.DirectoryContext` - Directory structure representation with processing status tracking
+- `..models.FileContext` - File metadata and processing state management
+- `..models.ProcessingStatus` - Status enumeration for processing state tracking
+- `..models.IndexingStatus` - Comprehensive indexing operation status reporting
+- `.rebuild_decision_engine.RebuildDecisionEngine` - Centralized decision-making for change detection
+- `.knowledge_builder.KnowledgeBuilder` - LLM-powered content summarization and knowledge file generation
+- `.special_handlers.ProjectBaseHandler` - Project-base specialized processing for whole codebase indexing
+- `.special_handlers.GitCloneHandler` - Git-clone specialized processing for read-only repository handling
+- `.plan_generator.PlanGenerator` - Decision-to-task conversion for atomic execution planning
+- `.execution_engine.ExecutionEngine` - Dependency-aware atomic task execution with progress reporting
+- `fastmcp.Context` (external library) - Real-time progress reporting and user interaction
+- `asyncio` (standard library) - Async programming patterns and concurrency control
+- `pathlib.Path` (standard library) - Cross-platform path operations and filesystem interaction
 
 **← Outbound:**
-- Knowledge base indexing workflows - primary orchestration for hierarchical processing
-- MCP server operations - integration with Jesse Framework MCP server functionality
-- CLI indexing commands - command-line interface for knowledge base operations
-- Automated processing pipelines - scheduled or triggered indexing workflows
+- Knowledge base indexing tools consuming `HierarchicalIndexer.index_hierarchy()` method
+- MCP server implementations requiring hierarchical processing coordination
+- JESSE Framework components needing structured knowledge base maintenance
+- Monitoring systems accessing `current_status` property for real-time progress tracking
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core orchestrator for hierarchical knowledge base indexing within Jesse Framework MCP, coordinating all phases of directory processing from discovery through content generation
-- **Ecosystem Position**: Central component in the knowledge base indexing pipeline, integrating specialized handlers and builders while providing comprehensive workflow coordination
-- **Integration Pattern**: Used by MCP server endpoints and CLI commands for knowledge base operations, with direct integration to specialized components for modular processing capabilities
+- **System Role**: Serves as the central orchestrator for the Knowledge Bases Hierarchical Indexing System, coordinating all phases of directory discovery, change detection, plan generation, and atomic task execution
+- **Ecosystem Position**: Core component bridging high-level indexing requests with specialized processing engines, decision systems, and execution frameworks
+- **Integration Pattern**: Consumed by MCP tools requiring hierarchical knowledge base maintenance, integrating with specialized handlers for git-clones and project-base scenarios, and coordinating with LLM-powered content generation through structured Plan-then-Execute workflows
 
 ######### Edge Cases & Error Handling
 
-The system handles comprehensive error scenarios including filesystem access failures during directory traversal, individual file processing failures with configurable continuation modes, LLM truncation detection through `None` returns from `KnowledgeBuilder`, and change detection failures with conservative fallback to processing mode. Error handling includes permission errors during directory access with graceful skipping and logging, concurrent processing failures with semaphore-based recovery, and component initialization failures preventing construction errors. The implementation provides configurable error behavior through `continue_on_file_errors` setting, comprehensive error statistics tracking with `add_error` method, and detailed logging with `exc_info=True` for debugging support. Special handling includes truncation artifact prevention where truncated files are completely omitted from `DirectoryContext.file_contexts`, orphaned file cleanup error handling, and processing status management ensuring accurate completion tracking.
+Error handling implements comprehensive exception catching with detailed logging through `logger.error()` calls including stack traces and graceful degradation options. Edge cases include filesystem access failures handled through `OSError` and `PermissionError` catching with continued processing, change detection failures triggering conservative fallback marking directories for processing, execution failures managed through configurable `continue_on_file_errors` behavior, and resource cleanup errors handled gracefully in `cleanup()` method. The system provides defensive programming patterns including validation of root path existence and directory status, comprehensive error statistics tracking through `ProcessingStats.add_error()`, and status determination based on execution success rates with configurable thresholds for partial success scenarios.
 
 ########## Internal Implementation Details
 
-Internal mechanics include semaphore-based concurrency control with `_processing_semaphore` limiting concurrent operations, immutable context management creating new `DirectoryContext` instances for state updates, and comprehensive statistics tracking through `ProcessingStats` with timing, counts, and error collection. The implementation uses recursive context building with `_build_directory_context` creating nested structures, leaf-first processing order through `_process_directory_leaf_first` ensuring child completion, and batch processing with configurable `batch_size` for performance optimization. Key internal patterns include source root storage in `_source_root` for cache integration, processing status updates throughout workflow phases, and cleanup delegation to component-specific cleanup methods. The system maintains processing timing with `processing_start_time` and `processing_end_time`, handles component lifecycle through initialization and cleanup phases, and provides thread-safe status access through `current_status` property.
+Internal mechanisms utilize `datetime.now()` for processing timing and performance metrics, recursive directory traversal through `_get_all_directories()` for comprehensive hierarchy analysis, and status mapping between `ExecutionResults` and `IndexingStatus` formats for API compatibility. The implementation maintains processing coordination through `_current_status` updates with real-time operation tracking, component initialization with dependency injection for `RebuildDecisionEngine`, `PlanGenerator`, and `ExecutionEngine`, and resource management through `cleanup()` method delegating to `ExecutionEngine._cleanup_execution_resources()`. Processing statistics include accurate file and directory counts, error tracking with detailed messages, and performance metrics including LLM call counts and execution duration measurements.
 
 ########### Code Usage Examples
 
-Basic hierarchical indexing workflow initialization and execution pattern:
+**Basic hierarchical indexing initialization and execution:** This example demonstrates how to initialize the indexer with configuration and execute hierarchical processing with progress reporting capabilities.
 
 ```python
-# Initialize hierarchical indexer with configuration and execute complete indexing workflow
-from jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer import HierarchicalIndexer
-from jesse_framework_mcp.knowledge_bases.models import IndexingConfig
+from pathlib import Path
 from fastmcp import Context
+from jesse_framework_mcp.knowledge_bases.models import IndexingConfig
+from jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer import HierarchicalIndexer
 
-# Create configuration and indexer
-config = IndexingConfig(knowledge_output_directory=Path("./knowledge"))
+# Initialize indexer with configuration
+config = IndexingConfig()
 indexer = HierarchicalIndexer(config)
 
 # Execute hierarchical indexing with progress reporting
-async with Context() as ctx:
-    status = await indexer.index_hierarchy(Path("./source"), ctx)
-    print(f"Indexing completed: {status.processing_stats.files_completed} files processed")
+async def run_indexing():
+    ctx = Context()
+    root_path = Path(".knowledge/")
+    status = await indexer.index_hierarchy(root_path, ctx)
+    return status
 ```
 
-Advanced configuration with incremental processing and error handling:
+**Real-time status monitoring during indexing operations:** This pattern enables monitoring of indexing progress with real-time status updates and progress percentage tracking.
 
 ```python
-# Configure hierarchical indexer for incremental processing with custom error handling
-config = IndexingConfig(
-    indexing_mode=IndexingMode.INCREMENTAL,
-    continue_on_file_errors=True,
-    max_concurrent_operations=4,
-    batch_size=10
-)
+# Monitor indexing progress in real-time
+async def monitor_indexing_progress(indexer):
+    while indexer.current_status.overall_status == ProcessingStatus.PROCESSING:
+        status = indexer.current_status
+        print(f"Operation: {status.current_operation}")
+        print(f"Progress: {status.processing_stats.progress_percentage:.1f}%")
+        await asyncio.sleep(1)
+```
 
+**Plan-then-Execute architecture component access:** This example shows how to access the internal components of the Plan-then-Execute architecture and perform proper resource cleanup.
+
+```python
+# Access Plan-then-Execute architecture components
 indexer = HierarchicalIndexer(config)
+decision_engine = indexer.rebuild_decision_engine
+plan_generator = indexer.plan_generator
+execution_engine = indexer.execution_engine
 
-# Execute with comprehensive error handling and status monitoring
-try:
-    status = await indexer.index_hierarchy(source_path, ctx)
-    if status.overall_status == ProcessingStatus.COMPLETED:
-        print(f"Success: {status.processing_stats.processing_duration:.2f}s")
-    else:
-        print(f"Partial completion: {len(status.processing_stats.errors)} errors")
-finally:
-    await indexer.cleanup()
+# Cleanup resources after processing
+await indexer.cleanup()
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/knowledge_builder.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This file implements a comprehensive LLM-powered knowledge file builder for the JESSE Framework's hierarchical indexing system, providing structured knowledge base generation through Claude 4 Sonnet integration. The file enables automated analysis and documentation of codebases through the `KnowledgeBuilder` class which orchestrates file analysis, directory summarization, and global content synthesis using cache-first processing strategies. Key semantic entities include `KnowledgeBuilder` class for orchestrating knowledge generation, `StrandsClaude4Driver` for Claude 4 Sonnet LLM integration, `FileAnalysisCache` for performance optimization, `EnhancedPrompts` for structured prompt generation, `KnowledgeFileGenerator` for template-based output, `DebugHandler` for replay functionality, `TruncationDetectedError` for artifact prevention, `IndexingConfig` for configuration management, `DirectoryContext` and `FileContext` for processing state tracking, and `ProcessingStatus` enumeration for operation monitoring. The technical architecture implements a continuation-based retry mechanism with intelligent response completion, providing 90%+ token savings through conversation continuity rather than fresh conversation restarts.
+This file implements a comprehensive LLM-powered knowledge file generation system using `Claude4SonnetConfig` for hierarchical semantic analysis and structured knowledge base creation. The `KnowledgeBuilder` class provides cache-first file analysis through `FileAnalysisCache`, continuation-based retry mechanisms with `StrandsClaude4Driver`, and template-driven knowledge file assembly via `KnowledgeFileGenerator`. Key semantic entities include `TruncationDetectedError` for artifact prevention, `EnhancedPrompts` for specialized analysis workflows, `DebugHandler` for replay functionality, and `ProcessingStatus` enumeration for workflow state management. The system implements a 3-phase generation workflow: individual file analysis with factual LLM processing, programmatic content insertion and subdirectory assembly, and global summary generation using assembled content for comprehensive synthesis.
 
 ##### Main Components
 
-The file contains the `KnowledgeBuilder` class with comprehensive initialization including `__init__()` for component setup, `initialize()` for LLM driver preparation, and `cleanup()` for resource management. Core processing methods include `build_file_knowledge()` for individual file analysis with cache-first processing, `build_directory_summary()` for directory-level knowledge generation, and `_process_single_file()` for cache-optimized file processing. Content generation methods encompass `_generate_global_summary()` for directory overview synthesis, `_generate_global_summary_from_contexts()` for context-based summarization, and `_extract_subdirectory_content()` for hierarchical content extraction. Quality assurance components include `_review_content_until_compliant()` for bounded loop compliance checking, `_retry_llm_call_with_truncation_check()` for continuation-based retry logic, `_generate_continuation_prompt()` and `_merge_responses()` for intelligent response completion. Utility methods provide `_read_file_content()` for robust file reading, `_extract_content_from_llm_response()` for clean content extraction, `_get_knowledge_file_path()` for path resolution, and truncation detection through `_has_truncation_marker()` and `_remove_truncation_marker()`.
+The file contains the `KnowledgeBuilder` class as the primary orchestrator, `TruncationDetectedError` custom exception for truncation handling, and multiple private methods for specialized processing workflows. Core processing methods include `build_file_knowledge()` for individual file analysis, `build_directory_summary()` for hierarchical directory processing, and `_process_single_file()` for cache-first LLM analysis. Content generation methods encompass `_generate_global_summary()` for directory-level synthesis, `_extract_subdirectory_content()` for filtered content extraction, and `_generate_global_summary_from_contexts()` for comprehensive context assembly. Utility methods provide `_retry_llm_call_with_truncation_check()` for robust LLM communication, `_review_content_until_compliant()` for quality assurance, and `_merge_responses()` for intelligent response combination.
 
 ###### Architecture & Design
 
-The architecture follows a three-phase knowledge generation workflow optimizing token usage and content quality through cache-first processing, continuation-based retry mechanisms, and bounded loop quality assurance. The design implements a layered approach with `FileAnalysisCache` providing performance optimization, `EnhancedPrompts` ensuring structured analysis, and `DebugHandler` enabling replay functionality for consistent testing. The class uses composition over inheritance with specialized components for different aspects of knowledge generation, including LLM integration through `StrandsClaude4Driver`, template generation through `KnowledgeFileGenerator`, and error handling through custom `TruncationDetectedError` exceptions. The retry mechanism employs conversation continuity maintaining context across truncation recovery attempts, using intelligent response merging to combine truncated and continuation responses seamlessly. Quality assurance implements dual truncation detection strategy combining programmatic checks with LLM reviewer validation, ensuring artifact prevention when truncation is detected while maximizing compliance success rates through bounded iteration.
+The system follows a hierarchical bottom-up assembly pattern where individual files are analyzed first, then aggregated into directory summaries, and finally synthesized into global knowledge files. The architecture implements a dual content strategy using full subdirectory content for LLM context and filtered content for final knowledge base files to prevent truncation issues. Cache-first processing strategy maximizes performance through `FileAnalysisCache` integration with selective bypass mechanisms for rebuild scenarios. The design incorporates a bounded loop reviewer workflow with dual truncation detection combining programmatic marker checks and LLM reviewer validation. Error handling follows a fail-fast approach with `TruncationDetectedError` preventing any artifact creation when truncation is detected, ensuring knowledge base integrity.
 
 ####### Implementation Approach
 
-The implementation uses cache-first processing strategy through `FileAnalysisCache` integration, checking for existing analyses before making LLM calls to maximize performance and reduce API costs. LLM integration employs `Claude4SonnetConfig.create_optimized_for_analysis()` with extended thinking enabled for complex analysis tasks, using conversation-specific caching architecture to prevent cross-conversation cache pollution. The continuation-based retry mechanism generates natural completion requests using `_generate_continuation_prompt()` and merges responses through `_merge_responses()` with overlap detection and duplicate sentence removal. Content processing implements robust file reading with multiple encoding strategies (UTF-8 with latin-1 fallback), binary file detection, and graceful error handling for unreadable files. Quality assurance uses bounded loop reviewer workflow with dual truncation detection, first checking programmatically for truncation markers then applying LLM reviewer prompts for compliance validation. Knowledge file generation follows project-base indexing business rule using mandatory `project-base/` subdirectory structure, with template-based complete file replacement strategy for consistent output formatting.
+The implementation uses continuation-based retry mechanisms that maintain conversation context across truncation recovery attempts, providing 90%+ token savings compared to fresh conversation approaches. Content processing employs intelligent response merging with overlap detection and duplicate sentence removal for seamless content combination. The system implements a triple detection strategy for truncation: programmatic marker detection, LLM reviewer validation, and reviewer correction truncation checks. File analysis utilizes content chunking for large files exceeding LLM context window constraints, with specialized prompts based on content-type detection. Directory processing follows a centralized decision engine pattern where `RebuildDecisionEngine` determines processing requirements, and `KnowledgeBuilder` executes template generation with alphabetical sorting and full rebuild approaches.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.models.indexing_config:IndexingConfig` - configuration management for LLM parameters and processing settings
-- `jesse_framework_mcp.models.knowledge_context:DirectoryContext` - directory processing state and context management
-- `jesse_framework_mcp.models.knowledge_context:FileContext` - file processing state and metadata tracking
-- `jesse_framework_mcp.models.knowledge_context:ProcessingStatus` - enumeration for operation status tracking
-- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - Claude 4 Sonnet LLM integration and conversation management
-- `jesse_framework_mcp.llm.strands_agent_driver:Claude4SonnetConfig` - LLM configuration optimization for analysis tasks
-- `jesse_framework_mcp.helpers.path_utils:get_portable_path` - cross-platform path conversion for knowledge base compatibility
-- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_file_generator:KnowledgeFileGenerator` - template-based knowledge file generation
-- `jesse_framework_mcp.knowledge_bases.indexing.enhanced_prompts:EnhancedPrompts` - structured prompt generation for different content types
-- `jesse_framework_mcp.knowledge_bases.indexing.debug_handler:DebugHandler` - debug capture and replay functionality for testing
-- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - performance optimization through intelligent caching
-- `fastmcp.Context` (external library) - MCP server context for progress reporting and logging
-- `asyncio` (external library) - asynchronous programming patterns for LLM request handling
-- `pathlib.Path` (external library) - cross-platform file operations and path handling
-- `logging` (external library) - structured logging for LLM operations and error tracking
+- `..models.IndexingConfig` - configuration parameters for LLM model settings and processing options
+- `..models.DirectoryContext` - directory processing state and file context aggregation
+- `..models.FileContext` - individual file processing metadata and knowledge content storage
+- `..models.ProcessingStatus` - enumeration for workflow state management and error tracking
+- `...llm.strands_agent_driver.StrandsClaude4Driver` - Claude 4 Sonnet LLM integration for content analysis
+- `...llm.strands_agent_driver.Claude4SonnetConfig` - LLM configuration optimization for analysis tasks
+- `.knowledge_file_generator.KnowledgeFileGenerator` - template engine for structured knowledge file creation
+- `.knowledge_prompts.EnhancedPrompts` - specialized prompt generation for different analysis contexts
+- `.debug_handler.DebugHandler` - debug capture and replay functionality for development workflows
+- `.file_analysis_cache.FileAnalysisCache` - performance optimization through timestamp-based cache management
 
 **← Outbound:**
-- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - consumes KnowledgeBuilder for directory processing workflows
-- `knowledge base files` - generated markdown files following hierarchical semantic tree structure
-- `cache files` - stored analysis results for performance optimization and replay functionality
-- `debug artifacts` - captured LLM interactions for testing and development workflows
+- `hierarchical_indexer.py:HierarchicalIndexer` - primary consumer for directory knowledge building workflows
+- `knowledge_base_handlers/` - handler implementations consuming knowledge building services for different content types
+- `debug_output/` - debug interaction capture files for replay and analysis workflows
+- `cache/` - cached analysis files for performance optimization and staleness detection
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core knowledge generation engine for JESSE Framework's hierarchical indexing system, orchestrating LLM-powered analysis and structured knowledge base creation
-- **Ecosystem Position**: Central component bridging LLM capabilities with knowledge base requirements, providing the primary interface for converting source code into structured documentation
-- **Integration Pattern**: Used by HierarchicalIndexer during directory processing workflows, consumed by development teams for automated documentation generation, and integrated with caching and debug systems for performance optimization and testing reliability
+- **System Role**: Core knowledge generation engine within the Jesse Framework MCP server, responsible for transforming raw file content into structured hierarchical knowledge bases through LLM analysis
+- **Ecosystem Position**: Central component bridging file system analysis with LLM processing capabilities, serving as the primary content transformation layer
+- **Integration Pattern**: Used by `HierarchicalIndexer` for bottom-up knowledge assembly, consumed by knowledge base handlers for different content types, and integrated with caching and debug systems for performance and development workflows
 
 ######### Edge Cases & Error Handling
 
-Error handling includes comprehensive truncation detection through dual strategy combining programmatic marker checking with LLM reviewer validation, raising `TruncationDetectedError` to prevent any artifact creation when truncation is detected. File processing handles encoding issues through multiple fallback strategies (UTF-8 to latin-1), binary file detection through null byte checking, and graceful degradation for unreadable files returning empty content. LLM integration implements continuation-based retry mechanism with intelligent response merging, handling technical errors through conversation-specific retry logic and progressive continuation attempts for complex truncation scenarios. Cache management handles cache miss scenarios gracefully, falling back to fresh LLM analysis when cached content is unavailable or stale, with selective caching based on compliance review outcomes. Quality assurance implements bounded loop reviewer workflow preventing infinite loops while maximizing compliance success rates, distinguishing between technical errors requiring file skipping and content issues allowing cache storage. Directory processing handles missing subdirectory content through extraction fallbacks, timestamp-based change detection for rebuild optimization, and comprehensive error propagation for failed processing states.
+The system implements comprehensive truncation detection through `TruncationDetectedError` which completely prevents artifact creation when LLM responses are incomplete, ensuring knowledge base integrity. Empty file handling gracefully skips unreadable or zero-length files with appropriate status tracking through `ProcessingStatus.SKIPPED`. Binary file detection prevents processing of unsuitable content through encoding error handling and null byte detection. Technical LLM errors are distinguished from content errors, with technical failures triggering file skipping while content issues allow caching of best-attempt results. The bounded loop reviewer prevents infinite loops through maximum iteration limits while preserving LLM work through forced caching when max iterations are reached. Cache staleness verification includes algorithm bug detection that raises runtime errors when freshness expectations are violated after rebuild operations.
 
 ########## Internal Implementation Details
 
-The class uses lazy initialization for `StrandsClaude4Driver` through `initialize()` method, enabling startup without immediate LLM connection requirements and proper resource management through `cleanup()`. Conversation management employs unique conversation IDs with UUID suffixes for isolation, using base conversation IDs with iteration tracking for reviewer workflows and continuation attempts. Content extraction implements sophisticated LLM response cleaning through `_extract_content_from_llm_response()`, filtering conversational headers while preserving legitimate section structure through `_has_legitimate_section_structure()` detection. Cache integration uses conversation-specific keys preventing cross-conversation pollution, with selective caching logic storing only usable content from compliant or max-iterations-reached scenarios. Debug capture employs structured stage naming with iteration tracking, enabling comprehensive replay functionality through `DebugHandler` integration for consistent testing workflows. Path resolution implements mandatory project-base indexing business rule through `_get_knowledge_file_path()`, always using `project-base/` subdirectory structure regardless of configuration settings. Response merging uses intelligent overlap detection through sentence-level analysis, removing duplicate content at merge boundaries while preserving truncation markers for compliance validation.
+The cache-first processing strategy checks `FileAnalysisCache` before LLM calls unless bypass conditions are met through rebuild decisions or full indexing mode. Conversation ID generation uses normalized path patterns with UUID suffixes for unique LLM conversation contexts. Content extraction employs header filtering to remove LLM conversational artifacts while preserving legitimate section structure through pattern recognition. The dual content strategy loads full KB content for LLM global summary context while extracting filtered fourth-level header content for final KB integration. Response merging implements sentence-level overlap detection with boundary analysis and duplicate removal for seamless content combination. Debug capture follows structured stage naming with iteration tracking for comprehensive replay functionality. Knowledge file path determination implements handler root detection for proper `root_kb.md` vs `{directory_name}_kb.md` naming conventions.
 
 ########### Code Usage Examples
 
-Basic knowledge builder initialization demonstrates the standard setup pattern for LLM-powered knowledge generation. This approach provides the foundation for all knowledge building operations with proper resource management.
-
+**Basic knowledge builder initialization and file processing:**
 ```python
-# Initialize knowledge builder with configuration and LLM setup
-config = IndexingConfig(
-    llm_model="claude-3-5-sonnet-20241022",
-    temperature=0.1,
-    max_tokens=4000,
-    debug_mode=True
-)
-
+# Initialize knowledge builder with configuration
+config = IndexingConfig(llm_model="claude-3-5-sonnet-20241022", debug_mode=True)
 builder = KnowledgeBuilder(config)
-await builder.initialize()  # Setup Claude 4 Sonnet driver
+await builder.initialize()
+
+# Process individual file with cache-first approach
+file_context = FileContext(file_path=Path("src/module.py"), file_size=5000, last_modified=datetime.now())
+result = await builder.build_file_knowledge(file_context, ctx, source_root=Path("/project"))
 ```
 
-File knowledge generation with cache-first processing demonstrates high-performance analysis with automatic caching. This pattern maximizes efficiency by avoiding redundant LLM calls for unchanged files.
-
+**Directory knowledge building with hierarchical assembly:**
 ```python
-# Generate file knowledge with cache optimization
-file_context = FileContext(
-    file_path=Path("src/components/Button.tsx"),
-    file_size=1024,
-    last_modified=datetime.now()
-)
-
-result_context = await builder.build_file_knowledge(
-    file_context=file_context,
-    ctx=mcp_context,
-    source_root=Path("src/")
-)
-
-if result_context.processing_status == ProcessingStatus.COMPLETED:
-    print(f"Knowledge generated: {len(result_context.knowledge_content)} characters")
-```
-
-Directory summary generation with global synthesis demonstrates comprehensive directory analysis using assembled content. This approach creates cohesive understanding from individual file analyses and subdirectory summaries.
-
-```python
-# Build directory summary with global synthesis
+# Build directory summary with subdirectory aggregation
 directory_context = DirectoryContext(
     directory_path=Path("src/components/"),
-    file_contexts=[file_context1, file_context2],
-    subdirectory_contexts=[subdir_context1]
+    file_contexts=[completed_file_contexts],
+    subdirectory_contexts=[completed_subdir_contexts]
 )
+result = await builder.build_directory_summary(directory_context, ctx, source_root)
+```
 
-summary_context = await builder.build_directory_summary(
-    directory_context=directory_context,
-    ctx=mcp_context,
-    source_root=Path("src/")
-)
-
-if summary_context.processing_status == ProcessingStatus.COMPLETED:
-    print(f"Knowledge file created: {summary_context.knowledge_file_path}")
+**Error handling and truncation detection:**
+```python
+try:
+    knowledge_content = await builder.build_file_knowledge(file_context, ctx)
+except TruncationDetectedError as e:
+    # Truncation detected - no artifacts created, file completely skipped
+    logger.error(f"File skipped due to truncation: {e}")
+    return None  # Indicates complete file omission from processing
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/knowledge_file_generator.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This module provides template-based knowledge file generation for the JESSE Framework's hierarchical indexing system, implementing a full rebuild approach with alphabetical sorting and comprehensive timestamp-based change detection. The `KnowledgeFileGenerator` class enables complete knowledge base file creation from directory contexts, replacing complex incremental updates with straightforward template generation. Key semantic entities include `KnowledgeFileGenerator` class, `FileContext` and `DirectoryContext` models, `get_portable_path` utility, three-trigger change detection system (`directory_needs_rebuild`), template generation methods (`generate_complete_knowledge_file`, `_generate_warning_header`, `_generate_subdirectory_section`, `_generate_file_section`, `_generate_metadata_footer`), file filtering logic (`_should_process_file`), and CommonMark-compliant markdown output. The system provides deterministic knowledge file generation with cross-platform path compatibility, preserving LLM-generated content formatting without transformation while ensuring consistent alphabetical ordering across all generated knowledge base files.
+This module provides template-based knowledge file generation using a full rebuild approach that replaces complex incremental updates with straightforward string template generation and alphabetical sorting. The functional intent centers on generating complete knowledge base files from scratch on every change, eliminating complex parsing and section replacement logic in favor of predictable, debuggable output. Key semantic entities include `KnowledgeFileGenerator` class implementing the main template generation logic, `generate_complete_knowledge_file()` method for full file creation, `FileContext` and `DirectoryContext` models for content organization, `get_portable_path()` utility for cross-platform path handling, and integration with `CommonMark` specification compliance for maximum markdown compatibility. The module implements alphabetical sorting for consistent file and subdirectory ordering, preserves LLM formatting through direct content insertion without transformation, and provides centralized decision logic relying on `RebuildDecisionEngine` for all rebuild decisions.
 
 ##### Main Components
 
-The module contains the `KnowledgeFileGenerator` class as the primary component, implementing template-based knowledge file generation. Core methods include `directory_needs_rebuild()` for three-trigger timestamp-based change detection, `generate_complete_knowledge_file()` for complete knowledge base file creation from components, and private helper methods `_generate_warning_header()`, `_generate_subdirectory_section()`, `_generate_file_section()`, and `_generate_metadata_footer()` for template section generation. Supporting methods include `_should_process_file()` for file type filtering based on processable extensions, `_get_kb_path()` for knowledge base file path generation, and `_generate_timestamp()` for consistent ISO 8601 timestamp formatting. The class operates with minimal initialization requirements and focuses on string template generation rather than complex parsing operations.
+The module contains the `KnowledgeFileGenerator` class as the primary template generator with `generate_complete_knowledge_file()` method for complete file creation from components, `_generate_warning_header()` method for consistent file headers preventing manual editing, `_generate_subdirectory_section()` and `_generate_file_section()` methods for formatted content sections, `_generate_metadata_footer()` method for comprehensive file metadata, `_generate_timestamp()` method for standardized timestamp formatting, and utility methods including `_should_process_file()` for file type filtering and `_get_kb_path()` for knowledge base file path generation following naming conventions.
 
 ###### Architecture & Design
 
-The architecture follows a full rebuild design pattern, generating complete knowledge files from templates on every change rather than implementing complex incremental updates. The system employs a three-trigger timestamp comparison system checking directory structure changes, individual file modifications, and subdirectory knowledge base updates. Template generation uses string concatenation with alphabetical sorting of all content components before assembly. The design emphasizes simplicity and reliability through deterministic template generation, avoiding complex parsing dependencies and section replacement logic. Cross-platform compatibility is achieved through portable path conversion and case-insensitive file extension filtering. The architecture preserves LLM-generated content formatting through direct insertion without transformation, ensuring knowledge content integrity throughout the generation process.
+The architecture implements full rebuild pattern generating complete knowledge files from templates on every change rather than incremental updates. Design principles emphasize template-based generation using string templates for predictable and debuggable output, alphabetical sorting ensuring consistent file and subdirectory ordering across all knowledge files, content preservation maintaining LLM formatting through direct insertion without transformation, and centralized decision logic trusting decisions already made by `RebuildDecisionEngine`. The structure separates template generation concerns from parsing complexity, uses deterministic output generation for reproducible results, and implements cross-platform compatibility through portable path handling and case-insensitive sorting.
 
 ####### Implementation Approach
 
-The implementation uses filesystem timestamp comparison (`st_mtime`) for efficient change detection across three triggers: directory modification time, source file modification times, and subdirectory knowledge base modification times. Template generation employs list-based content assembly with alphabetical sorting using `sorted()` with case-insensitive key functions. String template approach builds complete knowledge files through section concatenation, including warning headers, directory summaries, subdirectory integration sections, file knowledge sections, and metadata footers. File filtering implements extension-based processing using a comprehensive set of processable file extensions covering source code, documentation, and configuration files. Error handling provides graceful degradation with fallback content generation and detailed logging for debugging. The system generates portable paths for cross-platform compatibility and maintains consistent markdown formatting following CommonMark specifications.
+The implementation utilizes string template assembly building complete knowledge files through concatenated content parts with consistent structure. Content sorting employs alphabetical ordering using `sorted()` with case-insensitive key functions for files and subdirectories before template generation. Template generation creates structured markdown with warning headers, global summaries, subdirectory integration sections, file integration sections, and metadata footers. Path handling uses `get_portable_path()` utility for cross-platform compatibility with proper trailing slash handling for directories. Error handling implements comprehensive exception catching with detailed logging and graceful degradation providing fallback content when individual sections fail.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models.knowledge_context:FileContext` - file metadata and knowledge content structure
-- `..models.knowledge_context:DirectoryContext` - directory context and summary information
-- `...helpers.path_utils:get_portable_path` - cross-platform path conversion utility
-- `pathlib.Path` (standard library) - filesystem path operations and metadata access
-- `datetime.datetime` (standard library) - timestamp generation for content tracking
-- `logging` (standard library) - debug and error logging throughout generation process
+- `..models.knowledge_context.FileContext` - File metadata and knowledge content structure for template generation
+- `..models.knowledge_context.DirectoryContext` - Directory structure representation with processing context
+- `...helpers.path_utils.get_portable_path` - Cross-platform path conversion utility for consistent path formatting
+- `pathlib.Path` (standard library) - Cross-platform path operations and metadata handling
+- `datetime.datetime` (standard library) - Timestamp generation for content tracking and metadata
+- `typing.List` (standard library) - Type hints for template parameters and content structures
 
 **← Outbound:**
-- `knowledge_base_files/*.md` - generated markdown knowledge base files consumed by indexing system
-- `hierarchical_indexer.py` - knowledge file generator used by directory processing workflow
-- `knowledge_base_manager.py` - template generation integrated into knowledge base management operations
-- External markdown parsers - CommonMark-compliant output for standard markdown processing
+- Knowledge base indexing systems consuming `generate_complete_knowledge_file()` method output
+- File system operations writing generated markdown content to knowledge base files
+- Template validation systems requiring `CommonMark` specification compliance
+- Content management systems processing generated knowledge base files
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core template generation engine for the JESSE Framework's knowledge base indexing system, responsible for converting processed directory contexts into structured markdown knowledge files
-- **Ecosystem Position**: Central component in the knowledge base generation pipeline, serving as the final output stage after content analysis and context building
-- **Integration Pattern**: Used by hierarchical indexers and knowledge base managers for automated knowledge file generation, with output consumed by markdown processors and knowledge base consumers
+- **System Role**: Serves as the final content generation layer in the Knowledge Bases Hierarchical Indexing System, converting structured context data into formatted markdown knowledge files
+- **Ecosystem Position**: Core content generation component bridging structured data models with filesystem output, replacing complex incremental update engines with straightforward template generation
+- **Integration Pattern**: Consumed by hierarchical indexers requiring complete knowledge file generation, integrating with portable path utilities for cross-platform compatibility, and producing markdown output consumed by knowledge base management systems
 
 ######### Edge Cases & Error Handling
 
-The system handles missing knowledge base files by triggering automatic rebuild with appropriate logging. Filesystem access errors during timestamp comparison default to rebuild decisions with error reason logging. Portable path conversion failures fall back to directory name with warning logging. Template generation errors are caught and wrapped in `RuntimeError` with detailed error context. File processing handles non-existent files, permission errors, and invalid file types through extension filtering and existence checks. Empty content scenarios generate placeholder text rather than failing, ensuring consistent knowledge file structure. The three-trigger change detection system handles edge cases where filesystem timestamps may be unreliable by defaulting to rebuild decisions. Error logging provides detailed context including file paths, timestamps, and operation context for debugging and maintenance.
+Error handling implements comprehensive exception catching with detailed logging through `logger.error()` calls and graceful degradation providing fallback content when template generation fails. Edge cases include portable path conversion failures handled with fallback to basic path strings and continued processing, file extension detection using case-insensitive comparison for cross-platform compatibility, empty content scenarios providing placeholder text when summaries or analysis content are unavailable, and metadata generation failures providing minimal footer information with error indication. The system provides defensive programming patterns including validation of file processability through extension checking, timestamp generation fallbacks using standard ISO format, and template assembly error recovery maintaining partial content generation when individual sections fail.
 
 ########## Internal Implementation Details
 
-The class maintains no internal state between operations, relying on method parameters for all generation context. Timestamp comparison uses floating-point precision with two decimal places for logging clarity. File extension filtering uses a comprehensive set covering 40+ file types including source code, documentation, configuration, and script files. Template generation uses list-based content assembly with join operations for efficient string building. Portable path generation includes trailing slash detection and platform-specific path separator handling. Knowledge base file naming follows `{directory_name}_kb.md` convention with placement in parent directory. Metadata footer generation includes accurate file and subdirectory counts with generation timestamps. The system preserves original content formatting through direct string insertion without parsing or transformation operations.
+Internal mechanisms utilize `datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")` for standardized timestamp generation in ISO 8601 format, alphabetical sorting through `sorted()` with `key=lambda f: f.file_path.name.lower()` for case-insensitive ordering, and string template assembly using list concatenation with `"\n".join(content_parts)` for efficient content building. The implementation maintains processable file extensions set including source code, documentation, and configuration file types, portable path handling with trailing slash detection and platform-specific path separator handling, and content preservation through direct string insertion without parsing or transformation. Template structure includes HTML comment warnings, markdown headers with portable paths, content sections with timestamp metadata, and comprehensive footers with generation statistics and file identification.
 
 ########### Code Usage Examples
 
-**Basic knowledge file generation from directory context:**
+**Complete knowledge file generation from directory context:** This example demonstrates how to generate a complete knowledge base file from directory components with alphabetical sorting and template formatting.
+
 ```python
+from pathlib import Path
+from jesse_framework_mcp.knowledge_bases.indexing.knowledge_file_generator import KnowledgeFileGenerator
+from jesse_framework_mcp.knowledge_bases.models.knowledge_context import FileContext, DirectoryContext
+
+# Initialize generator and create complete knowledge file
 generator = KnowledgeFileGenerator()
-kb_path = Path("project_kb.md")
-content = generator.generate_complete_knowledge_file(
-    directory_path=Path("src/"),
-    global_summary="Project source code directory",
+directory_path = Path("src/")
+kb_file_path = Path("src_kb.md")
+
+complete_content = generator.generate_complete_knowledge_file(
+    directory_path=directory_path,
+    global_summary="Directory contains core application modules",
     file_contexts=[file_context1, file_context2],
-    subdirectory_summaries=[(Path("utils/"), "Utility functions")],
-    kb_file_path=kb_path
+    subdirectory_summaries=[(Path("utils/"), "Utility functions summary")],
+    kb_file_path=kb_file_path
 )
 ```
 
-**Change detection for rebuild decisions:**
+**File type filtering for processable content:** This pattern shows how to filter files for knowledge base processing based on extension and characteristics.
+
 ```python
-needs_rebuild, reason = generator.directory_needs_rebuild(
-    directory_path=Path("src/"),
-    kb_file_path=Path("src_kb.md")
-)
-if needs_rebuild:
-    logger.info(f"Rebuilding knowledge base: {reason}")
+# Filter files for knowledge base processing
+generator = KnowledgeFileGenerator()
+processable_files = []
+
+for file_path in directory_path.iterdir():
+    if generator._should_process_file(file_path):
+        processable_files.append(file_path)
+        
+print(f"Found {len(processable_files)} processable files")
 ```
 
-**File processing filter usage:**
+**Knowledge base file path generation following naming conventions:** This example demonstrates consistent KB file naming and location patterns for directory-adjacent placement.
+
 ```python
-processable_files = [
-    f for f in directory_path.iterdir() 
-    if generator._should_process_file(f)
-]
+# Generate knowledge base file paths following conventions
+generator = KnowledgeFileGenerator()
+source_directory = Path("components/")
+kb_path = generator._get_kb_path(source_directory)
+
+print(f"KB file will be created at: {kb_path}")  # components_kb.md
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/knowledge_prompts.py
+
+*Last Updated: 2025-07-06T23:05:36Z*
+
+#### Functional Intent & Features
+
+This file provides specialized LLM prompt templates for generating hierarchical semantic trees within the Jesse Framework MCP's knowledge base indexing system, focusing on architectural analysis and technical implementation details. The file implements comprehensive prompt engineering for different content types with token-efficient structure and programmatic content extraction capabilities. Key semantic entities include `EnhancedPrompts` class for prompt orchestration, `file_analysis_prompt` for individual file analysis, `directory_analysis_prompt` for module architecture analysis, `global_summary_prompt` for system-wide synthesis, reviewer prompts for structural compliance validation, `SEMANTIC_ENTITY_USAGE_SPEC` for technical terminology standardization, `LEVEL_8_FORMATTING_SPEC` for dependency formatting, and `get_portable_path` integration for cross-platform compatibility. The implementation emphasizes architectural focus over generic functionality descriptions, ensuring comprehensive coverage of design patterns, implementation strategies, and technical decision-making insights.
+
+##### Main Components
+
+The file contains the `EnhancedPrompts` class as the primary prompt container with specialized templates for different analysis scenarios. Core prompt templates include `file_analysis_prompt` for comprehensive file analysis with architectural emphasis, `directory_analysis_prompt` for module organization and design relationships, and `global_summary_prompt` for system-wide architectural synthesis. Supporting components include three reviewer prompts (`file_analysis_reviewer_prompt`, `directory_analysis_reviewer_prompt`, `global_summary_reviewer_prompt`) for structural compliance validation, shared specifications (`SEMANTIC_ENTITY_USAGE_SPEC`, `LEVEL_8_FORMATTING_SPEC`) for consistent formatting requirements, and utility methods for prompt generation with portable path support and error handling.
+
+###### Architecture & Design
+
+The architecture implements a template-based prompt generation system with content-type specialization and structured response format requirements. The design separates concerns through specialized prompt templates for different analysis contexts while maintaining consistent hierarchical semantic tree structure across all generated content. The component uses composition patterns with shared specification constants (`SEMANTIC_ENTITY_USAGE_SPEC`, `LEVEL_8_FORMATTING_SPEC`) to ensure DRY principles and consistent formatting requirements. The architecture includes comprehensive reviewer prompt integration for automated structural compliance checking, enabling quality assurance without manual intervention. The design emphasizes architectural analysis focus through specialized prompt engineering that prioritizes design patterns, implementation strategies, and technical depth over generic descriptions.
+
+####### Implementation Approach
+
+The implementation uses template string formatting with placeholder substitution for dynamic prompt generation, incorporating file metadata, content, and portable path conversion for cross-platform compatibility. The approach employs hierarchical semantic tree specification with 8 distinct levels (4-11) using markdown headers, ensuring progressive completeness without information redundancy between levels. Technical strategies include semantic entity usage specification requiring backquote formatting for technical terms, external dependencies formatting with standardized visual symbols (→, ←, ⚡), and comprehensive error handling with logging integration. The system implements reviewer prompt patterns for structural compliance validation, supporting both compliance verification and automatic correction in single operations through binary output formats.
+
+######## External Dependencies & Integration Points
+
+**→ Inbound:**
+- `...helpers.path_utils:get_portable_path` - cross-platform path conversion for LLM prompt compatibility
+- `logging` (external library) - structured logging for prompt generation operations and debugging
+- `typing` (external library) - type hints for prompt template parameters and response structures
+- `pathlib.Path` (external library) - modern path handling for file and directory operations
+
+**← Outbound:**
+- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_file_generator` - knowledge file generator consuming prompt templates for content generation
+- LLM processing systems - structured prompts for hierarchical semantic tree generation
+- Knowledge base storage systems - generated analysis content following hierarchical semantic tree structure
+- Template engine operations - programmatic content extraction and markdown integration
+
+**⚡ System role and ecosystem integration:**
+
+- **System Role**: This component serves as the prompt engineering foundation for the Jesse Framework MCP knowledge base system, providing specialized LLM templates that generate structured architectural analysis content
+- **Ecosystem Position**: Core infrastructure component within the knowledge indexing architecture, essential for generating consistent, high-quality technical documentation through LLM processing
+- **Integration Pattern**: Used by knowledge file generators and indexing workflows to create structured prompts for LLM analysis, with reviewer prompts ensuring consistent formatting compliance across all generated knowledge base content
+
+######### Edge Cases & Error Handling
+
+The prompt generation system handles comprehensive error scenarios including portable path conversion failures with fallback to original paths, prompt template formatting errors with detailed exception logging, and reviewer prompt generation failures with runtime error propagation. Error handling implements individual operation isolation through try-catch blocks around each prompt generation method, preventing single failures from affecting overall prompt system functionality. The system manages edge cases like missing file content, invalid directory structures, and malformed assembled content through defensive programming patterns and comprehensive logging. Recovery mechanisms include graceful degradation for path conversion failures, detailed error messages for debugging prompt generation issues, and comprehensive exception handling with proper error propagation for integration debugging.
+
+########## Internal Implementation Details
+
+Internal mechanisms include template string formatting with named placeholders for dynamic content insertion, portable path conversion integration using `get_portable_path()` for cross-platform compatibility, and comprehensive logging integration for debugging and monitoring prompt generation operations. The `EnhancedPrompts` class initializes with all prompt templates as instance attributes, enabling efficient reuse and consistent formatting across multiple prompt generation calls. Prompt templates include extensive specification sections for hierarchical semantic tree structure, semantic entity usage requirements, and external dependencies formatting with standardized visual symbols. The implementation uses f-string formatting for specification injection into prompt templates, ensuring DRY principles and consistent formatting requirements across all generated prompts.
+
+########### Code Usage Examples
+
+Basic prompt generation demonstrates comprehensive file analysis with architectural focus. This pattern shows how to initialize the prompt system and generate structured analysis prompts for LLM processing.
+
+```python
+# Initialize enhanced prompts with architectural analysis templates
+prompts = EnhancedPrompts()
+
+# Generate file analysis prompt with portable path support
+file_prompt = prompts.get_file_analysis_prompt(
+    file_path=Path("src/module.py"),
+    file_content=file_content,
+    file_size=1024
+)
+
+# Process with LLM for hierarchical semantic tree generation
+analysis_result = await llm_client.generate(file_prompt)
+```
+
+Directory analysis prompt generation shows module architecture focus. This approach enables comprehensive analysis of directory structures and component relationships within the codebase.
+
+```python
+# Generate directory analysis prompt with child content synthesis
+directory_prompt = prompts.get_directory_analysis_prompt(
+    directory_path=Path("src/components/"),
+    file_count=15,
+    subdirectory_count=3,
+    child_content_summary=assembled_child_content
+)
+
+# Process for comprehensive module architecture analysis
+directory_analysis = await llm_client.generate(directory_prompt)
+```
+
+Reviewer prompt integration enables automated structural compliance checking. This pattern ensures consistent formatting across all generated knowledge base content through automated validation and correction.
+
+```python
+# Generate reviewer prompt for structural compliance validation
+reviewer_prompt = prompts.get_file_analysis_reviewer_prompt(generated_output)
+
+# Process for automatic formatting correction
+review_result = await llm_client.generate(reviewer_prompt)
+
+# Handle compliance result (either "COMPLIANT" or corrected version)
+if review_result == "COMPLIANT":
+    final_content = generated_output
+else:
+    final_content = review_result
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/markdown_parser.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
@@ -1081,192 +1167,269 @@ available_headers = parser.find_available_headers(doc)
 is_valid = parser.validate_document_structure(doc)
 ```
 
-### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/orphaned_cleanup.py
+### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/plan_generator.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This file implements orphaned analysis cleanup management for the Jesse Framework MCP knowledge base system, designed to remove analysis files and knowledge files that no longer have corresponding source files, ensuring knowledge base accuracy and preventing stale artifact accumulation. The module provides comprehensive cleanup capabilities including orphaned `.analysis.md` file removal, orphaned `_kb.md` knowledge file cleanup, and empty directory pruning while maintaining mirror directory structure integrity. Key semantic entities include `OrphanedAnalysisCleanup` class with `cleanup_orphaned_files` method, `CleanupStats` dataclass for metrics tracking, `FileAnalysisCache` integration for path calculations, `FastMCP` context for progress reporting, leaf-first directory traversal with `_collect_directories_leaf_first`, three-phase cleanup strategy, reverse path mapping methods `_get_source_path_from_analysis_file` and `_get_source_directory_from_mirrored_path`, and comprehensive error handling with graceful degradation. The system implements conservative deletion approach only removing confirmed orphaned artifacts while preserving valid knowledge base structure and providing detailed audit trail through statistics and logging.
+Decision-to-plan translation engine converting `RebuildDecisionEngine` decisions into comprehensive atomic task execution plans for the Jesse Framework MCP knowledge base system. Provides Plan-then-Execute architecture implementation through `PlanGenerator` class that transforms high-level rebuild and deletion decisions into `ExecutionPlan` objects containing `AtomicTask` instances with proper dependencies and resource estimation. Enables developers to create reliable, debuggable execution workflows with comprehensive task metadata, dependency management, and performance estimation for hierarchical knowledge base processing. Key semantic entities include `PlanGenerator`, `ExecutionPlan`, `AtomicTask`, `TaskType`, `DecisionReport`, `RebuildDecision`, `DeletionDecision`, `DirectoryContext`, `FileContext`, `IndexingConfig`, `DecisionOutcome`, `DecisionReason`, `fastmcp.Context`, `pathlib.Path`, and `datetime` for comprehensive plan generation using five-phase workflow creating cleanup, cache structure, file processing, directory processing, and verification tasks with horizontal dependency management.
 
 ##### Main Components
 
-The file contains the `OrphanedAnalysisCleanup` class as the primary cleanup orchestrator with key methods including `cleanup_orphaned_files` for comprehensive cleanup workflow, `_collect_directories_leaf_first` for safe traversal ordering, `_cleanup_directory` for per-directory processing, `_cleanup_orphaned_analysis_files` for `.analysis.md` removal, `_cleanup_orphaned_knowledge_files` for `_kb.md` cleanup, and `_cleanup_empty_directory` for directory pruning. The `CleanupStats` dataclass provides comprehensive metrics tracking with properties for `total_files_deleted`, `total_items_deleted`, `cleanup_duration`, and error collection through `add_error` method. Supporting utility methods include `_get_source_path_from_analysis_file` and `_get_source_directory_from_mirrored_path` for reverse path calculation enabling source file verification. The class integrates `FileAnalysisCache` for consistent path calculations and maintains detailed statistics throughout all cleanup operations.
+Core `PlanGenerator` class serving as the primary decision-to-plan translation component with comprehensive task generation methods including `create_execution_plan()` for complete plan orchestration, `_generate_cleanup_tasks()` for deletion operations, `_generate_cache_structure_task()` for directory preparation, `_generate_file_tasks()` and `_generate_file_tasks_recursive()` for file processing, and `_generate_directory_tasks()` with `_generate_directory_tasks_recursive()` for knowledge base generation. Supporting utility methods including `_collect_cache_directories()` for structure preparation, `_get_base_dependencies()` for dependency management, `_collect_sibling_directory_tasks()` for horizontal dependencies, and `_sanitize_path_for_id()` for task identifier generation. Performance estimation parameters including `llm_analysis_duration`, `kb_generation_duration`, `file_operation_duration`, and `cleanup_operation_duration` for accurate resource planning.
 
 ###### Architecture & Design
 
-The architecture implements a three-phase cleanup strategy with clear separation between analysis file cleanup, knowledge file cleanup, and directory pruning operations. The design follows leaf-first processing pattern ensuring child directories are processed before parents, eliminating cleanup dependencies and enabling safe bottom-up directory removal. The system uses conservative deletion approach with explicit source file verification before removing any artifacts, preventing accidental deletion of valid knowledge base components. Key design patterns include the orchestrator pattern for workflow coordination, dataclass-based statistics tracking for comprehensive metrics, integration with existing `FileAnalysisCache` for consistent business logic, and async-first architecture supporting non-blocking operations with `FastMCP` context integration for real-time progress reporting.
+Implements five-phase plan generation architecture: Phase 1 generates cleanup tasks with no dependencies for early execution, Phase 2 creates cache structure tasks for directory preparation, Phase 3 generates file processing tasks depending on cleanup and structure, Phase 4 creates directory tasks depending on file tasks with horizontal sibling dependencies, and Phase 5 adds verification tasks depending on all processing operations. Uses leaf-first recursive processing ensuring proper hierarchical dependency ordering where parent directories wait for all child directories and files. Employs atomic task decomposition with comprehensive metadata embedding eliminating external state dependencies during execution. Implements horizontal dependency management through sibling task collection ensuring parent directories synchronize with all sibling completion before processing.
 
 ####### Implementation Approach
 
-The implementation uses leaf-first directory traversal with `_collect_directories_leaf_first` creating ordered processing queue ensuring safe cleanup dependencies. The system implements three-phase cleanup strategy starting with orphaned analysis file removal, followed by orphaned knowledge file cleanup, and concluding with empty directory pruning. Key algorithms include reverse path calculation mapping cache file paths back to source file locations, directory emptiness verification checking for both files and subdirectories, and mirror structure preservation logic preventing deletion when corresponding source directories exist. The approach integrates comprehensive error handling continuing cleanup operations despite individual failures, detailed statistics tracking with timing and error collection, and conservative deletion verification requiring explicit source file absence before artifact removal.
+Executes decision-driven task generation matching `RebuildDecisionEngine` decisions exactly to appropriate `TaskType` instances including `ANALYZE_FILE_LLM`, `SKIP_FILE_CACHED`, `CREATE_DIRECTORY_KB`, `SKIP_DIRECTORY_FRESH`, `DELETE_ORPHANED_FILE`, `DELETE_ORPHANED_DIRECTORY`, `CREATE_CACHE_STRUCTURE`, `VERIFY_CACHE_FRESHNESS`, and `VERIFY_KB_FRESHNESS`. Uses recursive directory traversal with consistent task ID generation through path sanitization ensuring reliable dependency resolution. Implements comprehensive metadata embedding including file characteristics, decision reasoning, directory contexts, and execution parameters for independent task execution. Employs priority-based task ordering with cleanup tasks at priority 100, file tasks at priority 50, directory tasks at priority 30, and verification tasks at priority 10 for optimal execution sequencing.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models:IndexingConfig` - configuration and path calculation utilities for cleanup behavior
-- `.file_analysis_cache:FileAnalysisCache` - cache path calculation and knowledge file location logic
-- `fastmcp:Context` - MCP context for progress reporting and user interaction
-- `pathlib` (external library) - cross-platform path operations and filesystem interaction
-- `logging` (external library) - structured logging for cleanup operations and debugging
-- `asyncio` (external library) - async programming patterns for non-blocking operations
-- `datetime` (external library) - timing information for performance analysis
-- `dataclasses` (external library) - statistics container implementation
+- `fastmcp.Context` - FastMCP framework context interface for async progress reporting and logging during plan generation
+- `jesse_framework_mcp.knowledge_bases.models:IndexingConfig` - Configuration object providing processing parameters and estimation settings
+- `jesse_framework_mcp.knowledge_bases.models:DirectoryContext` - Directory structure representation with file and subdirectory contexts for task creation
+- `jesse_framework_mcp.knowledge_bases.models:FileContext` - Individual file metadata including path, size, and timestamps for task metadata embedding
+- `jesse_framework_mcp.knowledge_bases.models.rebuild_decisions` - Decision model classes including `DecisionReport`, `RebuildDecision`, `DeletionDecision` for decision-to-task translation
+- `jesse_framework_mcp.knowledge_bases.models.execution_plan` - Execution planning models including `ExecutionPlan`, `AtomicTask`, `TaskType` for plan construction
+- `pathlib.Path` (external library) - Cross-platform path operations and task target specification
+- `datetime` (external library) - Timestamp generation for plan IDs and task metadata
+- `logging` (external library) - Structured logging for plan generation analysis and debugging
 
 **← Outbound:**
-- `hierarchical_indexer.py:HierarchicalIndexer` - integrated as Phase 1.7 in indexing workflow
-- Knowledge base maintenance workflows - cleanup operations for stale artifact removal
-- MCP server cleanup operations - maintenance functionality for knowledge base integrity
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - Consumes execution plans for coordinated task execution
+- Task execution engines - Receive atomic tasks with complete metadata for independent execution
+- Monitoring and progress reporting systems - Consume task estimates and execution planning information
+- Debugging and validation tools - Use comprehensive task metadata for execution analysis
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Specialized maintenance component within Jesse Framework MCP knowledge base indexing pipeline, ensuring knowledge base accuracy by removing orphaned artifacts
-- **Ecosystem Position**: Auxiliary component providing critical maintenance functionality integrated into the hierarchical indexing workflow as Phase 1.7 cleanup operation
-- **Integration Pattern**: Invoked by `HierarchicalIndexer` during indexing workflow phases, with direct integration to `FileAnalysisCache` for consistent path calculation and business rule enforcement
+- **System Role**: Critical translation component bridging decision-making and execution phases in the Jesse Framework MCP Plan-then-Execute architecture for knowledge base processing
+- **Ecosystem Position**: Core component enabling reliable execution planning by converting high-level decisions into atomic, dependency-aware tasks with comprehensive metadata
+- **Integration Pattern**: Used by hierarchical indexer to transform decision reports into executable plans, with generated tasks consumed by execution engines and monitoring systems
 
 ######### Edge Cases & Error Handling
 
-The system handles comprehensive error scenarios including filesystem access failures during directory traversal with graceful skipping and continued processing, individual file deletion failures with detailed error tracking and statistics updates, and path calculation errors returning `None` for safety in reverse mapping operations. Error handling includes permission errors during file and directory operations with comprehensive logging, concurrent access scenarios during cleanup operations, and malformed directory structures with defensive programming approaches. The implementation provides configurable error behavior through comprehensive error collection in `CleanupStats.errors`, detailed logging with `exc_info=True` for debugging support, and graceful degradation ensuring partial cleanup completion when individual operations fail. Special handling includes project-base root directory protection preventing structural damage, mirror structure preservation when source directories exist, and conservative deletion approach requiring explicit verification before artifact removal.
+Handles missing decisions by logging warnings and skipping task creation when `DecisionReport` lacks decisions for specific files or directories. Manages circular dependency prevention by avoiding sibling dependencies in directory task generation, using parent-child relationships exclusively for dependency management. Implements comprehensive plan validation through `ExecutionPlan.validate_dependencies()` ensuring all task dependencies are resolvable before execution begins. Provides graceful error handling in sibling collection with try-catch blocks returning empty lists when path calculations fail. Uses safe path sanitization preventing invalid task IDs from special characters or path separators while maintaining uniqueness across different files and directories.
 
 ########## Internal Implementation Details
 
-Internal mechanics include leaf-first directory collection using recursive depth-first traversal with `collect_recursive` nested function, three-phase cleanup processing with separate methods for each cleanup type, and reverse path calculation algorithms mapping cache paths back to source locations. The implementation uses `FileAnalysisCache.get_knowledge_file_path()` for consistent knowledge file location logic, comprehensive statistics tracking with timing information and error collection, and defensive programming with extensive try-catch blocks preventing cascading failures. Key internal patterns include project-base relative path calculation for mirror structure mapping, directory emptiness verification checking both files and subdirectories, and source directory existence verification for mirror structure preservation. The system maintains detailed audit trail through structured logging and statistics collection, handles component lifecycle through proper initialization and error recovery, and provides comprehensive metrics through `CleanupStats.to_dict()` for reporting and analysis.
+Maintains performance estimation parameters as instance variables enabling realistic duration calculations for different task types with `llm_analysis_duration` at 30 seconds, `kb_generation_duration` at 15 seconds, and fast operations under 0.1 seconds. Uses consistent task ID generation through `_sanitize_path_for_id()` replacing path separators and special characters with underscores while removing consecutive underscores for clean identifiers. Implements comprehensive metadata embedding including file sizes, modification timestamps, decision reasoning, directory contexts, and dependency counts for complete task execution context. Employs priority-based task ordering ensuring cleanup executes first, followed by structure creation, file processing, directory processing, and verification last through numerical priority values.
 
 ########### Code Usage Examples
 
-Basic orphaned analysis cleanup integration within indexing workflow:
+Essential plan generation workflow for converting decisions to executable tasks:
 
 ```python
-# Initialize and execute orphaned analysis cleanup as part of indexing workflow
-from jesse_framework_mcp.knowledge_bases.indexing.orphaned_cleanup import OrphanedAnalysisCleanup
-from jesse_framework_mcp.knowledge_bases.models import IndexingConfig
-from fastmcp import Context
+# Initialize plan generator with configuration for task estimation and metadata
+config = IndexingConfig(output_config=OutputConfig(knowledge_output_directory=knowledge_dir))
+plan_generator = PlanGenerator(config)
 
-# Create cleanup component with configuration
-config = IndexingConfig(knowledge_output_directory=Path("./knowledge"))
-cleanup = OrphanedAnalysisCleanup(config)
+# Create comprehensive execution plan from decision report and directory context
+execution_plan = await plan_generator.create_execution_plan(
+    root_context, decision_report, source_root, ctx
+)
 
-# Execute comprehensive cleanup with progress reporting
-async with Context() as ctx:
-    stats = await cleanup.cleanup_orphaned_files(
-        knowledge_root=Path("./knowledge"),
-        source_root=Path("./source"),
-        ctx=ctx
-    )
-    print(f"Cleanup completed: {stats.total_items_deleted} items removed in {stats.cleanup_duration:.2f}s")
+# Access generated tasks and execution metadata for processing coordination
+total_tasks = len(execution_plan.tasks)
+expensive_tasks = execution_plan.expensive_task_count
+estimated_duration = sum(task.estimated_duration for task in execution_plan.tasks)
 ```
 
-Advanced cleanup statistics analysis and error handling pattern:
+Task dependency analysis and execution ordering for debugging and monitoring:
 
 ```python
-# Execute cleanup with comprehensive statistics analysis and error reporting
-cleanup = OrphanedAnalysisCleanup(config)
+# Analyze task dependencies and execution ordering for validation
+validation_errors = execution_plan.validate_dependencies()
+if validation_errors:
+    logger.error(f"Plan validation failed: {validation_errors}")
 
-try:
-    stats = await cleanup.cleanup_orphaned_files(knowledge_root, source_root, ctx)
-    
-    # Analyze cleanup results
-    cleanup_report = stats.to_dict()
-    print(f"Analysis files deleted: {stats.analysis_files_deleted}")
-    print(f"Knowledge files deleted: {stats.knowledge_files_deleted}")
-    print(f"Directories deleted: {stats.directories_deleted}")
-    
-    if len(stats.errors) > 0:
-        print(f"Cleanup completed with {len(stats.errors)} errors:")
-        for error in stats.errors[:5]:  # Show first 5 errors
-            print(f"  - {error}")
-            
-except Exception as e:
-    print(f"Cleanup operation failed: {e}")
+# Access individual tasks with complete metadata for execution engines
+for task in execution_plan.tasks:
+    task_type = task.task_type
+    dependencies = task.dependencies
+    metadata = task.metadata
+    priority = task.priority
+    estimated_duration = task.estimated_duration
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/rebuild_decision_engine.py
+
+*Last Updated: 2025-07-06T23:05:36Z*
+
+#### Functional Intent & Features
+
+Centralized decision engine consolidating all rebuild and deletion decision logic for the Jesse Framework MCP knowledge base hierarchical indexing system. Provides single source of truth for processing decisions eliminating scattered logic across multiple components through `RebuildDecisionEngine` class with comprehensive staleness checking via `FileAnalysisCache` integration. Enables developers to make consistent, auditable decisions about file rebuilds, directory processing, and orphaned content cleanup with rich audit trails and performance optimization. Key semantic entities include `RebuildDecisionEngine`, `DecisionReport`, `RebuildDecision`, `DeletionDecision`, `DecisionOutcome`, `DecisionReason`, `FileAnalysisCache`, `ProjectBaseHandler`, `GitCloneHandler`, `DirectoryContext`, `FileContext`, `IndexingConfig`, `fastmcp.Context`, `pathlib.Path`, and `datetime` for comprehensive decision-making operations using file-first optimization approach preventing unnecessary directory rebuilds when only individual files are stale.
+
+##### Main Components
+
+Core `RebuildDecisionEngine` class serving as the primary decision-making component with comprehensive analysis methods including `analyze_hierarchy()` for full directory tree processing, `_analyze_file_rebuild_decisions()` and `_analyze_directory_rebuild_decisions()` for targeted processing, and `_analyze_deletion_decisions()` for orphaned content cleanup. Supporting decision factory methods `_create_rebuild_decision()` and `_create_deletion_decision()` for standardized decision object creation. Consolidated helper methods including `_get_file_timestamp_safe()`, `_is_timestamp_newer()`, `_calculate_cache_path_safe()`, and path mapping utilities for consistent filesystem operations. Public interface methods `should_rebuild_directory()`, `should_cleanup_orphaned_analysis()`, and `is_cache_fresh()` for external component integration.
+
+###### Architecture & Design
+
+Implements centralized decision architecture consolidating scattered logic from multiple components into single authoritative decision point with comprehensive audit trails. Uses file-first optimization approach analyzing individual file staleness before directory-level decisions to prevent unnecessary rebuilds. Integrates with existing `FileAnalysisCache` for performance-optimized staleness checking and special handlers (`ProjectBaseHandler`, `GitCloneHandler`) for scenario-specific processing. Employs selective cascading pattern where content-driven rebuilds automatically trigger ancestor directory rebuilds through `_propagate_cascading_decisions()`. Implements defensive programming with graceful error handling ensuring decision failures don't break overall processing workflow.
+
+####### Implementation Approach
+
+Executes four-phase analysis workflow: Phase 1 analyzes individual file rebuild decisions using cache staleness checking, Phase 2 analyzes directory rebuild decisions considering file-level outcomes, Phase 3 detects orphaned files for deletion decisions, and Phase 4 implements selective cascading propagating rebuild decisions up hierarchy. Uses timestamp-based staleness detection through direct comparison without tolerance for consistent behavior across components. Implements comprehensive path mapping between source files and knowledge base structure using project-base directory mirroring. Employs consolidated helper methods eliminating DRY violations and providing consistent error handling patterns across all decision operations.
+
+######## External Dependencies & Integration Points
+
+**→ Inbound:**
+- `fastmcp.Context` - FastMCP framework context interface for async logging and progress reporting
+- `jesse_framework_mcp.knowledge_bases.models:IndexingConfig` - Configuration object providing filtering rules and output directory settings
+- `jesse_framework_mcp.knowledge_bases.models:DirectoryContext` - Directory structure representation with file and subdirectory contexts
+- `jesse_framework_mcp.knowledge_bases.models:FileContext` - Individual file metadata including path, size, and modification timestamps
+- `jesse_framework_mcp.knowledge_bases.models.rebuild_decisions` - Decision model classes for structured outcomes and reasoning
+- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - Cache staleness checking and performance optimization
+- `jesse_framework_mcp.knowledge_bases.indexing.special_handlers` - Project-base and git-clone scenario handlers
+- `pathlib.Path` (external library) - Cross-platform path operations and filesystem metadata access
+- `datetime` (external library) - Timestamp comparison and decision timing calculations
+- `asyncio` (external library) - Async execution framework for concurrent decision processing
+
+**← Outbound:**
+- `jesse_framework_mcp.knowledge_bases.indexing.plan_generator:PlanGenerator` - Consumes decision reports for execution planning
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - Uses rebuild decisions for processing coordination
+- Knowledge base processing pipeline - Receives structured decision reports with rebuild and deletion instructions
+- Monitoring and logging systems - Consumes performance statistics and decision audit trails
+
+**⚡ System role and ecosystem integration:**
+- **System Role**: Core decision-making component serving as single source of truth for all rebuild and deletion decisions within the Jesse Framework MCP knowledge base indexing system
+- **Ecosystem Position**: Central component eliminating scattered decision logic across multiple indexing components while providing comprehensive audit trails and performance optimization
+- **Integration Pattern**: Used by hierarchical indexer and plan generator for coordinated processing decisions, with results feeding into execution planning and monitoring systems
+
+######### Edge Cases & Error Handling
+
+Handles empty directories by detecting contentless directories and skipping knowledge file generation to prevent infinite rebuild loops through `_is_directory_empty_of_processable_content()`. Manages project root specially ensuring `root_kb.md` generation follows business rules while applying standard staleness checking. Implements graceful filesystem error handling with conservative fallback decisions when file access fails or path calculations encounter errors. Provides comprehensive orphaned file detection with safety validation preventing accidental deletion of valid content. Uses consolidated error handling patterns through `_handle_decision_error()` creating standardized error decisions with detailed context information for debugging and recovery.
+
+########## Internal Implementation Details
+
+Maintains performance tracking through `_decisions_made`, `_filesystem_operations`, and `_decision_start_time` counters for optimization monitoring. Uses cached `_project_base_root` path for performance optimization in repeated path calculations. Implements consolidated helper methods eliminating DRY violations including timestamp retrieval, path calculation, and decision creation patterns. Employs direct timestamp comparison without tolerance aligning with `FileAnalysisCache` behavior for consistent staleness detection. Tracks cascading decisions through ancestor path calculation using `_get_ancestor_directories()` with safety limits preventing infinite traversal loops.
+
+########### Code Usage Examples
+
+Essential decision engine initialization and hierarchy analysis pattern:
+
+```python
+# Initialize decision engine with configuration for centralized decision making
+config = IndexingConfig(output_config=OutputConfig(knowledge_output_directory=knowledge_dir))
+decision_engine = RebuildDecisionEngine(config)
+
+# Perform comprehensive hierarchy analysis with file-first optimization
+report = await decision_engine.analyze_hierarchy(root_context, source_root, ctx)
+
+# Access structured decision results for execution planning
+stats = report.get_summary_statistics()
+rebuild_decisions = report.rebuild_decisions
+deletion_decisions = report.deletion_decisions
+```
+
+Individual decision making for external component integration:
+
+```python
+# Make single directory rebuild decision for targeted processing
+directory_decision = await decision_engine.should_rebuild_directory(
+    directory_context, source_root, ctx
+)
+
+# Check cache freshness for individual file processing optimization
+is_fresh, reason = decision_engine.is_cache_fresh(file_path, source_root)
+
+# Determine orphaned file cleanup status for maintenance operations
+cleanup_outcome, cleanup_reason = await decision_engine.should_cleanup_orphaned_analysis(
+    analysis_file_path, source_root, ctx
+)
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/special_handlers.py
 
-*Last Updated: 2025-07-05T11:47:12Z*
+*Last Updated: 2025-07-06T23:05:36Z*
 
 #### Functional Intent & Features
 
-This module implements specialized handlers for unique scenarios in the Knowledge Bases Hierarchical Indexing System, providing read-only git clone processing with mirrored knowledge structure and whole project codebase indexing with systematic exclusions. It offers specialized processing logic for git-clones (read-only mirrored structure) and project-base (whole codebase indexing) scenarios with custom handling logic that integrates with core hierarchical indexing while maintaining special case handling. Key semantic entities include `GitCloneHandler` class for read-only git clone processing, `ProjectBaseHandler` class for whole codebase indexing, `is_git_clone_path()` method for git clone detection, `get_mirrored_knowledge_path()` method for parallel structure mapping, `should_process_project_item()` method for exclusion filtering, `system_exclusions` set containing standard development directories, `DirectoryContext` and `FileContext` models for structure representation, `IndexingConfig` for configuration management, and `.knowledge/git-clones/` and `.knowledge/project-base/` directory structures for specialized knowledge organization with defensive programming ensuring graceful handling of access restrictions and processing errors.
+This file implements specialized handlers for the Jesse Framework MCP Knowledge Bases Hierarchical Indexing System, providing two distinct processing strategies for unique scenarios. The `GitCloneHandler` enables read-only processing of git clones with mirrored knowledge structure preservation, while the `ProjectBaseHandler` performs whole codebase indexing with systematic exclusion rules. Key semantic entities include `GitCloneHandler` and `ProjectBaseHandler` classes, `IndexingConfig` and `DirectoryContext` models, `pathlib.Path` operations, and specialized methods like `get_mirrored_knowledge_path()` and `should_process_project_item()`. The handlers integrate with the core hierarchical indexing system while maintaining specialized processing logic for git-clones (read-only mirrored structure) and project-base (comprehensive codebase coverage) scenarios, utilizing defensive programming patterns to handle access restrictions and filesystem errors gracefully.
 
 ##### Main Components
 
-The module contains two primary specialized handler classes: `GitCloneHandler` for read-only git clone processing with mirrored knowledge structure creation, and `ProjectBaseHandler` for whole project codebase indexing with systematic exclusion rules. `GitCloneHandler` methods include `is_git_clone_path()` for git clone detection, `get_mirrored_knowledge_path()` for parallel structure mapping, and `process_git_clone_structure()` for comprehensive git clone processing. `ProjectBaseHandler` methods include `should_process_project_item()` for exclusion rule application, `process_project_structure()` for entire project traversal, and `get_project_knowledge_path()` for knowledge file location determination. Both handlers implement initialization methods accepting `IndexingConfig` for specialized processing configuration and error handling methods for robust operation in unique scenarios.
+The file contains two primary handler classes: `GitCloneHandler` for processing read-only git clone repositories with mirrored knowledge structure creation, and `ProjectBaseHandler` for comprehensive project codebase indexing with exclusion filtering. Each handler includes initialization methods accepting `IndexingConfig`, path detection methods (`is_git_clone_path()`, `should_process_project_item()`), specialized path mapping functions (`get_mirrored_knowledge_path()`, `get_project_knowledge_path()`), and comprehensive structure processing methods (`process_git_clone_structure()`, `process_project_structure()`). The `ProjectBaseHandler` additionally implements `_build_project_directory_context()` for recursive directory traversal and context building with project-specific filtering rules.
 
 ###### Architecture & Design
 
-The architecture implements a specialized handler pattern extending core hierarchical indexing capabilities with unique scenario processing. `GitCloneHandler` uses read-only access patterns with mirrored knowledge structure creation, ensuring original repositories remain untouched while creating parallel knowledge base structure for comprehensive content analysis. `ProjectBaseHandler` employs comprehensive exclusion filtering combining system directory exclusions with project-specific rules, enabling whole codebase processing while preventing inappropriate content inclusion. Both handlers integrate seamlessly with core hierarchical processing through `DirectoryContext` and `FileContext` model usage, maintaining consistency with established indexing patterns. The design emphasizes defensive programming with graceful error handling for access restrictions, permission issues, and processing failures that could occur in specialized scenarios.
+Both handlers follow a configuration-driven architecture pattern with dependency injection of `IndexingConfig` objects, enabling flexible behavior customization. The `GitCloneHandler` implements a mirrored structure pattern, mapping git clone paths to parallel knowledge base directories with `_kb` suffixes while preserving directory hierarchy relationships. The `ProjectBaseHandler` employs a comprehensive traversal pattern with systematic exclusion rules, maintaining a predefined set of system exclusions (`.git`, `.knowledge`, `.coding_assistant`, `__pycache__`, etc.) and integrating with configuration-based filtering. Both handlers utilize defensive programming patterns with comprehensive error handling and logging, ensuring graceful degradation when encountering access restrictions or filesystem errors.
 
 ####### Implementation Approach
 
-The implementation uses path-based detection strategies for specialized scenario identification, with `GitCloneHandler` checking for `.knowledge/git-clones/` path patterns and `ProjectBaseHandler` applying comprehensive exclusion filtering. Git clone processing employs path mapping algorithms converting git clone paths to mirrored knowledge structure paths with `_kb` suffix preservation and directory hierarchy maintenance. Project base processing uses exclusion rule application combining `system_exclusions` set (containing `.git`, `.knowledge`, `.coding_assistant`, `.vscode`, `.idea`, `__pycache__`, `node_modules`, `.pytest_cache`, `.mypy_cache`) with configuration-driven filtering through `IndexingConfig.should_process_file()` and `should_process_directory()` methods. Both handlers implement comprehensive directory traversal with progress reporting and status updates for large-scale processing scenarios, returning structured `DirectoryContext` objects for integration with core hierarchical processing workflows.
+The `GitCloneHandler` uses path manipulation algorithms to create mirrored knowledge structures, converting paths like `.knowledge/git-clones/repo/file.py` to `.knowledge/git-clones/repo_kb/file_kb.md` while preserving directory hierarchies. The `ProjectBaseHandler` implements recursive directory traversal with filtering at each level, using `iterdir()` for filesystem enumeration and applying exclusion rules through `should_process_project_item()`. Both handlers create `DirectoryContext` and `FileContext` objects with metadata extraction including file sizes and modification timestamps. The implementation uses async/await patterns for progress reporting through `Context` objects, enabling user feedback during large codebase processing operations with structured logging for debugging and monitoring.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models.indexing_config:IndexingConfig` - configuration and exclusion rules for specialized processing scenarios
-- `..models.knowledge_context:DirectoryContext` - directory structure representation for specialized handling contexts
-- `..models.knowledge_context:FileContext` - file metadata and processing status tracking for specialized scenarios
-- `fastmcp:Context` - logging and progress reporting context for specialized processing operations
-- `pathlib` (external library) - cross-platform path operations and directory traversal for specialized scenarios
-- `logging` (external library) - structured logging for special handling operations and error tracking
+- `..models.indexing_config:IndexingConfig` - configuration and exclusion rules for specialized processing
+- `..models.knowledge_context:DirectoryContext` - context structures for directory representation
+- `..models.knowledge_context:FileContext` - context structures for file representation
+- `pathlib.Path` (standard library) - cross-platform path operations and directory traversal
+- `logging` (standard library) - structured logging for special handling operations
+- `fastmcp.Context` (external library) - MCP context for async progress reporting
 
 **← Outbound:**
-- `knowledge_bases/indexing/hierarchical_indexer.py:HierarchicalIndexer` - consumes specialized handler services for unique scenario processing
-- Mirrored knowledge structure files in `.knowledge/git-clones/` consumed by knowledge base systems
-- Project-base knowledge files in `.knowledge/project-base/` consumed by whole codebase analysis systems
-- `DirectoryContext` objects consumed by core hierarchical processing workflows
+- `core/hierarchical_processor.py` - consumes specialized handler outputs for knowledge base generation
+- `.knowledge/git-clones/{repo}_kb/` - generates mirrored knowledge structure directories
+- `.knowledge/project-base/root_kb.md` - produces project root knowledge files
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Specialized processing extension enabling unique scenario handling within the hierarchical indexing system for git clones and whole project codebases
-- **Ecosystem Position**: Peripheral specialized components extending core indexing capabilities for specific use cases requiring custom processing logic
-- **Integration Pattern**: Used by `HierarchicalIndexer` when specialized scenarios are detected, integrated through standard `DirectoryContext` and `FileContext` model interfaces, and consumed by knowledge base systems requiring specialized content organization
+- **System Role**: Specialized processing layer bridging unique scenarios (git clones, project-base) with core hierarchical indexing workflow
+- **Ecosystem Position**: Core component enabling comprehensive knowledge base coverage for diverse source structures
+- **Integration Pattern**: Used by hierarchical indexing orchestrator to handle special cases requiring custom processing logic, with handlers selected based on path patterns and processing requirements
 
 ######### Edge Cases & Error Handling
 
-The system handles git clone access restrictions through read-only processing patterns with comprehensive error handling for permission issues and repository integrity preservation. Missing or corrupted git clone directories are handled gracefully with fallback path generation and error logging without breaking the overall processing workflow. Project base processing handles large codebase scenarios with exclusion rule failures through individual item error handling, ensuring processing continues despite individual filtering failures. Path mapping failures in `get_mirrored_knowledge_path()` use fallback path generation to `unknown_kb.md` preventing processing interruption. System directory exclusion failures are handled through defensive programming with warning logging and conservative inclusion decisions. Both handlers implement comprehensive exception handling with detailed error logging and graceful degradation ensuring specialized processing failures don't cascade to core hierarchical indexing operations.
+Both handlers implement comprehensive error handling for filesystem access restrictions, with `try-except` blocks around directory iteration and file access operations. The `GitCloneHandler` handles path generation failures by returning fallback paths (`unknown_kb.md`) and logs errors for debugging. The `ProjectBaseHandler` gracefully handles `OSError` and `PermissionError` exceptions during directory traversal, continuing processing when individual items are inaccessible. Both handlers use warning-level logging for non-critical failures and error-level logging for processing failures that affect overall operation. The handlers include defensive checks for empty path components and invalid directory structures, ensuring robust operation across diverse filesystem configurations and permission scenarios.
 
 ########## Internal Implementation Details
 
-The git clone handler maintains path mapping logic converting `.knowledge/git-clones/repo/file.py` patterns to `.knowledge/git-clones/repo_kb/file_kb.md` mirrored structure with directory hierarchy preservation and file extension handling. Project base handler maintains `system_exclusions` set with standard development environment directories and integrates with `IndexingConfig` filtering methods for comprehensive exclusion rule application. Both handlers implement lazy initialization patterns with configuration storage and logging setup for specialized processing requirements. Path resolution uses `pathlib.Path.relative_to()` for relative path calculation and `pathlib.Path.parts` for path component analysis in specialized scenarios. Error handling uses structured logging with specific error messages and context information for debugging specialized processing issues. Progress reporting integrates with `fastmcp.Context` for real-time operation monitoring and status updates during large-scale specialized processing operations.
+The `GitCloneHandler` maintains internal path mapping logic using `relative_to()` and path part manipulation to construct mirrored structures, with special handling for repository root detection and file extension removal. The `ProjectBaseHandler` maintains a `system_exclusions` set as a class attribute, initialized with common development environment directories and cache folders. Both handlers use `datetime.fromtimestamp()` for file modification time extraction and `stat()` for file size metadata. The recursive `_build_project_directory_context()` method implements depth-first traversal with immediate filtering application, creating `FileContext` and `DirectoryContext` objects with complete metadata population. Internal logging uses structured messages with path information for debugging and monitoring specialized processing operations.
 
 ########### Code Usage Examples
 
-**Git clone handler initialization and path detection:**
+**GitCloneHandler initialization and path mapping:**
 ```python
-# Initialize git clone handler and detect git clone paths for specialized processing
-handler = GitCloneHandler(config)
-is_clone = handler.is_git_clone_path(Path(".knowledge/git-clones/repo"))
+# Initialize handler with configuration
+config = IndexingConfig()
+git_handler = GitCloneHandler(config)
+
+# Check if path requires git clone handling
+if git_handler.is_git_clone_path(Path(".knowledge/git-clones/my-repo")):
+    # Generate mirrored knowledge path
+    knowledge_path = git_handler.get_mirrored_knowledge_path(
+        Path(".knowledge/git-clones/my-repo/src/main.py"),
+        Path(".knowledge")
+    )
+    # Result: .knowledge/git-clones/my-repo_kb/src/main_kb.md
 ```
 
-**Mirrored knowledge path generation for git clone processing:**
+**ProjectBaseHandler filtering and processing:**
 ```python
-# Generate mirrored knowledge structure path maintaining directory hierarchy relationships
-git_path = Path(".knowledge/git-clones/repo/src/file.py")
-knowledge_path = handler.get_mirrored_knowledge_path(git_path, base_knowledge_path)
-# Results in: .knowledge/git-clones/repo_kb/src/file_kb.md
-```
-
-**Project base handler with exclusion filtering:**
-```python
-# Initialize project handler and apply exclusion rules for whole codebase processing
+# Initialize handler with exclusion rules
 project_handler = ProjectBaseHandler(config)
-should_process = project_handler.should_process_project_item(
-    Path("src/main.py"), project_root
-)
-```
 
-**Comprehensive project structure processing:**
-```python
-# Process entire project structure with systematic exclusions and progress reporting
-directory_context = await project_handler.process_project_structure(
-    project_root, ctx
+# Check if project item should be processed
+should_process = project_handler.should_process_project_item(
+    Path("src/main.py"), 
+    Path(".")
 )
-knowledge_path = project_handler.get_project_knowledge_path(project_root)
+
+# Get project knowledge file location
+kb_path = project_handler.get_project_knowledge_path(Path("."))
+# Result: ./.knowledge/project-base/root_kb.md
 ```
 
 ---
-*Generated: 2025-07-05T11:47:12Z*
+*Generated: 2025-07-06T23:05:36Z*
 *Source Directory: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing*
-*Total Files: 11*
+*Total Files: 14*
 *Total Subdirectories: 1*
 
 # End of indexing_kb.md

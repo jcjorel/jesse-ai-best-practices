@@ -1,87 +1,105 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/file_analysis_cache.py -->
-<!-- Cached On: 2025-07-04T16:52:20.867617 -->
-<!-- Source Modified: 2025-07-03T17:40:33.712319 -->
+<!-- Cached On: 2025-07-06T21:20:38.725458 -->
+<!-- Source Modified: 2025-07-06T21:19:09.350007 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file implements a high-performance caching system for individual LLM analysis outputs in the Jesse Framework MCP knowledge building system, providing significant performance improvements by avoiding recomputation of file analyses when source files remain unchanged. The `FileAnalysisCache` class manages timestamp-based freshness checking, clean metadata separation, and project-base directory structure mirroring using `IndexingConfig`, `DirectoryContext`, `FileContext`, `get_portable_path()`, HTML comment delimiters (`METADATA_START`, `METADATA_END`), and `.analysis.md` cache file suffixes. Key semantic entities include `datetime` timestamp comparison with configurable tolerance, `pathlib.Path` operations, comprehensive staleness detection through `is_knowledge_file_stale()`, constituent dependency checking, and cache structure preparation via `prepare_cache_structure()` for concurrent operation safety.
+The `FileAnalysisCache` class provides high-performance caching capabilities for individual LLM file analysis outputs within the Jesse Framework MCP knowledge building system. This cache manager eliminates redundant LLM API calls by storing and retrieving analysis results for unchanged source files, implementing timestamp-based staleness detection with `is_cache_fresh()` method returning detailed reasoning tuples. Key semantic entities include `FileAnalysisCache` class, `IndexingConfig` configuration model, `DirectoryContext` and `FileContext` data structures, `get_portable_path()` utility function, HTML comment metadata delimiters (`METADATA_START`, `METADATA_END`), project-base directory mirroring strategy, `.analysis.md` cache file suffix, `prepare_cache_structure()` method for concurrent operation safety, and `RebuildDecisionEngine` integration for staleness determination. The system provides clean metadata separation ensuring no cache artifacts contaminate final knowledge files through `_extract_analysis_content()` method, comprehensive error handling with graceful degradation on cache failures, and rich debugging capabilities with detailed timestamp comparisons and constituent staleness analysis.
 
 ##### Main Components
 
-The file contains the `FileAnalysisCache` class with core methods including `get_cached_analysis()` for retrieving clean cached content, `cache_analysis()` for storing analysis results with metadata, `is_cache_fresh()` for timestamp-based freshness validation, `get_cache_path()` for project-base path calculation, `is_knowledge_file_stale()` for comprehensive directory knowledge file staleness checking, `get_constituent_staleness_info()` for detailed debugging analysis, `prepare_cache_structure()` for upfront directory creation, and `clear_cache()` for cache invalidation. Supporting utility methods include `_extract_analysis_content()` for metadata removal, `_create_metadata_header()` for portable path metadata generation, `_collect_all_files_recursive()` for hierarchy traversal, and `get_cache_stats()` for monitoring.
+The module contains the primary `FileAnalysisCache` class with core caching operations including `get_cached_analysis()` for retrieval, `cache_analysis()` for storage, and `is_cache_fresh()` for staleness checking. Cache path management is handled by `get_cache_path()` following project-base directory structure mirroring. Knowledge file operations include `get_knowledge_file_path()` and `is_knowledge_file_stale()` for directory-level rebuild decisions. Metadata management components include `_create_metadata_header()` for rich cache tracking and `_extract_analysis_content()` for clean content extraction. Utility methods provide `get_constituent_staleness_info()` for detailed debugging analysis, `prepare_cache_structure()` for concurrent operation safety, `clear_cache()` for cache invalidation, and `get_cache_stats()` for monitoring. Helper methods include `_collect_all_files_recursive()` for directory traversal and `_is_handler_root_directory()` for consistent path generation across knowledge base handler types.
 
 ###### Architecture & Design
 
-The architecture implements a cache-first processing strategy with clean metadata separation ensuring no cache artifacts contaminate final knowledge files. The design follows project-base indexing business rules with mirror directory structure organization and standardized `.analysis.md` file naming conventions. HTML comment-based metadata blocks enable reliable content extraction while maintaining backward compatibility. The system uses immutable timestamp-based freshness checking with configurable tolerance for filesystem precision handling. Upfront cache structure preparation eliminates race conditions during concurrent operations through pre-created directory hierarchies.
+The architecture implements a cache-first processing strategy with clean metadata separation using HTML comment delimiters to prevent cache artifacts from contaminating final knowledge files. The design follows project-base directory structure mirroring as mandated by indexing business rules, creating `.analysis.md` cache files that mirror source file organization. Timestamp-based freshness checking uses direct filesystem timestamp comparison without tolerance for reliability and simplicity. The system employs upfront cache structure preparation through `prepare_cache_structure()` to eliminate race conditions during concurrent operations. Error handling follows graceful degradation principles where cache failures never break core knowledge building processes. The metadata system uses structured HTML comments with `CACHE_VERSION` for future compatibility and includes portable path references using `get_portable_path()` for cross-environment compatibility.
 
 ####### Implementation Approach
 
-The implementation uses timestamp comparison with `datetime.fromtimestamp()` and configurable tolerance through `timedelta` for reliable freshness detection. Cache path calculation follows project-base subdirectory mirroring using `Path.relative_to()` and structured path reconstruction. Metadata management uses HTML comment delimiters for clean content extraction without markdown parsing conflicts. Comprehensive staleness checking evaluates cached analyses, subdirectory knowledge files, and source file timestamps against knowledge file modification times. Concurrent safety is achieved through upfront directory structure creation and atomic file operations with graceful error handling.
+The implementation uses direct timestamp comparison between source files and cache files without tolerance, where cache is fresh if `cache_mtime >= source_mtime`. Cache files combine metadata headers with analysis content using clear HTML comment delimiters for reliable extraction. The system implements two-layer processing flow: source files trigger individual file reprocessing when changed, while knowledge files rebuild only when cached analyses or subdirectory knowledge files are newer. Directory structure preparation uses recursive `DirectoryContext` traversal to identify all files requiring cache directories, then creates unique cache directory sets atomically. Path calculation follows project-base indexing rules with relative path preservation and standardized `.analysis.md` suffix application. The staleness checking system specifically excludes cached analyses from directory rebuild decisions to prevent infinite rebuild loops, focusing only on source files and subdirectory knowledge files for directory-level staleness determination.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `..models.indexing_config:IndexingConfig` - Cache configuration and knowledge output directory paths
-- `..models.knowledge_context:DirectoryContext` - Directory structure context for cache preparation
-- `..models.knowledge_context:FileContext` - Individual file metadata and processing status
-- `...helpers.path_utils:get_portable_path` - Portable path generation for cross-environment compatibility
-- `fastmcp:Context` - Progress reporting during cache structure preparation
-- `pathlib` (external library) - Cross-platform path operations and file metadata access
-- `datetime` (external library) - Timestamp comparison and cache freshness determination
-- `logging` (external library) - Structured logging for cache operations and debugging
+- `..models.IndexingConfig` - Configuration model providing cache paths and timestamp tolerance settings
+- `..models.DirectoryContext` - Hierarchical directory structure representation for cache preparation
+- `..models.FileContext` - Individual file metadata with timestamps for staleness checking
+- `...helpers.path_utils:get_portable_path` - Portable path generation using JESSE path variables
+- `fastmcp.Context` - MCP framework context for progress reporting and user communication
+- `pathlib.Path` (standard library) - Cross-platform path operations and file metadata access
+- `datetime.datetime` (standard library) - Timestamp comparison and cache freshness determination
+- `logging` (standard library) - Structured logging for cache operations and debugging
 
 **← Outbound:**
-- `knowledge_builder.py:KnowledgeBuilder` - Cache retrieval and storage during file analysis
-- `hierarchical_indexer.py:HierarchicalIndexer` - Cache structure preparation and staleness checking
-- `change_detector.py:ChangeDetector` - Knowledge file staleness evaluation for incremental processing
-- `generated/.knowledge/project-base/` - Cache file storage following mirror directory structure
+- `knowledge_building/rebuild_decision_engine.py` - Consumes staleness checking methods for rebuild decisions
+- `knowledge_building/knowledge_builder.py` - Uses cache retrieval and storage during file processing
+- `indexing/hierarchical_indexer.py` - Integrates cache structure preparation in processing workflow
+- `{PROJECT_ROOT}/jesse-framework-mcp/knowledge-base/project-base/` - Generated cache files with metadata headers
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical performance optimization component providing LLM analysis caching to eliminate redundant processing and reduce API costs in the knowledge building pipeline
-- **Ecosystem Position**: Core infrastructure component supporting the hierarchical indexing system with cache-first processing strategy and comprehensive staleness detection
-- **Integration Pattern**: Used by knowledge builders for cache retrieval/storage, hierarchical indexers for structure preparation, and change detectors for staleness evaluation with concurrent operation safety
+- **System Role**: Core performance optimization component in the Jesse Framework MCP knowledge building pipeline, serving as the primary cache layer between source file analysis and knowledge file generation
+- **Ecosystem Position**: Central infrastructure component that significantly impacts system performance by reducing LLM API costs and processing time through intelligent caching
+- **Integration Pattern**: Used by knowledge builders during file processing workflows, integrated with rebuild decision engines for staleness determination, and consumed by hierarchical indexers for structure preparation during batch operations
 
 ######### Edge Cases & Error Handling
 
-The system handles missing cache files by returning `None` to trigger fresh LLM analysis rather than failing operations. Filesystem access errors during timestamp comparison are treated conservatively as requiring fresh analysis to prevent stale content usage. Cache extraction failures fall back to original content for backward compatibility with cache files lacking metadata delimiters. Concurrent directory creation race conditions are eliminated through upfront structure preparation with fallback to on-demand creation. Portable path conversion failures use absolute paths as fallback in metadata headers. Cache write failures are logged but don't break core processing through graceful degradation patterns.
+The system handles missing cache files by returning `None` from `get_cached_analysis()` to trigger fresh LLM analysis. Filesystem access errors during timestamp comparison result in conservative staleness assumptions, treating files as requiring fresh analysis. Cache write failures are logged but never propagate to break core knowledge building processes. Path calculation errors fall back to flat structure in project-base directory to ensure cache operations continue. Metadata extraction failures return original content for backward compatibility with cache files lacking metadata delimiters. Concurrent access scenarios are handled through upfront directory structure preparation, with fallback to on-demand directory creation if preparation fails. The system treats cache freshness check failures conservatively by assuming staleness to trigger rebuilds rather than risk serving stale content. Directory structure preparation failures are logged but don't prevent processing, as individual cache operations fall back to on-demand directory creation.
 
 ########## Internal Implementation Details
 
-The `METADATA_START` and `METADATA_END` HTML comment delimiters use `<!-- CACHE_METADATA_START -->` and `<!-- CACHE_METADATA_END -->` for reliable content extraction without markdown conflicts. Cache versioning uses `CACHE_VERSION = "1.0"` for future compatibility and migration support. Timestamp tolerance is calculated as `timedelta(seconds=config.timestamp_tolerance_seconds)` for consistent freshness checking. The `get_cache_path()` method applies project-base subdirectory structure with `.analysis.md` suffix following `Path("project-base") / relative_path.parent / f"{file_path.name}.analysis.md"` pattern. Staleness checking uses `cache_mtime > knowledge_mtime + self.timestamp_tolerance` comparison logic for all constituent dependencies.
+Cache files use HTML comment metadata blocks with `CACHE_VERSION = "1.0"` for future compatibility and migration support. The metadata header includes portable source file paths using `get_portable_path()`, cache timestamp, source modification time, and cache version. Content extraction uses string operations to locate `METADATA_START` and `METADATA_END` delimiters, removing everything up to and including the end delimiter. Timestamp tolerance is calculated from `IndexingConfig.timestamp_tolerance_seconds` but currently unused in direct comparison logic. The `_is_handler_root_directory()` method implements identical logic to `KnowledgeBuilder` for consistent path generation across project-base, git-clones, and PDF-knowledge handlers. Cache statistics collection traverses the cache directory using `rglob("*.analysis.md")` pattern matching. The constituent staleness analysis builds comprehensive dictionaries with ISO timestamp formatting and detailed reasoning for debugging purposes. Directory structure preparation uses set operations to eliminate duplicate directory creation and batch processing for atomic structure creation.
 
 ########### Code Usage Examples
 
-**Basic cache retrieval with freshness checking demonstrates how to check for cached analysis content before triggering expensive LLM operations. This pattern provides immediate performance benefits by avoiding redundant processing when files haven't changed.**
+**Basic cache retrieval and storage pattern:**
 ```python
+# Initialize cache with configuration
 cache = FileAnalysisCache(config)
+
+# Check for cached analysis
 cached_content = await cache.get_cached_analysis(file_path, source_root)
 if cached_content:
-    print(f"Cache hit: {len(cached_content)} characters")
+    # Use cached analysis directly
+    analysis_result = cached_content
 else:
-    print("Cache miss - fresh analysis required")
+    # Perform fresh LLM analysis
+    analysis_result = await perform_llm_analysis(file_path)
+    # Cache the result for future use
+    await cache.cache_analysis(file_path, analysis_result, source_root)
 ```
 
-**Caching analysis results with metadata shows how to store LLM analysis outputs with portable path metadata for future retrieval. This enables persistent caching across different environments and working directories.**
+**Cache structure preparation for concurrent operations:**
 ```python
-analysis_result = "# File Analysis\nThis file implements..."
-await cache.cache_analysis(file_path, analysis_result, source_root)
-print(f"Cached analysis for {file_path.name}")
+# Prepare entire cache structure upfront to eliminate race conditions
+await cache.prepare_cache_structure(root_context, source_root, ctx)
+
+# Now safe to perform concurrent caching operations
+tasks = [cache.cache_analysis(file_path, analysis, source_root) 
+         for file_path, analysis in file_analyses]
+await asyncio.gather(*tasks)
 ```
 
-**Comprehensive staleness checking for directory knowledge files demonstrates how to evaluate whether knowledge files need rebuilding based on constituent dependencies. This enables efficient incremental processing by only rebuilding when necessary.**
+**Knowledge file staleness checking:**
 ```python
+# Check if directory knowledge file needs rebuilding
 is_stale, reason = cache.is_knowledge_file_stale(
     directory_path, source_root, file_contexts, subdirectory_paths
 )
 if is_stale:
-    print(f"Knowledge file needs rebuild: {reason}")
+    logger.info(f"Rebuilding knowledge file: {reason}")
+    # Trigger knowledge file rebuild
 ```
 
-**Upfront cache structure preparation for concurrent safety shows how to pre-create directory hierarchies before concurrent operations begin. This eliminates race conditions and ensures consistent cache state during parallel processing.**
+**Detailed staleness analysis for debugging:**
 ```python
-await cache.prepare_cache_structure(root_context, source_root, ctx)
-print("Cache directories pre-created for safe concurrent operations")
+# Get comprehensive staleness information
+staleness_info = await cache.get_constituent_staleness_info(
+    directory_path, source_root, file_contexts, subdirectory_paths, ctx
+)
+# Access detailed timestamp comparisons and reasoning
+for file_info in staleness_info['source_files']:
+    print(f"File: {file_info['name']}, Modified: {file_info['mtime']}")
 ```

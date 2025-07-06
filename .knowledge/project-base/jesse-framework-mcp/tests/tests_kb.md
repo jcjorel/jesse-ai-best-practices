@@ -8,92 +8,88 @@
 
 #### Functional Intent & Features
 
-This directory provides comprehensive test coverage for the Jesse Framework MCP server ecosystem, validating core functionality across knowledge base indexing, HTTP response formatting, resource endpoints, configuration management, and LLM integration components. The test suite ensures system reliability through integration testing, unit testing, and end-to-end validation of real-world project complexity. Key semantic entities include `HierarchicalIndexer`, `FileAnalysisCache`, `IndexingConfig`, `MockContext`, `XAsyncHttpPath`, `format_http_section`, `get_session_init_context`, `StrandsClaude4Driver`, `OrphanedAnalysisCleanup`, `ChangeDetector`, `KnowledgeBuilder`, `pytest`, `asyncio`, `tempfile`, `pathlib.Path`, `FastMCP` decorator unwrapping, `jesse://project/gitignore-files` resource validation, `.knowledge/project-base/` directory structure testing, and comprehensive boundary marker compliance verification. The testing framework enables developers to validate MCP server functionality, knowledge base operations, HTTP protocol compliance, configuration template systems, and AWS Bedrock integration before deployment.
+Comprehensive test suite validating the Jesse Framework MCP Server's knowledge base indexing system, HTTP formatting infrastructure, and resource endpoint functionality through isolated unit tests, integration testing, and real-world validation scenarios. Provides extensive testing capabilities for hierarchical dependency planning, cache integration, configuration management, project root detection, and MCP resource protocol compliance. Enables developers to verify system reliability through targeted validation of `HierarchicalIndexer`, `RebuildDecisionEngine`, `FileAnalysisCache`, `XAsyncHttpPath`, `IndexingConfig`, session initialization resources, and gitignore compliance functionality. Key semantic entities include `pytest`, `asyncio`, `tempfile`, `MockContext`, `TestContext`, `unwrap_fastmcp_function`, `pathlib.Path`, `FastMCP` protocol simulation, `jesse://session/init-context`, `jesse://project/gitignore-files`, `StrandsClaude4Driver`, `Claude4SonnetConfig`, boundary marker validation (`--JESSE_FRAMEWORK_BOUNDARY_2025--`), HTTP status code testing, and comprehensive decision outcome validation through `DecisionOutcome`, `DecisionReason`, and `DecisionReport` structures.
 
 ##### Main Components
 
-The directory contains 16 specialized test files organized by functional domain: session initialization testing (`test_session_init_resource.py`), knowledge resource validation (`test_new_resources.py`), LLM driver integration (`test_strands_driver.py`), configuration system validation (`test_default_knowledge_directory.py`, `test_configuration_template_system.py`), HTTP infrastructure testing (`test_http_formatting.py`, `test_http_core_functionality.py`, `test_http_section_formatting.py`, `test_http_path_integration.py`), knowledge base indexing validation (`test_file_analysis_cache_integration.py`, `test_orphaned_cleanup.py`, `test_comprehensive_change_detection.py`, `test_upfront_cache_structure_preparation.py`), business rule compliance (`test_project_base_indexing_rule.py`), integration testing (`test_project_indexing_integration.py`), project setup validation (`test_project_root.py`), resource endpoint testing (`test_gitignore_resource.py`), and debugging utilities (`test_smart_compliance_debug.py`). Supporting components include `MockContext` classes for isolated testing, `unwrap_fastmcp_function` utilities for direct function access, and comprehensive fixture management for temporary directory creation.
+Core test categories include session initialization validation through `test_session_init_resource.py` and `test_new_resources.py` for MCP resource endpoint testing, hierarchical indexing validation through `test_hierarchical_dependency_planning.py`, `test_centralized_decision_engine.py`, and `test_project_indexing_integration.py` for system-wide integration testing. HTTP infrastructure testing encompasses `test_http_formatting.py` (reference file), `test_http_core_functionality.py`, `test_http_section_formatting.py`, and `test_http_path_integration.py` for comprehensive HTTP response validation. Cache and performance testing includes `test_file_analysis_cache_integration.py` and `test_upfront_cache_structure_preparation.py` for optimization validation. Configuration and project structure testing covers `test_configuration_template_system.py`, `test_project_root.py`, `test_default_knowledge_directory.py`, and specialized validation through `test_root_kb_generation.py`, `test_project_base_indexing_rule.py`, and `test_scratchpad_exclusion.py`.
 
 ###### Architecture & Design
 
-The testing architecture follows a layered validation approach with unit tests for individual components, integration tests for subsystem interactions, and end-to-end tests for complete workflow validation. The design implements isolation patterns using `tempfile.TemporaryDirectory()` for clean test environments, mock context patterns for FastMCP integration testing, and progressive validation strategies with clear success/failure criteria. Test organization separates concerns by functional domain while maintaining comprehensive coverage through cross-cutting integration tests. The architecture includes specialized testing patterns for async operations, HTTP protocol validation, file system operations, configuration management, and real-world project complexity simulation.
+Implements comprehensive testing architecture with mock-based isolation patterns using `MockContext` and `TestContext` classes for FastMCP protocol simulation without external dependencies. Uses temporary filesystem isolation through `tempfile.TemporaryDirectory()` for reproducible test environments and realistic file system operations. Employs parametric testing patterns with `pytest` fixtures for configuration validation across multiple handler types (`project-base`, `git-clones`, `pdf-knowledge`). Implements dual-mode testing strategies supporting both unit testing for isolated component validation and integration testing for end-to-end system verification. Uses assertion-based validation with comprehensive edge case coverage, error condition simulation, and boundary marker compliance verification for MCP resource protocol adherence.
 
 ####### Implementation Approach
 
-The implementation uses `pytest` framework with class-based organization, async/await patterns for MCP server compatibility, and comprehensive fixture management for test isolation. Testing strategies include direct function testing through FastMCP decorator unwrapping, realistic file system simulation with proper cleanup, timestamp-based validation for change detection, and comprehensive error scenario coverage. The approach implements progressive test execution with detailed logging, emoji-based status indicators for visual feedback, and comprehensive result analysis including statistics tracking and debug artifact preservation. Configuration testing uses hierarchical validation patterns, while integration testing employs conservative settings for stability and comprehensive monitoring for error detection.
+Executes async testing patterns throughout using `asyncio.run()` and `await` syntax for compatibility with MCP server async interfaces. Implements FastMCP decorator unwrapping through `unwrap_fastmcp_function()` utility enabling direct function testing without protocol overhead. Uses realistic project structure simulation with nested directory hierarchies, file content generation, and timestamp manipulation for comprehensive staleness testing. Employs comprehensive validation strategies including HTTP response parsing, boundary marker counting, content-length verification, and multi-section response assembly testing. Implements performance testing through concurrent operation simulation, cache hit rate measurement, and race condition detection for optimization validation.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - core indexing system validation across multiple test files
-- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - caching functionality testing and integration validation
-- `jesse_framework_mcp.resources.session_init:get_session_init_context` - MCP session initialization resource testing
-- `jesse_framework_mcp.helpers.async_http_formatter:format_http_section` - HTTP response formatting validation
-- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - AWS Bedrock Claude 4 integration testing
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration system validation
-- `pytest` (external library) - primary testing framework with fixture management
-- `asyncio` (external library) - async execution framework for MCP compatibility
-- `tempfile` (external library) - isolated test environment creation
-- `pathlib.Path` (external library) - cross-platform path manipulation
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - core indexing system validation
+- `jesse_framework_mcp.knowledge_bases.indexing.rebuild_decision_engine:RebuildDecisionEngine` - decision logic testing
+- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - cache functionality validation
+- `jesse_framework_mcp.knowledge_bases.indexing.plan_generator:PlanGenerator` - execution planning testing
+- `jesse_framework_mcp.helpers.async_http_formatter:format_http_section` - HTTP formatting validation
+- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncHttpPath` - dual-path functionality testing
+- `jesse_framework_mcp.resources.session_init:get_session_init_context` - session initialization resource testing
+- `jesse_framework_mcp.resources.project_resources:get_project_gitignore_files` - gitignore resource validation
+- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - LLM driver integration testing
+- `pytest` (external library) - comprehensive testing framework with fixtures and parametric testing
+- `asyncio` (external library) - async execution framework for MCP protocol compatibility
+- `tempfile` (external library) - isolated test environment creation and cleanup
+- `pathlib.Path` (external library) - cross-platform path manipulation and validation
 
 **← Outbound:**
-- CI/CD pipeline systems consuming test execution results for deployment validation
-- Development workflows using test results for functionality verification
-- MCP server deployment processes requiring test validation before production
-- Debug artifact generation in `/tmp/` directories for troubleshooting analysis
+- `CI/CD pipeline systems` - automated test execution consuming test results for deployment validation
+- `development workflows` - manual test execution for component validation and debugging
+- `test coverage reports` - comprehensive validation metrics for system reliability monitoring
+- `debug artifact directories/` - structured output for post-test analysis and troubleshooting
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation infrastructure ensuring Jesse Framework MCP server reliability across all functional domains before production deployment
-- **Ecosystem Position**: Core testing foundation validating the complete MCP server ecosystem from individual components through full integration workflows
-- **Integration Pattern**: Executed by developers during development, CI/CD systems for automated validation, and deployment processes for system verification, ensuring comprehensive coverage of MCP protocol compliance, knowledge base operations, HTTP infrastructure, and LLM integration
+- **System Role**: Critical validation infrastructure ensuring Jesse Framework MCP Server reliability through comprehensive testing of knowledge base indexing, HTTP formatting, resource endpoints, and configuration management systems
+- **Ecosystem Position**: Core testing foundation validating all major system components from low-level HTTP formatting through high-level knowledge base processing workflows, preventing regression and ensuring deployment readiness
+- **Integration Pattern**: Executed by developers during development cycles and CI/CD systems for continuous validation, consuming actual project files and MCP protocol implementations while generating comprehensive validation reports and debug artifacts
 
 ######### Edge Cases & Error Handling
 
-The test suite validates comprehensive error scenarios including missing project root detection, FastMCP decorator unwrapping failures, HTTP boundary marker compliance violations, knowledge base corruption scenarios, configuration template validation errors, and AWS credential availability issues. Error handling includes graceful degradation when external dependencies are unavailable, comprehensive exception capture with traceback preservation, and detailed diagnostic output for troubleshooting. The tests specifically handle file system permission errors, concurrent operation race conditions, timestamp tolerance validation, orphaned file cleanup edge cases, and integration testing with partial failure tolerance. Mock context implementations provide error simulation capabilities while maintaining test isolation from external systems.
+Comprehensive error scenario validation includes missing project root detection with setup guidance generation, FastMCP decorator unwrapping failures with graceful fallback, and filesystem permission issues with appropriate error mapping. Tests validate empty directory handling preventing infinite rebuild loops, orphaned file detection with safety validation, and concurrent operation race condition prevention. HTTP error handling covers automatic status code detection from Python exceptions (`FileNotFoundError` to 404, `PermissionError` to 403), boundary marker validation, and content-length accuracy with UTF-8 encoding. Configuration error handling includes invalid handler type validation, missing configuration file auto-generation, and Pydantic model validation with descriptive error messages. Cache error handling validates timestamp tolerance scenarios, cache invalidation accuracy, and performance optimization under various load conditions.
 
 ########## Internal Implementation Details
 
-Internal mechanisms include comprehensive fixture management using `pytest.fixture` with `tempfile.TemporaryDirectory()` context managers, emoji-based status reporting for visual test feedback, and detailed timing measurement for performance validation. The test suite implements realistic project structure simulation with nested directories and multiple file types, timestamp manipulation through `time.sleep()` calls for change detection testing, and comprehensive message capture through mock context classes. Configuration testing uses hierarchical object construction with specific parameter validation, while HTTP testing employs byte-perfect content-length calculation and UTF-8 encoding validation. Integration testing includes debug artifact preservation, comprehensive statistics tracking, and multi-criteria success evaluation with configurable thresholds.
+Mock context implementations maintain separate message lists (`info_messages`, `debug_messages`, `warning_messages`, `error_messages`) with real-time console output for debugging. Temporary directory management uses context managers with automatic cleanup and realistic file system operations including permission manipulation and timestamp control. HTTP validation employs string parsing with regular expressions for RFC 7231 timestamp format validation and byte-perfect content-length calculation. Configuration testing uses dictionary-based validation with nested structure access and immutability verification through deep copy testing. Performance testing implements concurrent operation simulation with `asyncio.gather()` and race condition detection through error message pattern analysis.
 
 ########### Usage Examples
 
-Essential test execution patterns demonstrate comprehensive validation workflows for the Jesse Framework MCP server. These examples provide developers with standard approaches for running test suites and validating system functionality.
+Essential test execution patterns demonstrate comprehensive system validation workflows. These patterns provide structured approaches for validating different aspects of the Jesse Framework MCP Server testing infrastructure.
 
 ```python
-# Run complete test suite for all components
-pytest tests/
+# Execute comprehensive session initialization validation
+python test_session_init_resource.py
+# Validates jesse://session/init-context resource with boundary marker compliance
 
-# Execute specific functional domain tests
-pytest tests/test_session_init_resource.py
-pytest tests/test_http_formatting.py
-pytest tests/test_project_indexing_integration.py
+# Run hierarchical dependency planning tests
+python test_hierarchical_dependency_planning.py  
+# Validates selective cascading and horizontal dependency management
+
+# Execute real-world integration testing
+python test_project_indexing_integration.py --full-rebuild
+# Comprehensive system validation with actual project files
 ```
 
-Integration testing patterns enable real-world project validation with comprehensive monitoring and debug capabilities. These approaches support both automated testing and manual troubleshooting workflows.
+Specialized testing patterns enable component isolation and targeted validation. These approaches focus on specific system components while maintaining comprehensive coverage of functionality and edge cases.
 
 ```python
-# Execute comprehensive integration test on actual project
-python tests/test_project_indexing_integration.py
+# HTTP formatting validation with temporary files
+python test_http_path_integration.py
+# Validates XAsyncHttpPath dual-path functionality and content loading
 
-# Run with debug output for troubleshooting
-python tests/test_project_root.py --dump
-```
+# Cache integration testing with performance validation
+python test_file_analysis_cache_integration.py
+# Validates cache-first processing and optimization benefits
 
-Mock context implementation provides standardized testing infrastructure for isolated MCP resource validation. This pattern enables comprehensive testing without external system dependencies while maintaining compatibility with MCP server interfaces.
-
-```python
-# Standard mock context pattern used across test files
-class MockContext:
-    def __init__(self):
-        self.messages = []
-    
-    async def info(self, message: str):
-        self.messages.append(f"INFO: {message}")
-        print(f"ℹ️  {message}")
-    
-    async def error(self, message: str):
-        self.messages.append(f"ERROR: {message}")
-        print(f"❌ {message}")
+# Configuration template system validation
+python test_configuration_template_system.py
+# Validates handler-specific configurations and auto-generation
 ```
 
 ## Subdirectory Knowledge Integration
@@ -102,115 +98,104 @@ class MockContext:
 
 ## File Knowledge Integration
 
-### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_comprehensive_change_detection.py
+### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_centralized_decision_engine.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This test script validates comprehensive change detection enhancements for the Jesse Framework MCP system, specifically testing enhanced constituent dependency checking for directory knowledge files. The script provides comprehensive validation of `FileAnalysisCache` staleness detection, `ChangeDetector` functionality, and hierarchical dependency propagation mechanisms. Key semantic entities include `FileAnalysisCache`, `ChangeDetector`, `IndexingConfig`, `DirectoryContext`, `FileContext`, `ProcessingStatus`, `MockContext`, `tempfile`, `asyncio`, `pathlib.Path`, `datetime`, and `timedelta`. The testing framework validates timestamp-based staleness detection, cached analysis propagation, subdirectory knowledge file dependencies, and performance optimization through smart change detection algorithms.
+This test file validates the centralized `RebuildDecisionEngine` addressing two critical scattered decision logic issues: infinite rebuilding of empty directories (like "image" directory) and missing global project summaries (`root_kb.md`). The file provides comprehensive test coverage for decision engine functionality through `test_empty_directory_decision()`, `test_project_root_decision()`, `test_regular_directory_decision()`, and `test_comprehensive_decision_analysis()` functions. Key semantic entities include `RebuildDecisionEngine`, `IndexingConfig`, `DirectoryContext`, `FileContext`, `DecisionOutcome`, `DecisionReason`, `MockContext`, `IndexingMode.INCREMENTAL`, `OutputConfig`, `ChangeDetectionConfig`, and `DecisionReport` enabling rapid navigation of knowledge base indexing decision logic. The test suite validates that empty directories receive `SKIP` decisions with `EMPTY_DIRECTORY` reasoning, project roots get `REBUILD` decisions with `PROJECT_ROOT_FORCED` reasoning, and regular directories use staleness-based `COMPREHENSIVE_STALENESS` logic.
 
 ##### Main Components
 
-The script contains five primary test functions: `test_file_analysis_cache_staleness_checking()` validates comprehensive staleness checking methods, `test_detailed_staleness_info()` tests detailed staleness information gathering, `test_change_detector_enhancements()` validates enhanced `ChangeDetector` functionality, `test_realistic_change_scenarios()` tests real-world development scenarios, and `test_performance_optimization()` measures performance benefits. Supporting components include `MockContext` class for testing context simulation, `create_directory_context()` helper function for test data creation, and `run_all_tests()` orchestration function for comprehensive test execution.
+The test file contains four primary test functions: `test_empty_directory_decision()` validates empty directory handling preventing infinite rebuilds, `test_project_root_decision()` ensures project root processing for `root_kb.md` generation, `test_regular_directory_decision()` verifies standard staleness-based decision logic, and `test_comprehensive_decision_analysis()` tests complete hierarchy analysis. The `MockContext` class provides FastMCP Context simulation with message capture capabilities through `info()`, `debug()`, `warning()`, and `error()` methods. The `main()` function orchestrates test execution with comprehensive result reporting and error isolation.
 
 ###### Architecture & Design
 
-The testing architecture follows a hierarchical validation pattern with isolated test environments using `tempfile.TemporaryDirectory()` for each test scenario. The design implements layered processing validation where source file changes do not directly trigger knowledge file rebuilds, ensuring proper separation of concerns. Each test creates realistic project structures with multiple directories, files, and knowledge bases to validate constituent dependency relationships. The `MockContext` class provides async logging simulation for testing framework integration without external dependencies.
+The test architecture follows a mock-based testing pattern with `MockContext` simulating the FastMCP Context interface for decision engine interaction. Each test function creates isolated temporary directory structures using `tempfile.TemporaryDirectory()` to simulate real filesystem scenarios. The design employs comprehensive assertion-based validation checking both decision outcomes (`DecisionOutcome.SKIP`, `DecisionOutcome.REBUILD`) and reasoning (`DecisionReason.EMPTY_DIRECTORY`, `DecisionReason.PROJECT_ROOT_FORCED`, `DecisionReason.COMPREHENSIVE_STALENESS`). Test isolation ensures individual test failures don't affect other test execution through try-catch error handling.
 
 ####### Implementation Approach
 
-The implementation uses timestamp-based staleness detection with configurable tolerance (`timestamp_tolerance_seconds=0.05`) for precise change detection testing. Tests create realistic file hierarchies, modify timestamps through `time.sleep()` calls, and validate staleness propagation through cached analyses and subdirectory knowledge files. The approach validates that source file modifications trigger cached analysis updates, which then propagate to knowledge file rebuilds through hierarchical dependency chains. Performance testing measures detection times across moderate-sized project structures to validate optimization benefits.
+The implementation uses `asyncio` for asynchronous test execution matching the decision engine's async interface. Each test creates specific directory contexts using `DirectoryContext` and `FileContext` models to simulate different scenarios: empty directories with no file contexts, project roots with content, and regular directories with processable files. The testing strategy employs comprehensive verification checking decision outcomes, reasoning text content, and debug message patterns. Test data generation uses real file creation with `Path.write_text()` and `Path.mkdir()` for authentic filesystem simulation.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - core caching functionality testing
-- `jesse_framework_mcp.knowledge_bases.indexing.change_detector:ChangeDetector` - change detection validation
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration model testing
-- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:DirectoryContext` - context model validation
-- `tempfile` (standard library) - isolated test environment creation
-- `asyncio` (standard library) - async test execution framework
-- `pathlib.Path` (standard library) - file system path manipulation
+- `jesse_framework_mcp.knowledge_bases.indexing.rebuild_decision_engine:RebuildDecisionEngine` - core decision engine being tested
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration model for decision engine setup
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:DirectoryContext` - directory context modeling
+- `jesse_framework_mcp.knowledge_bases.models.rebuild_decisions:DecisionOutcome` - decision outcome enumeration
+- `asyncio` (external library) - asynchronous test execution framework
+- `tempfile` (external library) - temporary directory creation for test isolation
+- `pathlib.Path` (external library) - filesystem path manipulation
 
 **← Outbound:**
-- Test execution results consumed by CI/CD validation systems
-- Performance metrics output for optimization tracking
-- Validation reports for constituent dependency checking verification
+- `pytest` or direct execution - test runner consuming this test suite
+- `CI/CD pipeline` - automated testing consuming test results
+- `development workflow` - manual test execution for decision engine validation
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring constituent dependency checking works correctly across the Jesse Framework MCP knowledge base system
-- **Ecosystem Position**: Core testing infrastructure validating the foundation of change detection and caching mechanisms
-- **Integration Pattern**: Executed by developers and CI systems to validate knowledge base indexing reliability before deployment
+- **System Role**: Critical validation component ensuring decision engine correctness within the Jesse Framework MCP knowledge base indexing system
+- **Ecosystem Position**: Core testing infrastructure preventing regression in decision logic that could cause infinite rebuilds or missing project summaries
+- **Integration Pattern**: Executed by developers and CI/CD systems to validate decision engine behavior before deployment, ensuring knowledge base indexing reliability
 
 ######### Edge Cases & Error Handling
 
-The tests validate missing knowledge file scenarios (should be stale), up-to-date knowledge file detection (should not be stale), source file modification impact (should not directly trigger rebuilds due to layered processing), cached analysis newer than knowledge files (should trigger rebuilds), and subdirectory knowledge files newer than parent directories (should trigger parent rebuilds). Error handling includes assertion failures with descriptive messages, exception catching with traceback printing, and comprehensive test result reporting with pass/fail statistics.
+The test suite handles multiple edge cases including completely empty directories with no files or subdirectories, project root directories requiring forced processing regardless of staleness, and mixed hierarchies combining empty directories with content-bearing directories. Error handling uses comprehensive try-catch blocks in each test function preventing individual test failures from stopping overall execution. The `MockContext` captures all message types (`info`, `debug`, `warning`, `error`) enabling verification of proper error communication. Test assertions include specific error message pattern matching ensuring decision engine provides appropriate feedback for different scenarios.
 
 ########## Internal Implementation Details
 
-Internal mechanisms include `timestamp_tolerance_seconds=0.05` for precise timing control, `time.sleep(0.1)` calls to ensure proper timestamp ordering, temporary directory cleanup through context managers, and realistic project structure creation with multiple file types. The `MockContext` class captures logging messages for validation, while helper functions like `create_directory_context()` generate proper test data structures. Performance measurement uses `time.time()` for execution timing and calculates performance ratios between different scenarios.
+The `MockContext` class maintains separate message lists (`info_messages`, `debug_messages`, `warning_messages`, `error_messages`) for categorized message verification and real-time console output for debugging. Test functions use specific assertion patterns checking decision outcome enums, reasoning text content matching, and debug message emoji patterns (`📁 EMPTY`, `🏗️ PROJECT ROOT`). The comprehensive analysis test builds complex directory hierarchies with `subdirectory_contexts` nesting to validate recursive decision making. File timestamp simulation uses `datetime.fromtimestamp(file.stat().st_mtime)` for realistic staleness testing scenarios.
 
 ########### Code Usage Examples
 
-Essential test execution pattern for validating change detection:
-
+**Basic decision engine test setup:**
 ```python
-# Create test environment with proper configuration
-with tempfile.TemporaryDirectory() as temp_dir:
-    temp_path = Path(temp_dir)
-    knowledge_dir = temp_path / ".knowledge"
-    source_root = temp_path / "project"
-    
-    # Configure with small tolerance for testing
-    output_config = OutputConfig(knowledge_output_directory=knowledge_dir)
-    change_detection = ChangeDetectionConfig(timestamp_tolerance_seconds=0.05)
-    config = IndexingConfig(
-        handler_type="project-base",
-        description="Test configuration for change detection",
-        output_config=output_config,
-        change_detection=change_detection
+# Create test configuration for decision engine
+config = IndexingConfig(
+    output_config=OutputConfig(knowledge_output_directory=temp_path / ".knowledge"),
+    change_detection=ChangeDetectionConfig(
+        indexing_mode=IndexingMode.INCREMENTAL,
+        timestamp_tolerance_seconds=1.0
     )
+)
+
+# Create decision engine and mock context
+decision_engine = RebuildDecisionEngine(config)
+ctx = MockContext()
 ```
 
-Staleness checking validation pattern:
-
+**Empty directory decision testing:**
 ```python
-# Test staleness detection with file contexts
-cache = FileAnalysisCache(config)
-file_contexts = [
-    FileContext(
-        file_path=file1,
-        file_size=file1.stat().st_size,
-        last_modified=datetime.fromtimestamp(file1.stat().st_mtime)
-    )
-]
-
-is_stale, reason = cache.is_knowledge_file_stale(
-    source_root / "src", source_root, file_contexts
+# Create empty directory context (no files, no subdirectories)
+empty_directory_context = DirectoryContext(
+    directory_path=empty_dir,
+    file_contexts=[],  # No files
+    subdirectory_contexts=[]  # No subdirectories
 )
-assert is_stale == True, "Should be stale when knowledge file missing"
+
+# Make decision and verify outcome
+decision = await decision_engine.should_rebuild_directory(
+    empty_directory_context, temp_path, ctx
+)
+assert decision.outcome == DecisionOutcome.SKIP
+assert decision.reason == DecisionReason.EMPTY_DIRECTORY
 ```
 
-Comprehensive change detection testing:
-
+**Comprehensive hierarchy analysis:**
 ```python
-# Validate comprehensive directory change detection
-detector = ChangeDetector(config)
-directory_context = DirectoryContext(
-    directory_path=source_root / "app",
-    file_contexts=file_contexts
-)
+# Perform comprehensive analysis on directory hierarchy
+report = await decision_engine.analyze_hierarchy(root_context, temp_path, ctx)
 
-change_info = await detector.check_comprehensive_directory_change(
-    directory_context, source_root, ctx
-)
-assert change_info is not None, "Should detect change when knowledge file missing"
+# Verify report structure and decisions
+assert report.total_decisions >= 3
+root_decision = report.get_decision_for_path(temp_path)
+stats = report.get_summary_statistics()
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_configuration_template_system.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
@@ -310,172 +295,275 @@ assert ".knowledge" in config_model.content_filtering.project_base_exclusions
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_default_knowledge_directory.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This test script validates the default behavior of `IndexingConfig` to automatically set `knowledge_output_directory` to `{PROJECT_ROOT}/.knowledge/` when not explicitly specified, ensuring proper knowledge base storage location configuration within the Jesse Framework MCP ecosystem. It provides comprehensive testing capabilities for default directory assignment, explicit path override functionality, serialization behavior validation, and project root detection integration. The suite enables developers to verify that knowledge indexing operations will correctly default to the standardized `.knowledge/` directory structure. Key semantic entities include `IndexingConfig`, `OutputConfig`, `get_project_root`, `knowledge_output_directory`, `to_dict`, `pathlib.Path`, project root detection, and `.knowledge/` directory convention. The implementation leverages path manipulation and configuration serialization to ensure consistent knowledge storage behavior across different deployment scenarios.
+This test script validates the default knowledge directory configuration behavior within the JESSE Framework MCP Server knowledge base system, specifically designed to verify that `IndexingConfig` automatically defaults to `{PROJECT_ROOT}/.knowledge/` directory when no explicit path is specified. The script provides comprehensive testing capabilities for configuration default behavior, explicit override functionality, and serialization validation. Key semantic entities include `IndexingConfig`, `OutputConfig`, `get_project_root`, `knowledge_output_directory` property, `to_dict()` serialization method, and `.knowledge/` default directory structure. The testing framework implements three-phase validation through default behavior testing, explicit specification override testing, and configuration serialization verification with emoji-based status reporting.
 
 ##### Main Components
 
-The test suite contains two primary test functions: `test_default_knowledge_directory()` performs three validation scenarios including default behavior verification, explicit specification override testing, and serialization correctness validation, while `test_project_root_integration()` validates the underlying project root detection mechanism. Supporting components include comprehensive console output formatting with emoji indicators for test status, assertion-based validation with descriptive error messages, and main execution orchestration with success tracking and exit code management. The test structure implements sequential validation with early failure detection and detailed diagnostic output for troubleshooting configuration issues.
+The script contains two primary test functions: `test_default_knowledge_directory()` for comprehensive configuration default behavior validation with three sub-tests, and `test_project_root_integration()` for project root detection verification. The main execution block orchestrates sequential test execution with success tracking and exit code management. Each test function implements assertion-based validation with detailed console output including expected versus actual value comparisons and conditional test skipping for missing project root scenarios.
 
 ###### Architecture & Design
 
-The test architecture follows a sequential validation pattern with three distinct test phases: default behavior validation, explicit override verification, and serialization integrity checking. The design implements graceful degradation when project root detection fails, allowing tests to continue with appropriate fallback behavior validation. Error handling uses assertion-based validation with descriptive failure messages and conditional test execution based on environment capabilities. The architecture separates concerns between configuration behavior testing and underlying utility function validation, enabling independent verification of each component while maintaining integration testing coverage.
+The architecture follows a structured testing pattern with isolated test functions for different configuration aspects, utilizing direct class instantiation and property inspection. The design implements graceful degradation for missing project root detection, treating it as a skippable condition rather than failure. Error handling is structured with assertion-based validation and conditional test execution based on project root availability. The testing framework uses explicit value comparison with detailed logging for debugging configuration behavior.
 
 ####### Implementation Approach
 
-Test execution uses direct function calls with boolean return tracking and comprehensive console output for immediate feedback. Default behavior testing creates `IndexingConfig()` instances without parameters and compares the resulting `knowledge_output_directory` against expected `PROJECT_ROOT/.knowledge/` paths. Override testing instantiates `OutputConfig` with custom paths and verifies that `IndexingConfig(output_config=output_config)` respects explicit specifications. Serialization testing calls `to_dict()` method and validates that the nested dictionary structure contains correct string representations of path objects. Project root integration uses `get_project_root()` directly to verify the underlying path detection mechanism.
+The implementation uses direct `IndexingConfig()` instantiation to test default behavior and `OutputConfig(knowledge_output_directory=custom_path)` for explicit override testing. Project root detection employs `get_project_root()` utility function with conditional validation based on return value availability. Configuration serialization testing uses `to_dict()` method with nested dictionary access for `output_config.knowledge_output_directory` validation. The testing strategy implements both positive path validation and fallback behavior verification through conditional assertion logic.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - core configuration class being tested
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:OutputConfig` - nested configuration for explicit path specification
-- `jesse_framework_mcp.helpers.path_utils:get_project_root` - project root detection utility function
-- `pathlib.Path` (stdlib) - path manipulation and comparison operations
-- `sys` (stdlib) - path modification and exit code management
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - primary configuration class
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:OutputConfig` - output configuration component
+- `jesse_framework_mcp.helpers.path_utils:get_project_root` - project root detection utility
+- `pathlib:Path` (external library) - path manipulation and validation
+- `sys` (external library) - system path manipulation and exit code management
 
 **← Outbound:**
-- Test execution reports for CI/CD pipeline validation
-- Configuration behavior verification for knowledge indexing system
-- Default directory validation for Jesse Framework MCP deployment
-- Integration testing results for knowledge base storage configuration
+- Console test output with emoji-based status indicators
+- Test result validation for knowledge base configuration integrity
+- Exit code reporting for CI/CD pipeline integration
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring knowledge base storage defaults work correctly before production deployment of indexing operations
-- **Ecosystem Position**: Development and testing infrastructure supporting the Jesse Framework MCP knowledge indexing subsystem's default configuration behavior
-- **Integration Pattern**: Executed by developers during configuration changes, CI/CD pipelines for regression testing, and deployment validation for knowledge storage setup
+- **System Role**: Configuration validation component ensuring knowledge base directory defaults are properly established within the JESSE Framework MCP Server ecosystem
+- **Ecosystem Position**: Critical testing utility for knowledge base configuration integrity, validating the bridge between project structure detection and knowledge storage location defaults
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify knowledge base configuration behavior before deployment, ensuring consistent knowledge storage location across different environments
 
 ######### Edge Cases & Error Handling
 
-The suite handles project root detection failure through conditional test execution with warning messages and fallback behavior validation. When `get_project_root()` returns `None`, tests skip directory comparison but verify that `knowledge_output_directory` also returns `None` as expected fallback behavior. Configuration validation failures trigger assertion errors with descriptive messages indicating which specific test scenario failed. Serialization edge cases are handled by checking for nested dictionary key existence before attempting string comparison. The test framework provides detailed diagnostic output showing expected versus actual values for troubleshooting configuration mismatches.
+Error handling covers missing project root detection with graceful test skipping and fallback behavior validation, invalid configuration scenarios through assertion-based validation, and serialization failures with conditional test execution. The script handles missing `.knowledge/` directory scenarios through default path construction validation. Edge cases include project root detection failures in different environments, custom path override conflicts, and serialization format changes. The testing framework provides differentiated reporting through emoji indicators and maintains test execution continuity with conditional assertion logic.
 
 ########## Internal Implementation Details
 
-Path comparison uses direct equality checking between `Path` objects rather than string comparison to ensure platform-independent validation. Test result tracking uses boolean variables with conditional logic for success determination and appropriate exit code setting. Console output formatting employs emoji indicators (`✅`, `❌`, `⚠️`, `🎉`, `💥`) for immediate visual feedback on test status. The serialization test accesses nested dictionary values using `.get()` method with empty dictionary defaults to prevent KeyError exceptions. Project root path construction uses the `/` operator for `Path` objects to ensure proper path joining across different operating systems.
+Default behavior testing uses direct property access on `IndexingConfig()` instances with `Path` object comparison against expected project root plus `.knowledge/` suffix. Explicit override testing creates `OutputConfig` instances with custom paths and validates property inheritance through `IndexingConfig(output_config=output_config)` constructor. Serialization validation accesses nested dictionary structures through `config_dict.get('output_config', {}).get('knowledge_output_directory')` with string comparison against expected path representations. Test orchestration uses boolean success tracking with conditional execution and exit code management.
 
 ########### Code Usage Examples
 
-**Basic test execution demonstrates the complete validation suite:**
-```python
-# Run the complete test suite to verify default knowledge directory behavior
-python test_default_knowledge_directory.py
-```
+**Basic default configuration testing with project root validation:**
 
-**Default configuration testing shows automatic directory assignment:**
+This example demonstrates how to test the default knowledge directory behavior and validate project root integration. The test verifies that `IndexingConfig` automatically sets the knowledge output directory to the project root plus `.knowledge/` suffix.
+
 ```python
-# Test that IndexingConfig automatically sets knowledge_output_directory to PROJECT_ROOT/.knowledge/
+# Test default knowledge directory configuration behavior
 config = IndexingConfig()
-expected_knowledge_dir = get_project_root() / '.knowledge'
-assert config.knowledge_output_directory == expected_knowledge_dir
+expected_project_root = get_project_root()
+if expected_project_root:
+    expected_knowledge_dir = expected_project_root / '.knowledge'
+    assert config.knowledge_output_directory == expected_knowledge_dir
 ```
 
-**Explicit override testing validates custom path specification:**
+**Explicit configuration override with custom path validation:**
+
+This snippet shows how to test explicit knowledge directory specification and verify that custom paths properly override default behavior. The test ensures that explicit configuration takes precedence over automatic defaults.
+
 ```python
-# Test that explicit specification overrides the default behavior
+# Test explicit knowledge directory override functionality
 custom_path = Path("/tmp/custom_knowledge")
 output_config = OutputConfig(knowledge_output_directory=custom_path)
-config2 = IndexingConfig(output_config=output_config)
-assert config2.knowledge_output_directory == custom_path
+config = IndexingConfig(output_config=output_config)
+assert config.knowledge_output_directory == custom_path
 ```
 
-**Serialization validation ensures configuration persistence works correctly:**
+**Configuration serialization validation with nested dictionary access:**
+
+This example demonstrates how to validate configuration serialization behavior and ensure that knowledge directory paths are properly preserved in dictionary format. The test verifies that serialized configurations maintain path information correctly.
+
 ```python
-# Test that configuration serializes correctly with proper path string conversion
+# Test configuration serialization and dictionary representation
+config = IndexingConfig()
 config_dict = config.to_dict()
 knowledge_dir_str = config_dict.get('output_config', {}).get('knowledge_output_directory')
 expected_str = str(get_project_root() / '.knowledge')
 assert knowledge_dir_str == expected_str
 ```
 
-### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_file_analysis_cache_integration.py
+### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_discovery_debug.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This file provides comprehensive integration testing for the `FileAnalysisCache` system within the Jesse Framework MCP knowledge building pipeline. It validates cache-first processing workflows, metadata handling, timestamp-based freshness detection, and performance optimization through cached analysis retrieval. The test suite ensures `FileAnalysisCache` correctly integrates with `KnowledgeBuilder`, `IndexingConfig`, `FileContext`, and `StrandsClaude4Driver` components while maintaining proper cache invalidation based on file modification timestamps. Key semantic entities include `FileAnalysisCache`, `KnowledgeBuilder`, `MockContext`, `IndexingConfig`, `OutputConfig`, `ChangeDetectionConfig`, `FileContext`, `ProcessingStatus`, `METADATA_START`, `METADATA_END`, `get_cached_analysis()`, `cache_analysis()`, `get_cache_path()`, `build_file_knowledge()`, `timestamp_tolerance_seconds`, and `cache_stats()` enabling comprehensive validation of the caching subsystem's integration points and performance characteristics.
+This file provides debug testing capabilities for the Jesse Framework MCP's directory discovery phase, specifically investigating why the `HierarchicalIndexer` component fails to properly exclude certain directories during project indexing. The file implements comprehensive discovery phase validation through the `test_discovery_debug()` async function, enabling developers to diagnose directory exclusion failures in knowledge base indexing workflows. Key semantic entities include `HierarchicalIndexer`, `IndexingConfig`, `get_default_config`, `should_process_directory()`, `_discover_directory_structure()`, project-base exclusions (`.coding_assistant/`, `.knowledge/`, `.clinerules/`, `scratchpad/`), `AsyncMock` context simulation, and tempfile-based test environment creation. The implementation uses structured test project creation with realistic directory hierarchies to validate exclusion logic against expected behavior patterns.
 
 ##### Main Components
 
-Contains four primary test functions: `test_cache_basic_functionality()` for storage/retrieval validation, `test_cache_freshness_checking()` for timestamp-based invalidation, `test_cache_integration_with_knowledge_builder()` for end-to-end workflow testing with mock LLM responses, and `test_cache_performance_simulation()` for multi-file cache hit rate analysis. Includes `MockContext` class simulating FastMCP logging interface and `MockKnowledgeBuilder` class extending `KnowledgeBuilder` with deterministic mock responses. The `run_all_cache_tests()` orchestrator executes all test scenarios and provides comprehensive result reporting with pass/fail statistics.
+The file contains the primary `test_discovery_debug()` async function that orchestrates the complete debug workflow, a `main()` function serving as the CLI entry point with result reporting, and comprehensive test infrastructure including temporary directory creation, mock context setup, and validation logic. The debug test creates a realistic project structure with both excluded directories (`.coding_assistant/`, `.knowledge/`, `.clinerules/`, `scratchpad/`) and included directories (`src/`, `docs/`) to simulate real-world indexing scenarios. The validation system compares expected versus actual discovery results through set operations and provides detailed diagnostic output including mock call analysis and final determination logic.
 
 ###### Architecture & Design
 
-Implements isolated test environments using `tempfile.TemporaryDirectory()` for each test scenario, ensuring clean state between tests. Uses dependency injection pattern with mock objects (`MockContext`, `MockKnowledgeBuilder`) to eliminate external API dependencies while preserving integration behavior. Follows arrange-act-assert testing pattern with explicit validation checkpoints and detailed error reporting. Test architecture separates concerns between cache mechanics testing, freshness validation, integration workflow testing, and performance simulation through distinct test functions.
+The debug test follows a structured validation architecture with distinct phases: test environment setup, configuration loading, individual directory exclusion testing, discovery phase execution, and comprehensive result analysis. The design uses temporary filesystem isolation through `tempfile.TemporaryDirectory` to ensure test reproducibility and cleanup. The validation approach employs set-based comparison logic to identify wrongly included or excluded directories, with comprehensive diagnostic reporting including mock context call analysis. The architecture separates concerns between test setup, execution, validation, and reporting phases for clear debugging workflow.
 
 ####### Implementation Approach
 
-Employs realistic file system simulation with proper directory structures (`src/`, `components/`, `project/`) and authentic file content (Python scripts, TypeScript React components). Uses `asyncio.sleep()` for timestamp manipulation in freshness testing and implements cache hit/miss detection through return value analysis. Mock LLM responses provide deterministic test outcomes while preserving actual cache integration pathways. Performance testing simulates batch processing scenarios with multiple files to validate cache efficiency at scale.
+The implementation uses async/await patterns for compatibility with the `HierarchicalIndexer._discover_directory_structure()` method, employing `AsyncMock` objects to simulate the indexing context without actual logging infrastructure. The test creates a realistic project structure programmatically, then validates both individual directory exclusion logic through `config.should_process_directory()` and the complete discovery phase behavior. The validation strategy uses set operations (`excluded_expected & discovered_names`, `included_expected - discovered_names`) to identify discrepancies between expected and actual behavior. Diagnostic output includes structured reporting with emoji indicators, detailed mock call analysis, and final determination logic for root cause identification.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder:KnowledgeBuilder` - core knowledge building functionality
-- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - primary cache implementation under test
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration management
-- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:FileContext` - file processing context
-- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - LLM integration (mocked)
-- `tempfile` (external library) - temporary directory management
-- `asyncio` (external library) - asynchronous test execution
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - core indexing component under test
+- `jesse_framework_mcp.knowledge_bases.indexing.defaults:get_default_config` - configuration factory for project-base settings
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration model with exclusion logic
+- `asyncio` (external library) - async execution runtime for test orchestration
+- `tempfile` (external library) - temporary filesystem creation for isolated testing
+- `pathlib:Path` (external library) - filesystem path manipulation and directory operations
+- `unittest.mock:AsyncMock` (external library) - mock context simulation for indexer testing
 
 **← Outbound:**
-- `sys.exit()` - process termination with success/failure codes
-- Console output via `print()` - test progress and result reporting
-- File system operations through `Path.write_text()` and `Path.read_text()`
+- `console output` - structured diagnostic reporting for developers debugging discovery issues
+- `test results` - boolean validation results for CI/CD integration or manual testing workflows
+- `temporary filesystem artifacts` - test project structure creation for validation scenarios
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring `FileAnalysisCache` integration reliability within Jesse Framework MCP knowledge building pipeline
-- **Ecosystem Position**: Core testing infrastructure validating caching subsystem performance and correctness
-- **Integration Pattern**: Executed by developers and CI/CD systems to validate cache implementation before deployment, ensuring knowledge building performance optimization works correctly
+
+- **System Role**: This debug test serves as a diagnostic tool for the Jesse Framework MCP's knowledge base indexing system, specifically targeting directory discovery phase failures that prevent proper exclusion of configuration and temporary directories
+- **Ecosystem Position**: Peripheral debugging utility that validates core indexing functionality, essential for maintaining proper knowledge base creation workflows but not part of the production indexing pipeline
+- **Integration Pattern**: Used by developers experiencing directory exclusion issues, executed manually or through test runners to diagnose `HierarchicalIndexer` behavior and validate configuration effectiveness
 
 ######### Edge Cases & Error Handling
 
-Validates cache behavior when source files are modified after caching through timestamp comparison with configurable `timestamp_tolerance_seconds`. Tests cache miss scenarios when cache files don't exist or are stale, ensuring proper fallback to LLM processing. Handles metadata corruption scenarios by validating `METADATA_START` and `METADATA_END` delimiter presence in cache files. Includes whitespace tolerance in content comparison (up to 5 character differences) to handle minor formatting variations between cache storage and retrieval operations.
+The debug test handles scenarios where excluded directories are wrongly discovered or expected directories are missed during the discovery phase. The validation logic identifies both false positives (excluded directories appearing in results) and false negatives (expected directories missing from results) through comprehensive set-based comparison. The test provides detailed diagnostic output for debugging scenarios including empty discovery results, configuration loading failures, and mock context call analysis. Error scenarios include temporary directory creation failures, configuration parsing issues, and async execution problems, with structured reporting to identify whether issues originate in the discovery phase or elsewhere in the execution flow.
 
 ########## Internal Implementation Details
 
-Cache files are stored with `.analysis.md` extension in knowledge directory structure mirroring source hierarchy. Metadata delimiters (`METADATA_START`, `METADATA_END`) wrap file timestamps and processing information while being stripped from retrieved content. Mock LLM responses are deterministic strings containing realistic analysis content for consistent test validation. Test execution uses temporary directories with automatic cleanup and provides detailed progress logging with emoji indicators for visual test status tracking.
+The test creates a specific directory structure with `.coding_assistant/workspace.json`, `.knowledge/kb.md`, `.clinerules/rules.md`, `scratchpad/notes.txt`, `src/main.py`, and `docs/README.md` files to simulate realistic project layouts. The configuration uses `project-base` defaults with custom knowledge output directory pointing to the temporary test location. Mock context setup includes `info`, `debug`, `warning`, and `error` methods as `AsyncMock` objects to capture indexer logging behavior. The validation logic uses `wrongly_included = excluded_expected & discovered_names` and `wrongly_excluded = included_expected - discovered_names` for precise discrepancy identification. Final determination combines both validation results to determine if the discovery phase is functioning correctly.
 
 ########### Code Usage Examples
 
-**Basic cache functionality validation:**
+**Running the debug test to diagnose directory exclusion issues:**
+
 ```python
+# Execute the debug test directly
+result = asyncio.run(test_discovery_debug())
+if result:
+    print("Discovery phase working correctly")
+else:
+    print("Discovery phase has issues")
+```
+
+**Using the CLI interface for manual debugging:**
+
+```bash
+# Run the debug test from command line
+python test_discovery_debug.py
+```
+
+**Integrating debug validation into test workflows:**
+
+```python
+# Example integration for automated testing
+async def validate_indexer_discovery():
+    debug_result = await test_discovery_debug()
+    assert debug_result, "Discovery phase validation failed"
+    return debug_result
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_file_analysis_cache_integration.py
+
+*Last Updated: 2025-07-06T23:03:54Z*
+
+#### Functional Intent & Features
+
+This comprehensive test suite validates the `FileAnalysisCache` integration within the JESSE Framework MCP Server knowledge building system, specifically designed to verify cache-first processing, metadata stripping, freshness checking, and performance optimization capabilities. The test suite provides extensive validation for cache storage and retrieval, timestamp-based staleness detection, and seamless integration with the knowledge building workflow. Key semantic entities include `FileAnalysisCache`, `KnowledgeBuilder`, `IndexingConfig`, `FileContext`, `ProcessingStatus`, `MockContext`, `MockKnowledgeBuilder`, `test_cache_basic_functionality`, `test_cache_freshness_checking`, `test_cache_integration_with_knowledge_builder`, `test_cache_performance_simulation`, `StrandsClaude4Driver`, `Claude4SonnetConfig`, `OutputConfig`, `ChangeDetectionConfig`, `LLMConfig`, `DebugConfig`, `METADATA_START`, `METADATA_END` delimiters, and `asyncio` async execution patterns. The testing framework implements four-phase validation through basic functionality testing, freshness checking validation, knowledge builder integration testing, and performance simulation with multiple file scenarios.
+
+##### Main Components
+
+The test suite contains four primary async test functions: `test_cache_basic_functionality()` implementing cache storage, retrieval, and metadata validation, `test_cache_freshness_checking()` validating timestamp-based cache invalidation, `test_cache_integration_with_knowledge_builder()` testing end-to-end integration with mock LLM responses, and `test_cache_performance_simulation()` demonstrating cache hit rate optimization across multiple files. The `MockContext` class provides simplified logging without actual LLM integration, while `MockKnowledgeBuilder` extends `KnowledgeBuilder` with simulated LLM responses for realistic testing. The `run_all_cache_tests()` function orchestrates sequential test execution with comprehensive result reporting and success rate calculation.
+
+###### Architecture & Design
+
+The architecture follows a comprehensive testing pattern with isolated test functions for different cache integration aspects, utilizing temporary directory structures and realistic file scenarios for validation. The design implements mock-based testing through `MockKnowledgeBuilder` to simulate LLM interactions without external API dependencies, enabling reliable and fast test execution. Error handling is structured with assertion-based validation and detailed console output for debugging. The testing framework uses realistic file content and directory structures combined with actual `FileAnalysisCache` and `KnowledgeBuilder` integration to validate end-to-end caching behavior.
+
+####### Implementation Approach
+
+The implementation uses temporary directory creation with `tempfile.TemporaryDirectory()` for isolated testing environments and realistic file system operations. Cache testing employs direct method calls to `get_cached_analysis()`, `cache_analysis()`, and `get_cache_stats()` for targeted validation. Mock LLM integration uses class inheritance with `MockKnowledgeBuilder` overriding `_process_single_file()` to provide deterministic responses. The testing strategy implements both positive path validation and edge case testing through file modification scenarios, cache invalidation testing, and performance measurement with multiple file processing cycles.
+
+######## External Dependencies & Integration Points
+
+**→ Inbound:**
+- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder:KnowledgeBuilder` - primary knowledge building class
+- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - cache implementation
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration management
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:OutputConfig` - output configuration
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:ChangeDetectionConfig` - change detection settings
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:LLMConfig` - LLM configuration
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:DebugConfig` - debug configuration
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:FileContext` - file context modeling
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:ProcessingStatus` - processing status tracking
+- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - LLM driver integration
+- `jesse_framework_mcp.llm.strands_agent_driver:Claude4SonnetConfig` - LLM configuration
+- `asyncio` (external library) - async execution framework
+- `tempfile` (external library) - temporary directory and file management
+- `pathlib:Path` (external library) - cross-platform path manipulation
+- `datetime` (external library) - timestamp handling for cache freshness validation
+
+**← Outbound:**
+- Console test output with detailed cache validation reporting
+- Test result validation for cache integration functionality
+- Performance metrics for cache hit rate optimization
+- Exit code reporting for CI/CD pipeline integration
+
+**⚡ System role and ecosystem integration:**
+- **System Role**: Comprehensive validation component ensuring FileAnalysisCache reliability and performance optimization within the JESSE Framework MCP Server knowledge building ecosystem
+- **Ecosystem Position**: Critical testing utility for cache integration functionality, validating the bridge between file analysis caching and knowledge building workflows with performance optimization
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify cache-first processing behavior, metadata handling, and performance benefits before knowledge building system deployment
+
+######### Edge Cases & Error Handling
+
+Error handling covers temporary directory creation failures with automatic cleanup, cache file access permission issues, and timestamp tolerance validation for freshness checking. The test suite handles file modification scenarios through sleep delays and timestamp comparison validation, ensuring cache invalidation works correctly. Edge cases include missing cache files with null return validation, metadata delimiter presence verification, content stripping accuracy, and cache statistics validation. The testing framework provides comprehensive error scenario coverage through assertion-based validation, detailed console output for debugging, and graceful handling of mock LLM response variations.
+
+########## Internal Implementation Details
+
+Cache functionality testing uses direct file system operations with temporary directories and realistic file content creation. Freshness checking employs `asyncio.sleep()` for timestamp manipulation and file modification simulation. Mock LLM integration overrides `_process_single_file()` method with predetermined responses while maintaining actual cache integration behavior. Performance testing creates multiple files with iterative processing cycles to measure cache hit rates and validate optimization benefits. Test orchestration uses tuple-based test definition with function references and comprehensive result aggregation through success rate calculation.
+
+########### Code Usage Examples
+
+**Basic cache functionality testing with storage and retrieval:**
+
+This example demonstrates how to test fundamental cache operations including storage, retrieval, and metadata handling. The test validates that cache files are created in correct locations with proper metadata delimiters.
+
+```python
+# Test basic cache storage and retrieval functionality
 cache = FileAnalysisCache(config)
-test_analysis = "## Test Analysis\n\nThis is a test Python file."
+test_analysis = "## Test Analysis\n\nThis is a test Python file analysis."
 await cache.cache_analysis(test_file, test_analysis, source_root)
 retrieved_analysis = await cache.get_cached_analysis(test_file, source_root)
 assert retrieved_analysis == test_analysis
 ```
 
-**Cache freshness testing with file modification:**
+**Cache freshness validation with file modification scenarios:**
+
+This snippet shows how to test cache invalidation based on file timestamps and modification detection. The test verifies that modified files correctly invalidate cached analysis results.
+
 ```python
-# Cache original content
+# Test cache freshness checking with file modification
 await cache.cache_analysis(test_file, original_analysis, source_root)
-# Modify file after caching
-await asyncio.sleep(2)
+await asyncio.sleep(2)  # Ensure timestamp difference
 test_file.write_text("# Modified content")
-# Verify cache invalidation
 stale_retrieval = await cache.get_cached_analysis(test_file, source_root)
-assert stale_retrieval is None
+assert stale_retrieval is None  # Cache should be invalidated
 ```
 
-**Integration testing with KnowledgeBuilder:**
+**Mock knowledge builder integration with cache validation:**
+
+This example demonstrates how to test cache integration with knowledge building workflows using mock LLM responses. The test validates that cache hits and misses are handled correctly during file processing.
+
 ```python
-file_context = FileContext(
-    file_path=test_file,
-    file_size=test_file.stat().st_size,
-    last_modified=datetime.fromtimestamp(test_file.stat().st_mtime)
-)
-result = await builder.build_file_knowledge(file_context, ctx, source_root)
-assert result.processing_status == ProcessingStatus.COMPLETED
+# Test knowledge builder integration with cache-first processing
+class MockKnowledgeBuilder(KnowledgeBuilder):
+    async def _process_single_file(self, file_path, content, ctx, source_root=None):
+        cached_analysis = await self.analysis_cache.get_cached_analysis(file_path, source_root)
+        if cached_analysis:
+            await ctx.info(f"📄 CACHE HIT: Using cached analysis for {file_path.name}")
+            return cached_analysis
+        return self._mock_llm_response
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_gitignore_resource.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
@@ -590,288 +678,382 @@ else:
     exit(1)
 ```
 
-### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_http_core_functionality.py
+### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_hierarchical_dependency_planning.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This file provides comprehensive test coverage for core HTTP functionality within the JESSE Framework MCP server, validating HTTP status code constants, error handling mechanisms, and content criticality classification. The file ensures proper HTTP response generation through testing of `XAsyncHttpStatus` class constants (200, 240, 241, 403, 404, 500), `XAsyncHttpErrorHandler` exception-to-status mapping, and `XAsyncContentCriticality` validation with case-insensitive normalization. Key semantic entities include `XAsyncHttpStatus` for status code management, `XAsyncHttpErrorHandler` for automatic error detection from Python exceptions, `XAsyncContentCriticality` for content priority validation, and `pytest` framework for comprehensive test execution. The testing architecture validates HTTP infrastructure reliability through status code verification, template-based error content generation, and robust input validation.
+Test suite validating hierarchical dependency planning architecture for the Jesse Framework MCP knowledge base system, specifically ensuring selective cascading and horizontal dependency management work correctly. Provides comprehensive validation of `RebuildDecisionEngine` selective ancestor propagation and `PlanGenerator` sibling dependency coordination through `test_selective_cascading()` and `test_horizontal_dependencies()` functions. Enables developers to verify that directory rebuild decisions correctly cascade to parent directories without affecting unrelated siblings, and that horizontal dependencies between sibling directories are properly established. Key semantic entities include `MockContext`, `RebuildDecisionEngine`, `PlanGenerator`, `DecisionReport`, `RebuildDecision`, `DirectoryContext`, `FileContext`, `IndexingConfig`, `DecisionOutcome`, `DecisionReason`, `tempfile`, `asyncio`, and `fastmcp.Context` for comprehensive dependency planning validation using async test execution patterns.
 
 ##### Main Components
 
-The file contains three primary test classes: `TestHttpStatus` validates `XAsyncHttpStatus` class constants and `get_default_message()` method functionality, `TestHttpErrorHandler` tests `XAsyncHttpErrorHandler` error content generation and exception mapping capabilities, and `TestContentCriticality` validates `XAsyncContentCriticality` enum validation with case normalization. Each test class focuses on specific HTTP infrastructure components, providing comprehensive coverage of status code handling, error response generation, and content classification validation with both positive and negative test scenarios.
+Two primary test functions (`test_selective_cascading()` and `test_horizontal_dependencies()`) that validate different aspects of the hierarchical dependency system, plus a `MockContext` class for FastMCP context simulation and a `main()` orchestration function. The `MockContext` provides logging capabilities with debug, info, warning, and error methods that capture messages for test verification. Test functions create temporary directory structures, configure indexing parameters, and exercise the decision engine and plan generator components to verify correct behavior.
 
 ###### Architecture & Design
 
-The test architecture follows pytest class-based organization with clear separation of HTTP functionality concerns. `TestHttpStatus` validates the foundation layer of HTTP status code constants and message mapping, while `TestHttpErrorHandler` tests the error handling layer that maps Python exceptions to appropriate HTTP responses. `TestContentCriticality` focuses on content classification validation with case-insensitive input handling. The design emphasizes defensive programming validation, template-based error content generation, and extensible HTTP status code support for future additions.
+Follows async test architecture pattern with temporary filesystem setup for isolated testing environments. Uses dependency injection through mock objects to simulate FastMCP context without requiring full framework initialization. Implements comprehensive test scenarios that mirror real-world directory structures with nested hierarchies (`src/components/buttons/`, `src/components/forms/`, `src/utils/`) to validate both vertical cascading and horizontal dependency relationships. Test design separates concerns between decision-making logic and plan generation logic for focused validation.
 
 ####### Implementation Approach
 
-Tests utilize direct constant validation for `XAsyncHttpStatus` class attributes, ensuring each status code matches expected HTTP standard values. Error handling tests create actual Python exceptions (`FileNotFoundError`, `PermissionError`, `ValueError`) to validate automatic exception-to-status mapping through `detect_error_from_exception()` method. Content criticality testing employs case variation strategies (uppercase, lowercase, mixed case) to validate normalization behavior. The implementation strategy emphasizes comprehensive edge case coverage, template-based error message validation, and robust input validation with descriptive error messages.
+Creates temporary directory structures using `tempfile.TemporaryDirectory()` context manager for clean test isolation, then populates with realistic file hierarchies to simulate actual project structures. Constructs `IndexingConfig` objects with minimal exclusions to focus testing on core logic rather than filtering behavior. Uses `DecisionReport` objects to track rebuild decisions and verify cascading propagation through `_propagate_cascading_decisions()` method calls. Implements assertion-based validation to verify ancestor directories receive `DecisionReason.CHILD_DIRECTORY_REBUILT` while sibling directories remain unaffected.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncContentCriticality` - content priority classification with validation
-- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncHttpStatus` - HTTP status code constants and message mapping
-- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncHttpErrorHandler` - exception-to-HTTP-status mapping functionality
-- `pytest` (external library) - testing framework for comprehensive HTTP functionality validation
+- `fastmcp.Context` - FastMCP framework context interface for logging operations
+- `jesse_framework_mcp.knowledge_bases.models` - Core data models including `IndexingConfig`, `DirectoryContext`, `FileContext`
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config` - Configuration models `OutputConfig`, `ContentFilteringConfig`
+- `jesse_framework_mcp.knowledge_bases.models.rebuild_decisions` - Decision tracking models `DecisionReport`, `RebuildDecision`, `DecisionOutcome`, `DecisionReason`
+- `jesse_framework_mcp.knowledge_bases.indexing.rebuild_decision_engine` - `RebuildDecisionEngine` for cascading logic validation
+- `jesse_framework_mcp.knowledge_bases.indexing.plan_generator` - `PlanGenerator` for horizontal dependency testing
+- `asyncio` (external library) - Async execution framework for test orchestration
+- `tempfile` (external library) - Temporary filesystem creation for test isolation
+- `pathlib.Path` (external library) - Path manipulation utilities
+- `datetime.datetime` (external library) - Timestamp generation for file contexts
 
 **← Outbound:**
-- `test_http_formatting.py` - originally contained these tests before file split for organization
-- `CI/CD pipeline/` - automated validation of HTTP infrastructure reliability
-- `development workflow/` - ensures HTTP response generation consistency across JESSE Framework
+- Test execution frameworks - Provides validation results for CI/CD pipeline integration
+- Development workflow - Validates architectural fixes before deployment
+- Knowledge base indexing system - Ensures dependency planning logic correctness
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring JESSE Framework MCP server HTTP infrastructure operates correctly with proper status codes and error handling
-- **Ecosystem Position**: Core testing infrastructure validating fundamental HTTP response generation and error handling mechanisms
-- **Integration Pattern**: Executed by developers during development and CI/CD systems for continuous validation of HTTP functionality reliability
+- **System Role**: Critical validation component ensuring the hierarchical dependency planning architecture functions correctly within the Jesse Framework MCP knowledge base system
+- **Ecosystem Position**: Core testing infrastructure that validates fundamental indexing behavior, preventing regression in dependency management logic
+- **Integration Pattern**: Executed by developers and CI systems to verify architectural fixes, with results feeding into deployment decisions and system reliability assurance
 
 ######### Edge Cases & Error Handling
 
-Error handling validation includes testing unknown status codes with `get_default_message()` returning "Unknown Status" for graceful degradation. Exception mapping tests validate `FileNotFoundError` maps to 404 status, `PermissionError` maps to 403 status, and generic exceptions map to 500 status with detailed error content. Content criticality validation tests invalid inputs raise `ValueError` with descriptive messages specifying valid options. Template-based error content generation handles missing parameters gracefully, and case-insensitive validation ensures robust input handling across various text formats.
+Tests verify that sibling directories without content changes are correctly excluded from cascading rebuilds, preventing unnecessary work propagation. Validates that ancestor propagation stops at appropriate boundaries and doesn't create infinite loops or excessive cascading. Handles scenarios where decision reports contain mixed rebuild and skip decisions to ensure selective processing. Uses assertion-based validation that will raise clear exceptions if cascading logic fails, providing immediate feedback on architectural issues.
 
 ########## Internal Implementation Details
 
-The test implementation directly accesses class constants for validation, ensuring `XAsyncHttpStatus.OK == 200` and similar assertions for all supported status codes. Error handler testing creates specific exception instances and validates the three-tuple return format `(status_code, status_message, error_content)` from `detect_error_from_exception()`. Content criticality testing uses `pytest.raises()` context manager for exception validation with specific error message content verification. Template validation ensures error content generation uses proper string formatting with location and detail parameter substitution.
+Uses `_propagate_cascading_decisions()` private method to test internal cascading logic directly, bypassing higher-level interfaces for focused validation. Employs `_collect_sibling_directory_tasks()` and `_sanitize_path_for_id()` methods to verify task ID generation and sibling relationship establishment. Creates realistic `DirectoryContext` and `FileContext` objects with proper parent-child relationships to mirror actual indexing scenarios. Implements comprehensive logging capture through `MockContext.logs` list for debugging test execution and verifying internal decision-making processes.
 
 ########### Code Usage Examples
 
-Basic HTTP status code validation demonstrates how to verify status constants and retrieve default messages. This pattern ensures HTTP infrastructure operates with correct status codes and provides graceful handling of unknown codes.
+Essential test execution pattern for validating hierarchical dependency planning:
 
 ```python
-# Validate status code constants and retrieve default messages
+# Create isolated test environment with realistic directory structure
+with tempfile.TemporaryDirectory() as temp_dir:
+    source_root = Path(temp_dir)
+    (source_root / "src" / "components" / "buttons").mkdir(parents=True)
+    
+    # Configure indexing with minimal exclusions for focused testing
+    config = IndexingConfig(
+        output_config=OutputConfig(knowledge_output_directory=knowledge_dir),
+        content_filtering=ContentFilteringConfig(
+            excluded_extensions={".pyc", ".pyo"},
+            excluded_directories={".git", "__pycache__"}
+        )
+    )
+    
+    # Test selective cascading by marking specific directory for rebuild
+    decision_engine = RebuildDecisionEngine(config)
+    report = DecisionReport()
+    buttons_decision = RebuildDecision(
+        path=source_root / "src" / "components" / "buttons",
+        outcome=DecisionOutcome.REBUILD,
+        reason=DecisionReason.COMPREHENSIVE_STALENESS
+    )
+    report.add_rebuild_decision(buttons_decision)
+    
+    # Verify cascading propagation to ancestors only
+    cascaded_count = await decision_engine._propagate_cascading_decisions(
+        None, source_root, report, ctx
+    )
+    assert report.get_decision_for_path(source_root / "src").should_rebuild
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_http_core_functionality.py
+
+*Last Updated: 2025-07-06T23:03:54Z*
+
+#### Functional Intent & Features
+
+This focused test suite validates core HTTP functionality within the JESSE Framework MCP Server HTTP formatting infrastructure, specifically designed to verify HTTP status code constants, error handling mechanisms, and content criticality classification systems. The test suite provides comprehensive validation capabilities for HTTP status mapping, exception-to-status conversion, and case-insensitive criticality normalization. Key semantic entities include `XAsyncHttpStatus`, `XAsyncHttpErrorHandler`, `XAsyncContentCriticality`, `TestHttpStatus`, `TestHttpErrorHandler`, `TestContentCriticality`, `get_default_message`, `generate_error_content`, `detect_error_from_exception`, `validate`, `pytest` testing framework, `OK`, `CONTEXT_DEPENDENT`, `CONTEXT_DEPENDENT_IMMEDIATE`, `NOT_FOUND`, `FORBIDDEN`, `INTERNAL_SERVER_ERROR` status constants, `FileNotFoundError`, `PermissionError` exception mapping, and `CRITICAL`, `INFORMATIONAL` criticality levels. The testing framework implements three-phase validation through HTTP status constant verification, error handling template testing, and content criticality normalization validation with comprehensive edge case coverage.
+
+##### Main Components
+
+The test suite contains three primary test classes: `TestHttpStatus` with three test methods validating status code constants and default message mapping functionality, `TestHttpErrorHandler` with five test methods verifying error content generation and exception-to-status mapping behavior, and `TestContentCriticality` with four test methods testing criticality validation and case normalization. Each test class implements comprehensive assertion-based validation with specific focus areas: status code constant verification, error template formatting validation, exception mapping accuracy, and case-insensitive input handling for criticality levels.
+
+###### Architecture & Design
+
+The architecture follows a focused testing pattern with isolated test classes for different HTTP functionality aspects, utilizing direct method calls and assertion-based validation for comprehensive coverage. The design implements systematic testing through class-based organization with specific test methods for each functional area. Error handling validation is structured with exception simulation and template-based content generation testing. The testing framework uses realistic error scenarios combined with edge case validation to ensure robust HTTP functionality across different input conditions and error states.
+
+####### Implementation Approach
+
+The implementation uses direct class method invocation for status code and error handling validation with comprehensive assertion testing. Status code testing employs constant value verification and message mapping validation through `get_default_message()` method calls. Error handling testing uses exception simulation with `FileNotFoundError` and `PermissionError` instances and template-based content generation validation. Criticality testing implements case normalization validation through various input format combinations including uppercase, lowercase, and mixed case scenarios with invalid input error handling.
+
+######## External Dependencies & Integration Points
+
+**→ Inbound:**
+- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncContentCriticality` - content criticality validation and normalization
+- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncHttpStatus` - HTTP status code constants and message mapping
+- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncHttpErrorHandler` - error content generation and exception mapping
+- `pytest` (external library) - testing framework with assertion utilities and exception testing
+
+**← Outbound:**
+- HTTP formatting validation for JESSE Framework MCP Server resource endpoints
+- Error handling verification for MCP resource protocol compliance
+- Status code validation for HTTP response generation systems
+
+**⚡ System role and ecosystem integration:**
+- **System Role**: Foundation validation component ensuring HTTP core functionality reliability within the JESSE Framework MCP Server HTTP formatting infrastructure
+- **Ecosystem Position**: Critical testing utility for HTTP infrastructure components, validating the foundation layer that supports HTTP section formatting and path integration functionality
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify HTTP status constants, error handling templates, and criticality classification before HTTP formatting system deployment
+
+######### Edge Cases & Error Handling
+
+Error handling covers unknown status code scenarios with graceful fallback to generic messages, invalid criticality input validation with descriptive error messages, and comprehensive exception mapping testing for various Python exception types. The test suite handles edge cases including empty string inputs, mixed case normalization, and unknown status code handling through fallback mechanisms. Exception testing validates proper mapping of `FileNotFoundError` to 404 status, `PermissionError` to 403 status, and generic exceptions to 500 status with appropriate error content generation. The testing framework provides comprehensive error scenario coverage through `pytest.raises()` context managers and detailed error message validation.
+
+########## Internal Implementation Details
+
+Status code testing uses direct constant value assertions with integer comparison and string message validation. Error content generation testing employs template substitution validation with parameter injection and content format verification. Exception mapping testing creates specific exception instances with message content and validates status code, status message, and error content generation accuracy. Criticality validation testing uses string input normalization with case conversion verification and invalid input error message pattern matching through exception assertion testing.
+
+########### Code Usage Examples
+
+**HTTP status code constant validation and message mapping:**
+
+This example demonstrates how to test HTTP status code constants and their corresponding default messages. The test validates that status codes have correct integer values and proper message mapping functionality.
+
+```python
+# Test HTTP status code constants and default message mapping
 assert XAsyncHttpStatus.OK == 200
+assert XAsyncHttpStatus.NOT_FOUND == 404
+assert XAsyncHttpStatus.get_default_message(200) == "OK"
 assert XAsyncHttpStatus.get_default_message(404) == "Not Found"
 assert XAsyncHttpStatus.get_default_message(999) == "Unknown Status"
 ```
 
-Exception-to-HTTP-status mapping provides automatic error detection from Python exceptions for consistent HTTP response generation. This approach eliminates manual status code assignment and ensures proper error handling across the framework.
+**Error content generation and exception mapping validation:**
+
+This snippet shows how to test error content generation templates and automatic exception-to-status mapping. The test verifies that different exception types map to appropriate HTTP status codes with proper error content.
 
 ```python
-# Automatic error detection from Python exceptions
+# Test error content generation and exception mapping
+result_404 = XAsyncHttpErrorHandler.generate_error_content(404, "file://test.md")
+assert "Resource not found: file://test.md" == result_404
 exc = FileNotFoundError("File not found")
-status_code, status_message, error_content = XAsyncHttpErrorHandler.detect_error_from_exception(
-    exc, "file://missing.md"
-)
-# Returns: (404, "Not Found", "Resource not found: file://missing.md")
+status_code, status_message, error_content = XAsyncHttpErrorHandler.detect_error_from_exception(exc, "file://missing.md")
+assert status_code == 404 and status_message == "Not Found"
 ```
 
-Content criticality validation demonstrates case-insensitive input handling with normalization to uppercase format. This pattern ensures consistent content classification regardless of input case variations.
+**Content criticality validation with case normalization:**
+
+This example demonstrates how to test content criticality validation and case-insensitive normalization. The test validates that various input formats are properly normalized and invalid inputs raise appropriate errors.
 
 ```python
-# Case-insensitive criticality validation
+# Test content criticality validation and case normalization
+assert XAsyncContentCriticality.validate("CRITICAL") == "CRITICAL"
 assert XAsyncContentCriticality.validate("critical") == "CRITICAL"
-assert XAsyncContentCriticality.validate("InFormAtional") == "INFORMATIONAL"
-
-# Invalid input handling
+assert XAsyncContentCriticality.validate("Critical") == "CRITICAL"
 with pytest.raises(ValueError) as exc_info:
     XAsyncContentCriticality.validate("invalid")
+assert "Invalid criticality 'invalid'" in str(exc_info.value)
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_http_formatting.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-Test suite organization and backward compatibility reference file for JESSE Framework MCP server HTTP formatting infrastructure. Provides centralized import aggregation from three specialized test modules (`test_http_core_functionality.py`, `test_http_section_formatting.py`, `test_http_path_integration.py`) maintaining existing test runner compatibility after large test file refactoring. Features graceful import error handling with placeholder classes and comprehensive re-export functionality. Key semantic entities include `TestHttpStatus`, `TestHttpErrorHandler`, `TestContentCriticality`, `TestHTTPSectionFormatting`, `TestMultiSectionResponse`, `TestHttpPath`, `TestPortablePathResolution`, `__all__` export list, `ImportError` exception handling, `warnings.warn()` for diagnostic messaging, and relative import patterns using dot notation. Technical implementation focuses on backward compatibility preservation through import aggregation and fallback mechanisms.
+This reference file serves as an organizational hub for the split HTTP formatting test suite within the JESSE Framework MCP Server, specifically designed to maintain backward compatibility while providing clear navigation to specialized test modules. The file provides test suite organization capabilities, import aggregation for existing test runners, and comprehensive documentation of the test split architecture. Key semantic entities include `TestHttpStatus`, `TestHttpErrorHandler`, `TestContentCriticality`, `TestHttpStatusLines`, `TestHTTPSectionFormatting`, `TestMultiSectionResponse`, `TestExtractHttpSections`, `TestFormatHttpResponse`, `TestIntegrationWithConstants`, `TestPortablePathResolution`, `TestHttpPath`, `TestPathContentHandling`, `TestPerformanceAndEdgeCases`, `test_http_core_functionality.py`, `test_http_section_formatting.py`, `test_http_path_integration.py`, `ImportError` exception handling, `warnings` module integration, and `__all__` export list management. The reference architecture implements backward compatibility through re-export patterns and graceful fallback with placeholder classes for missing modules.
 
 ##### Main Components
 
-- Import aggregation from `test_http_core_functionality` module containing `TestHttpStatus`, `TestHttpErrorHandler`, `TestContentCriticality` classes
-- Import aggregation from `test_http_section_formatting` module containing `TestHttpStatusLines`, `TestHTTPSectionFormatting`, `TestMultiSectionResponse`, `TestExtractHttpSections`, `TestFormatHttpResponse`, `TestIntegrationWithConstants` classes
-- Import aggregation from `test_http_path_integration` module containing `TestPortablePathResolution`, `TestHttpPath`, `TestPathContentHandling`, `TestPerformanceAndEdgeCases` classes
-- `__all__` export list defining public API for backward compatibility
-- Exception handling block with `ImportError` catching and `warnings.warn()` messaging
-- Placeholder class definitions providing empty test classes when imports fail
+The file contains three primary organizational sections: comprehensive docstring documentation explaining the test suite split rationale and module organization, conditional import statements with try-catch blocks for the three specialized test modules, and fallback placeholder class definitions for graceful error handling. The import section aggregates twelve test classes across three functional domains: core HTTP functionality, section formatting, and path integration. The `__all__` export list provides explicit backward compatibility for existing test runners, while the exception handling section creates empty placeholder classes with descriptive docstrings when imports fail.
 
 ###### Architecture & Design
 
-Implements aggregator pattern consolidating distributed test modules into single import point. Design uses try-catch import strategy with graceful degradation to placeholder classes preventing import failures. Architecture separates concerns through specialized test modules while maintaining unified access interface. Uses relative import syntax with dot notation for module-relative imports. Implements comprehensive re-export strategy through `__all__` list ensuring all test classes remain discoverable. Error handling architecture provides diagnostic warnings without breaking test discovery mechanisms. Placeholder class design maintains class structure with docstring references to actual implementation locations.
+The architecture follows a reference file pattern with clear separation of concerns through module-based organization, utilizing conditional imports and graceful degradation for missing dependencies. The design implements backward compatibility preservation through comprehensive re-exports and placeholder fallbacks, ensuring existing test runners continue functioning without modification. Error handling is structured with `ImportError` exception catching and `warnings` module integration for developer notification. The organizational framework uses docstring-based documentation combined with explicit module references to guide developers to appropriate test locations.
 
 ####### Implementation Approach
 
-Uses Python relative import mechanism with `from .module_name import` syntax for sibling module access. Implements comprehensive exception handling wrapping all imports in single try-catch block. Uses `warnings.warn()` with `ImportWarning` category for non-fatal diagnostic messaging. Implements placeholder class generation with descriptive docstrings indicating actual test locations. Uses `__all__` list for explicit public API definition enabling controlled re-export. Implements graceful fallback strategy creating empty classes with pass statements when imports fail. Documentation string provides comprehensive module organization explanation and usage guidance for developers.
+The implementation uses conditional import statements with try-catch blocks to handle missing specialized test modules gracefully. Module organization employs explicit relative imports from three specialized files covering distinct functional areas. Backward compatibility uses `__all__` list definition with comprehensive test class re-exports for existing test discovery mechanisms. The fallback strategy implements placeholder class creation with descriptive docstrings indicating actual test locations when imports fail, preventing import errors in dependent systems.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `tests/test_http_core_functionality.py:TestHttpStatus` - HTTP status code and utility test classes
-- `tests/test_http_core_functionality.py:TestHttpErrorHandler` - Error handling and exception mapping tests
-- `tests/test_http_section_formatting.py:TestHTTPSectionFormatting` - HTTP section formatting functionality tests
-- `tests/test_http_path_integration.py:TestHttpPath` - HttpPath dual-path functionality tests
-- `warnings` (external library) - Warning system for import failure diagnostics
-- `ImportError` (external library) - Exception handling for failed module imports
+- `tests/test_http_core_functionality.py:TestHttpStatus` - HTTP status constants and utilities testing
+- `tests/test_http_core_functionality.py:TestHttpErrorHandler` - error handling and exception mapping testing
+- `tests/test_http_core_functionality.py:TestContentCriticality` - content criticality validation testing
+- `tests/test_http_section_formatting.py:TestHttpStatusLines` - HTTP status line functionality testing
+- `tests/test_http_section_formatting.py:TestHTTPSectionFormatting` - section formatting validation testing
+- `tests/test_http_section_formatting.py:TestMultiSectionResponse` - multi-section response handling testing
+- `tests/test_http_section_formatting.py:TestExtractHttpSections` - section extraction functionality testing
+- `tests/test_http_section_formatting.py:TestFormatHttpResponse` - response formatting integration testing
+- `tests/test_http_section_formatting.py:TestIntegrationWithConstants` - constants integration testing
+- `tests/test_http_path_integration.py:TestPortablePathResolution` - portable path resolution testing
+- `tests/test_http_path_integration.py:TestHttpPath` - HttpPath dual-path functionality testing
+- `tests/test_http_path_integration.py:TestPathContentHandling` - path content loading testing
+- `tests/test_http_path_integration.py:TestPerformanceAndEdgeCases` - performance and edge case testing
+- `warnings` (external library) - warning notification system for import failures
 
 **← Outbound:**
-- `pytest` test discovery systems - Discovers and executes aggregated test classes
-- `test_runners/` - CI/CD systems consuming unified test interface
-- `coverage_tools/` - Code coverage analysis tools accessing test classes
-- `ide_integrations/` - Development environment test discovery mechanisms
+- Test discovery systems requiring backward compatibility with original test structure
+- CI/CD pipelines expecting unified test class imports from single module
+- Development tools and IDEs using test class references for navigation
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Central test aggregation point maintaining backward compatibility after test suite refactoring while enabling modular test organization
-- **Ecosystem Position**: Core testing infrastructure component bridging legacy test runners with new modular test architecture
-- **Integration Pattern**: Used by pytest discovery, CI/CD pipelines, and development tools requiring unified test class access without modification to existing test execution workflows
+- **System Role**: Organizational reference point maintaining backward compatibility for HTTP formatting test suite after modular split within JESSE Framework MCP Server testing infrastructure
+- **Ecosystem Position**: Central compatibility layer ensuring seamless transition from monolithic to modular test organization without breaking existing test runners or development workflows
+- **Integration Pattern**: Used by test discovery systems, CI/CD pipelines, and development tools requiring unified access to HTTP formatting test classes across specialized modules
 
 ######### Edge Cases & Error Handling
 
-Handles `ImportError` exceptions when specialized test modules are missing or corrupted through comprehensive try-catch wrapping. Provides diagnostic `warnings.warn()` messaging with specific module names and helpful resolution guidance. Creates placeholder classes with descriptive docstrings preventing test discovery failures when imports fail. Handles partial import failures where some modules succeed and others fail through individual class imports. Manages circular import scenarios through relative import syntax avoiding absolute path dependencies. Provides graceful degradation maintaining test runner compatibility even with missing test modules. Handles module path resolution issues in different execution contexts through dot notation relative imports.
+Error handling covers missing specialized test module scenarios with `ImportError` exception catching and graceful fallback to placeholder classes. The file handles import failures through `warnings.warn()` notifications with detailed guidance for resolving missing module issues. Edge cases include partial module availability, circular import dependencies, and test runner compatibility issues with split architecture. The fallback mechanism provides empty placeholder classes with descriptive docstrings to prevent import errors while clearly indicating actual test locations for developer guidance.
 
 ########## Internal Implementation Details
 
-Uses `try-except ImportError` block wrapping all relative imports with specific error message construction including failed module names. Implements `warnings.warn()` with `ImportWarning` category and detailed diagnostic message including resolution steps. Creates placeholder classes using `class ClassName: pass` pattern with docstring references to actual implementation files. Uses `__all__` list containing 14 test class names organized by functional categories (core, formatting, integration). Implements relative import syntax `from .module_name import` requiring package context execution. Placeholder classes maintain identical names to imported classes ensuring test discovery compatibility. Documentation string uses triple-quote format with detailed module organization explanation and developer guidance.
+Import organization uses relative import syntax with explicit test class enumeration for clear dependency tracking. Placeholder class creation employs dynamic class definition with descriptive docstrings indicating actual test module locations. The `__all__` export list maintains alphabetical organization within functional groupings for consistent test discovery. Exception handling uses `ImportWarning` category for appropriate warning classification and developer tool integration.
 
 ########### Code Usage Examples
 
-Essential patterns for test aggregation and backward compatibility maintenance. These examples demonstrate import aggregation strategies and error handling mechanisms for maintaining test suite organization.
+**Backward compatible test class import pattern:**
+
+This example demonstrates how existing test runners can continue importing test classes without modification after the test suite split. The reference file maintains all original import paths through re-exports.
 
 ```python
-# Comprehensive import aggregation with error handling for test module organization
+# Import test classes using original import pattern for backward compatibility
+from test_http_formatting import (
+    TestHttpStatus,
+    TestHTTPSectionFormatting,
+    TestHttpPath
+)
+# All test classes remain accessible through original import structure
+```
+
+**Graceful fallback handling for missing modules:**
+
+This snippet shows how the reference file handles missing specialized test modules through placeholder classes and warning notifications. The fallback prevents import errors while guiding developers to resolve missing dependencies.
+
+```python
+# Graceful handling of missing specialized test modules
 try:
-    from .test_http_core_functionality import (
-        TestHttpStatus,
-        TestHttpErrorHandler,
-        TestContentCriticality
-    )
-    from .test_http_section_formatting import (
-        TestHttpStatusLines,
-        TestHTTPSectionFormatting
-    )
+    from .test_http_core_functionality import TestHttpStatus
 except ImportError as e:
     warnings.warn(f"Could not import split test modules: {e}")
+    class TestHttpStatus:
+        """Placeholder - actual tests in test_http_core_functionality.py"""
+        pass
 ```
 
-Backward compatibility export list configuration ensures test discovery systems continue working without modification. This pattern maintains API stability while enabling internal reorganization.
+**Comprehensive test class re-export for compatibility:**
+
+This example demonstrates how the reference file maintains backward compatibility through explicit re-exports in the `__all__` list. The pattern ensures test discovery systems continue finding all test classes through the original module.
 
 ```python
-# Backward compatibility export list ensuring test discovery works unchanged
+# Comprehensive re-export pattern for backward compatibility
 __all__ = [
-    'TestHttpStatus',
-    'TestHttpErrorHandler', 
-    'TestContentCriticality',
-    'TestHttpStatusLines',
-    'TestHTTPSectionFormatting'
+    'TestHttpStatus', 'TestHttpErrorHandler', 'TestContentCriticality',
+    'TestHttpStatusLines', 'TestHTTPSectionFormatting', 'TestMultiSectionResponse',
+    'TestPortablePathResolution', 'TestHttpPath', 'TestPathContentHandling'
 ]
-```
-
-Placeholder class creation prevents import failures while providing clear guidance to developers. This fallback mechanism maintains test runner compatibility even when specialized modules are missing.
-
-```python
-# Placeholder class creation preventing import failures while providing guidance
-class TestHttpStatus:
-    """Placeholder - actual tests in test_http_core_functionality.py"""
-    pass
-
-class TestHttpErrorHandler:
-    """Placeholder - actual tests in test_http_core_functionality.py"""
-    pass
-```
-
-Diagnostic warning system provides specific resolution guidance for missing test modules. This approach helps developers quickly identify and resolve import issues during development.
-
-```python
-# Diagnostic warning with specific resolution guidance for missing modules
-warnings.warn(
-    f"Could not import split test modules: {e}. "
-    "Ensure test_http_core_functionality.py, test_http_section_formatting.py, "
-    "and test_http_path_integration.py are present in the tests/ directory.",
-    ImportWarning
-)
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_http_path_integration.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This file provides comprehensive test coverage for `XAsyncHttpPath` class dual-path functionality and portable path resolution within the JESSE Framework MCP server. The file validates cross-platform path variable substitution (`{PROJECT_ROOT}`, `{HOME}`, `{CLINE_RULES}`, `{CLINE_WORKFLOWS}`), HTTP formatting integration with location headers, and automatic file content loading with `Last-Modified` header generation. Key semantic entities include `XAsyncHttpPath` class for dual-path storage, `resolve_portable_path` function for variable substitution, `format_http_section` for HTTP response formatting, `tempfile` module for filesystem testing, and `pytest` framework for comprehensive test execution. The testing architecture ensures portable path resolution maintains original variable preservation while enabling filesystem operations on resolved paths.
+This comprehensive test suite validates the `XAsyncHttpPath` class and portable path resolution functionality within the JESSE Framework MCP Server, specifically designed to verify cross-platform path variable substitution, HTTP formatting integration, and file content handling. The test suite provides extensive validation capabilities for dual-path functionality, environment variable resolution, and HTTP section formatting with automatic content loading. Key semantic entities include `XAsyncHttpPath`, `format_http_section`, `resolve_portable_path`, `TestPortablePathResolution`, `TestHttpPath`, `TestPathContentHandling`, `TestPerformanceAndEdgeCases` test classes, `{PROJECT_ROOT}`, `{HOME}`, `{CLINE_RULES}`, `{CLINE_WORKFLOWS}` path variables, `pytest` testing framework, `tempfile` temporary file handling, and `CONTENT_TYPES`, `SECTION_TYPES`, `RULE_CRITICALITY_MAP` constants. The testing framework implements comprehensive validation through portable path resolution testing, dual-path storage verification, automatic Last-Modified header generation, and performance testing with large content blocks.
 
 ##### Main Components
 
-The file contains four primary test classes: `TestPortablePathResolution` validates `resolve_portable_path` function behavior with all supported environment variables, `TestHttpPath` tests `XAsyncHttpPath` class construction and dual-path functionality, `TestPathContentHandling` validates file content reading with automatic `Last-Modified` header integration, and `TestPerformanceAndEdgeCases` ensures performance with large content and special character handling. Each test class focuses on specific aspects of path resolution and HTTP integration, providing comprehensive coverage of portable path functionality, filesystem operations, and HTTP response generation.
+The test suite contains four primary test classes: `TestPortablePathResolution` with six test methods for environment variable substitution validation, `TestHttpPath` with twelve test methods for dual-path functionality and HTTP integration testing, `TestPathContentHandling` with eight test methods for file content loading and error handling validation, and `TestPerformanceAndEdgeCases` with three test methods for performance and boundary condition testing. Each test class implements comprehensive assertion-based validation with temporary file creation, cross-platform path testing, and detailed error scenario coverage including missing files, invalid types, and Unicode content handling.
 
 ###### Architecture & Design
 
-The test architecture follows pytest conventions with class-based organization separating concerns by functional area. `TestPortablePathResolution` validates the foundation layer of path variable substitution, while `TestHttpPath` tests the `XAsyncHttpPath` wrapper class that inherits from `Path` while preserving original portable paths. `TestPathContentHandling` focuses on integration between file system operations and HTTP formatting, particularly automatic `Last-Modified` header generation from file modification times. The design emphasizes cross-platform compatibility testing, error condition validation, and integration testing between path resolution and HTTP response formatting components.
+The architecture follows a comprehensive testing pattern with isolated test classes for different functional aspects, utilizing `pytest` framework conventions and temporary file management for realistic testing scenarios. The design implements cross-platform compatibility testing through environment variable resolution validation and path manipulation verification. Error handling is structured with exception testing using `pytest.raises()` context managers and assertion-based validation for expected behaviors. The testing framework uses realistic file operations combined with HTTP formatting integration to validate end-to-end functionality from path resolution through content delivery.
 
 ####### Implementation Approach
 
-Tests utilize temporary file creation with `tempfile.NamedTemporaryFile` for realistic filesystem testing scenarios, ensuring proper cleanup with try-finally blocks. Path resolution testing validates variable substitution using `Path.cwd()` and `Path.home()` for environment-independent assertions. The `XAsyncHttpPath` testing strategy verifies dual-path functionality by comparing `get_original_path()` preservation against `str()` resolution results. Integration testing combines `XAsyncHttpPath` objects with `format_http_section` to validate automatic file content reading and `Last-Modified` header generation. Error handling tests cover file not found scenarios, empty content validation, and invalid type checking with specific exception assertions.
+The implementation uses direct class instantiation with `XAsyncHttpPath()` for dual-path testing and `resolve_portable_path()` for variable substitution validation. File content testing employs `tempfile.NamedTemporaryFile()` with UTF-8 encoding for realistic file operations and cleanup management. HTTP integration testing uses `format_http_section()` with various parameter combinations to validate header generation and content handling. The testing strategy implements both positive path validation and comprehensive error condition testing through invalid inputs, missing files, and edge cases like empty content and Unicode characters.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.helpers.async_http_formatter:format_http_section` - HTTP response formatting with automatic content loading
-- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncHttpPath` - dual-path storage class for portable path handling
-- `jesse_framework_mcp.helpers.path_utils:resolve_portable_path` - environment variable substitution in paths
-- `jesse_framework_mcp.constants:CONTENT_TYPES` - HTTP content type constants for validation
-- `pytest` (external library) - testing framework for comprehensive test execution
-- `tempfile` (external library) - temporary file creation for filesystem testing
-- `pathlib.Path` (external library) - cross-platform path operations and validation
+- `jesse_framework_mcp.helpers.async_http_formatter:format_http_section` - HTTP section formatting function
+- `jesse_framework_mcp.helpers.async_http_formatter:XAsyncHttpPath` - dual-path HTTP path class
+- `jesse_framework_mcp.helpers.path_utils:resolve_portable_path` - portable path resolution utility
+- `jesse_framework_mcp.constants:CONTENT_TYPES` - content type constants
+- `jesse_framework_mcp.constants:SECTION_TYPES` - section type constants
+- `jesse_framework_mcp.constants:RULE_CRITICALITY_MAP` - criticality mapping constants
+- `pytest` (external library) - testing framework and assertion utilities
+- `tempfile` (external library) - temporary file creation and management
+- `pathlib:Path` (external library) - cross-platform path manipulation
+- `re` (external library) - regular expression pattern matching for RFC 7231 validation
 
 **← Outbound:**
-- `test_http_formatting.py` - originally contained these tests before file split for organization
-- `CI/CD pipeline` - automated test execution validating portable path functionality
-- `development workflow` - validates JESSE Framework MCP server path handling reliability
+- Test validation reports for CI/CD pipeline integration
+- Cross-platform compatibility verification for deployment systems
+- HTTP formatting validation for MCP server resource endpoints
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring JESSE Framework MCP server handles portable paths correctly across different deployment environments
-- **Ecosystem Position**: Core testing infrastructure validating fundamental path resolution and HTTP integration functionality
-- **Integration Pattern**: Executed by developers during development and CI/CD systems for continuous validation of cross-platform path handling
+- **System Role**: Comprehensive validation component ensuring XAsyncHttpPath class reliability and portable path resolution accuracy within the JESSE Framework MCP Server ecosystem
+- **Ecosystem Position**: Critical testing utility for HTTP path integration functionality, validating the bridge between cross-platform path resolution and HTTP content delivery mechanisms
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify portable path functionality, HTTP formatting integration, and file content handling before MCP server deployment across different operating systems
 
 ######### Edge Cases & Error Handling
 
-Error handling tests validate `TypeError` exceptions for invalid content types passed to `format_http_section`, ensuring clear error messages specify expected types (`str` or `XAsyncHttpPath`). File system error scenarios include automatic 404 HTTP response generation when `XAsyncHttpPath` content files don't exist, and `ValueError` exceptions for empty file content validation. Unicode content testing ensures proper UTF-8 encoding with accurate byte-length calculation for international characters and emoji. Cross-platform path resolution testing handles environment variable availability and path separator differences. Performance testing validates large content handling (10KB+ content blocks) without memory issues or formatting corruption.
+Error handling covers missing file scenarios with automatic 404 HTTP response generation, invalid content type parameters with `TypeError` exceptions, empty file content with `ValueError` validation, and Unicode character preservation with accurate byte-length calculation. The test suite handles cross-platform path resolution failures through environment variable validation and temporary file cleanup through try-finally blocks. Edge cases include multiple variable combinations in single paths, partial variable resolution with literal text preservation, filesystem permission issues, and RFC 7231 timestamp format validation. The testing framework provides comprehensive error scenario coverage through exception testing and assertion-based validation with detailed error message verification.
 
 ########## Internal Implementation Details
 
-The test implementation uses `tempfile.NamedTemporaryFile` with explicit encoding='utf-8' for consistent cross-platform file handling. Cleanup operations utilize `unlink(missing_ok=True)` for safe temporary file removal. Path resolution validation compares resolved paths against `Path.cwd()` and `Path.home()` results for environment independence. HTTP header validation uses string parsing and regular expression matching for RFC 7231 timestamp format verification. The `XAsyncHttpPath` testing strategy accesses both `_resolved_path` internal attribute for cleanup and public methods for functionality validation. Performance tests generate large content using string multiplication for consistent memory usage patterns.
+Path resolution testing uses direct comparison between original and resolved paths with `get_original_path()` and `get_resolved_path()` method validation. File content testing creates temporary files with specific encodings and validates automatic cleanup through context managers and explicit `unlink()` calls. HTTP integration testing inspects generated headers through string parsing and regular expression matching for timestamp format validation. Performance testing uses large content generation through string multiplication and validates content-length accuracy through UTF-8 byte encoding calculations.
 
 ########### Code Usage Examples
 
-Basic `XAsyncHttpPath` construction and dual-path access:
+**Basic portable path resolution with environment variables:**
+
+This example demonstrates how to test portable path variable resolution across different environments. The test validates that environment variables are properly substituted while preserving original path structure.
+
 ```python
-# Create HttpPath with portable variable
-http_path = XAsyncHttpPath("file://{PROJECT_ROOT}/.knowledge/test.md")
-
-# Access original portable path for headers
-original = http_path.get_original_path()  # "file://{PROJECT_ROOT}/.knowledge/test.md"
-
-# Access resolved path for filesystem operations
-resolved = str(http_path)  # "/actual/project/path/.knowledge/test.md"
-```
-
-Integration with HTTP formatting for automatic content loading:
-```python
-# HttpPath object automatically reads file content and adds Last-Modified header
-result = format_http_section(
-    content=XAsyncHttpPath("{HOME}/Cline/Rules/JESSE_HINTS.md"),
-    content_type="text/markdown",
-    criticality="CRITICAL",
-    description="Framework Rules",
-    section_type="framework-rule",
-    location="file://{HOME}/Cline/Rules/JESSE_HINTS.md"
-)
-```
-
-Portable path resolution testing pattern:
-```python
-# Test environment variable substitution
+# Test PROJECT_ROOT variable resolution to current working directory
 location = "file://{PROJECT_ROOT}/.knowledge/test.md"
 resolved = resolve_portable_path(location)
-
-# Validate variable replacement
 assert "{PROJECT_ROOT}" not in resolved
 assert str(Path.cwd()) in resolved
 ```
 
+**XAsyncHttpPath dual-path functionality with HTTP integration:**
+
+This snippet shows how to test XAsyncHttpPath dual-path storage and HTTP formatting integration. The test verifies that original portable paths are preserved for headers while resolved paths enable filesystem operations.
+
+```python
+# Test HttpPath dual-path functionality with format_http_section integration
+original_path = "file://{HOME}/Cline/Rules/JESSE_HINTS.md"
+http_path = XAsyncHttpPath(original_path)
+result = format_http_section(
+    content="# Test Content",
+    content_type="text/markdown",
+    criticality="CRITICAL",
+    location=http_path
+)
+assert f"Content-Location: {original_path}" in result
+```
+
+**File content handling with automatic Last-Modified headers:**
+
+This example demonstrates how to test automatic file content loading and Last-Modified header generation. The test validates that XAsyncHttpPath objects automatically read file content and generate appropriate HTTP headers.
+
+```python
+# Test automatic Last-Modified header generation with file content
+with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.md', encoding='utf-8') as tmp_file:
+    tmp_file.write("# Test Content")
+    tmp_http_path = XAsyncHttpPath(tmp_file.name)
+result = format_http_section(content=tmp_http_path, content_type="text/markdown")
+assert "Last-Modified:" in result
+assert "# Test Content" in result
+```
+
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_http_section_formatting.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
@@ -974,181 +1156,90 @@ result = format_multi_section_response(section1, section2,
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_new_resources.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This test script validates knowledge resource functionality for the JESSE Framework MCP Server, specifically testing README.md resources in the `.knowledge/` directory structure. The script provides automated validation of knowledge base file existence, content verification, and resource registration processes for MCP server integration. Key semantic entities include `test_git_clones_readme()`, `test_pdf_knowledge_readme()`, `test_resource_registration()` functions, `register_knowledge_resources` import, `asyncio` async execution framework, `pathlib.Path` file system operations, and `.knowledge/git-clones/README.md` and `.knowledge/pdf-knowledge/README.md` file paths. The testing framework enables developers to verify that knowledge base resources are properly accessible through the MCP server with appropriate content validation and graceful handling of missing directories.
+This test script validates README.md resource functionality within the JESSE Framework MCP Server knowledge management system, specifically designed to verify knowledge base resource registration and file accessibility. The script provides automated testing capabilities for knowledge resource validation, file existence verification, and content structure analysis. Key semantic entities include `register_knowledge_resources`, `test_git_clones_readme`, `test_pdf_knowledge_readme`, `asyncio` async execution, `fastmcp.Context` integration, and `.knowledge/` directory structure with `git-clones/README.md` and `pdf-knowledge/README.md` paths. The testing framework implements emoji-based status reporting and graceful handling of missing knowledge directories for new installations.
 
 ##### Main Components
 
-The script contains three primary async test functions: `test_git_clones_readme()` for validating git clones knowledge base README file, `test_pdf_knowledge_readme()` for PDF knowledge directory validation, and `test_resource_registration()` for verifying MCP resource registration. The `main()` function orchestrates sequential test execution with formatted console output. Each test function implements file existence checking, content validation, and expected content pattern matching with emoji-based status reporting for visual test result differentiation.
+The script contains three primary async test functions: `test_git_clones_readme()` for git clones knowledge base validation, `test_pdf_knowledge_readme()` for PDF knowledge directory testing, and `test_resource_registration()` for resource registration verification. The `main()` function orchestrates sequential test execution with formatted output headers. Each test function implements file existence checking, content loading with UTF-8 encoding, and expected content pattern matching for knowledge base validation.
 
 ###### Architecture & Design
 
-The test architecture follows a sequential validation pattern where individual knowledge resources are tested independently before validating the overall registration process. The design implements file system validation using `os.path.exists()` checks combined with content analysis for expected headers and knowledge base references. The script uses graceful degradation for missing directories, treating them as expected conditions for new installations rather than failures. Error isolation ensures that individual test failures do not prevent execution of subsequent tests.
+The architecture follows a sequential testing pattern with individual resource validation followed by registration testing. The design implements graceful degradation for missing directories, treating them as expected conditions for new installations rather than failures. Error handling is structured with try-catch blocks around each test function, providing isolated failure reporting. The testing framework uses file system operations combined with content analysis to validate both resource availability and structural integrity.
 
 ####### Implementation Approach
 
-The testing strategy employs direct file system access using `os.path.exists()` and file reading operations with UTF-8 encoding for content validation. Content verification uses string containment checks for expected headers like "Git Clone Knowledge Bases Index" and knowledge base references like "FastMCP" and "Cline". The implementation includes character counting for content size validation and pattern matching for structural verification. Resource registration testing uses direct function calls to `register_knowledge_resources()` with exception handling for registration failures.
+The implementation uses direct file system access through `os.path.exists()` for file validation and standard file reading with UTF-8 encoding for content analysis. Content validation employs string containment checks for expected headers like "Git Clone Knowledge Bases Index" and knowledge base references including "FastMCP" and "Cline". The testing strategy differentiates between critical failures (file access errors) and expected conditions (missing directories in new installations) through warning versus error status indicators.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
 - `jesse_framework_mcp.resources.knowledge:register_knowledge_resources` - knowledge resource registration function
-- `jesse_framework_mcp.main:server` - MCP server instance for integration context
-- `fastmcp.Context` (external library) - MCP context interface specification
-- `asyncio` (stdlib) - async execution framework
-- `pathlib.Path` (stdlib) - file system path manipulation
-- `os` (stdlib) - file existence and directory operations
+- `jesse_framework_mcp.main:server` - MCP server instance import
+- `fastmcp:Context` (external library) - MCP context interface
+- `asyncio` (external library) - async execution framework
 - `.knowledge/git-clones/README.md` - git clones knowledge base index file
 - `.knowledge/pdf-knowledge/README.md` - PDF knowledge base index file
+- `os` (external library) - file system operations
+- `pathlib:Path` (external library) - path manipulation utilities
 
 **← Outbound:**
-- Test execution reports consumed by developers for validation
-- Console output with emoji-based status indicators for debugging
-- Validation results for CI/CD pipeline integration
+- Console test output for validation reporting
+- Test status indicators for CI/CD pipeline integration
+- Knowledge resource validation reports for deployment verification
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Validation component ensuring knowledge base resources are properly configured and accessible through MCP server endpoints
-- **Ecosystem Position**: Supporting test infrastructure for JESSE Framework knowledge management system validation
-- **Integration Pattern**: Executed by developers during development and automated testing pipelines to verify knowledge resource availability and content integrity
+- **System Role**: Validation component ensuring knowledge base resources are properly accessible and registered within the MCP server ecosystem
+- **Ecosystem Position**: Testing utility for knowledge management system integrity, validating the bridge between file system knowledge bases and MCP resource endpoints
+- **Integration Pattern**: Executed by developers and deployment systems to verify knowledge resource availability before MCP server activation
 
 ######### Edge Cases & Error Handling
 
-The script handles multiple edge cases including missing knowledge directories (treated as expected for new installations), missing README files (with appropriate warning messages), and content validation failures when expected headers or references are absent. Exception handling includes comprehensive error catching with string representation of exceptions for debugging. The testing framework differentiates between critical failures (registration errors) and expected conditions (missing PDF knowledge directory) using different emoji indicators and message types.
+Error handling covers missing knowledge directories (treated as warnings for new installations), file access permission issues, UTF-8 encoding failures, and resource registration exceptions. The script handles missing expected content patterns through conditional validation reporting. Edge cases include partial knowledge directory structures, corrupted README files, and resource registration conflicts. The testing framework provides differentiated status reporting using emoji indicators to distinguish between critical errors, warnings, and successful validations.
 
 ########## Internal Implementation Details
 
-The test functions implement emoji-based status reporting using Unicode characters (`✅`, `❌`, `⚠️`) for immediate visual feedback on test results. File content validation includes character counting with length reporting and specific string pattern matching for expected content elements. The script uses UTF-8 encoding explicitly for file reading operations to handle international characters in knowledge base content. Resource registration testing validates that the registration process completes without exceptions rather than testing specific registration outcomes.
+File existence checking uses `os.path.exists()` with relative path resolution from the script execution directory. Content validation reads entire files into memory using UTF-8 encoding with automatic error handling. String pattern matching uses case-sensitive containment checks for specific headers and knowledge base names. The resource registration test performs function invocation without parameter validation, focusing on execution success rather than functional correctness.
 
 ########### Code Usage Examples
 
-**Basic knowledge resource file validation pattern:**
+**Basic knowledge resource testing execution:**
 
-This code demonstrates file existence checking and content validation for knowledge base resources. It provides a foundation for testing README files in knowledge directories with appropriate error handling.
+This code snippet demonstrates how to execute all knowledge resource validation tests in sequence. The main function orchestrates comprehensive testing of git clones, PDF knowledge, and registration components.
 
 ```python
-# Test file existence and content validation for knowledge resources
-readme_path = ".knowledge/git-clones/README.md"
-if os.path.exists(readme_path):
-    with open(readme_path, 'r', encoding='utf-8') as f:
-        content = f.read()
-    if "Git Clone Knowledge Bases Index" in content:
-        print("✅ Git clones README contains expected header")
+# Execute all knowledge resource validation tests
+await main()
+# Runs git clones, PDF knowledge, and registration tests sequentially
 ```
 
-**Resource registration validation for MCP server integration:**
+**Individual git clones README validation:**
 
-This pattern validates that knowledge resources register successfully with the MCP server. It ensures the registration process completes without exceptions and provides appropriate error reporting.
+This example shows how to test specific knowledge base accessibility and content structure validation. The function validates both file existence and expected content patterns for git clones knowledge base.
 
 ```python
-# Validate that knowledge resources register successfully with MCP server
-try:
-    register_knowledge_resources()
-    print("✅ Knowledge resources registered successfully")
-except Exception as e:
-    print(f"❌ Resource registration test failed: {str(e)}")
+# Test git clones knowledge base accessibility and content structure
+await test_git_clones_readme()
+# Validates .knowledge/git-clones/README.md existence and expected content patterns
 ```
 
-**Sequential test execution with formatted output:**
+**Resource registration verification:**
 
-This approach orchestrates comprehensive knowledge resource validation with visual formatting. It provides structured test execution with clear section boundaries for debugging purposes.
+This snippet demonstrates how to verify knowledge resources register without errors in the MCP server. The registration function confirms that knowledge base resources are accessible through MCP endpoints.
 
 ```python
-# Execute comprehensive knowledge resource validation suite
-async def main():
-    print("=" * 60)
-    print("TESTING NEW WRITABLE RESOURCES")
-    await test_git_clones_readme()
-    await test_pdf_knowledge_readme()
-    await test_resource_registration()
-```
-
-### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_orphaned_cleanup.py
-
-*Last Updated: 2025-07-05T18:23:26Z*
-
-#### Functional Intent & Features
-
-This file provides comprehensive test coverage for the `OrphanedAnalysisCleanup` component within the Jesse Framework MCP knowledge building system. It validates orphaned file detection and removal functionality, ensuring proper cleanup of stale analysis files and knowledge files when their corresponding source files no longer exist. The test suite verifies directory structure preservation, leaf-first traversal algorithms, and cleanup statistics reporting through `pytest` framework integration. Key semantic entities include `OrphanedAnalysisCleanup`, `IndexingConfig`, `OutputConfig`, `cleanup_orphaned_files()`, `_collect_directories_leaf_first()`, `temp_directories`, `indexing_config`, `mock_context`, `analysis_files_deleted`, `knowledge_files_deleted`, `directories_deleted`, `total_items_deleted`, `project-base`, `.analysis.md`, and `_kb.md` enabling validation of knowledge base maintenance operations and file system consistency checks.
-
-##### Main Components
-
-Contains `TestOrphanedAnalysisCleanup` test class with six test methods: `test_cleanup_orphaned_analysis_files()` for validating removal of orphaned analysis files, `test_cleanup_orphaned_knowledge_files()` for knowledge file cleanup validation, `test_preserve_directories_with_content()` for content preservation verification, `test_no_cleanup_needed()` for empty structure handling, `test_preserve_empty_directories_with_existing_source()` for source-mirrored directory preservation, and `test_leaf_first_directory_collection()` for traversal algorithm validation. Includes three `pytest` fixtures: `temp_directories()` for temporary file system setup, `indexing_config()` for test configuration creation, and `mock_context()` for FastMCP context mocking.
-
-###### Architecture & Design
-
-Implements isolated test environments using `tempfile.TemporaryDirectory()` with structured directory hierarchies mirroring real knowledge base layouts. Uses `pytest` fixture dependency injection pattern for test setup and teardown management. Employs mock objects (`AsyncMock`) for external dependency isolation while preserving integration behavior. Test architecture separates concerns between orphaned file detection, directory preservation logic, cleanup statistics validation, and traversal algorithm verification through distinct test methods with clear arrange-act-assert patterns.
-
-####### Implementation Approach
-
-Creates realistic file system scenarios with `source_root/` and `knowledge_root/` directory structures containing `.analysis.md` and `_kb.md` files. Uses `Path.write_text()` and `Path.exists()` for file manipulation and validation. Implements cleanup statistics verification through assertion checks on `stats.analysis_files_deleted`, `stats.knowledge_files_deleted`, and `stats.directories_deleted` counters. Validates leaf-first directory traversal by creating nested directory structures and verifying collection order through index comparison of directory names.
-
-######## External Dependencies & Integration Points
-
-**→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.models:IndexingConfig` - configuration model for cleanup operations
-- `jesse_framework_mcp.knowledge_bases.indexing.orphaned_cleanup:OrphanedAnalysisCleanup` - primary cleanup component under test
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:OutputConfig` - output directory configuration
-- `fastmcp:Context` - FastMCP context interface for logging operations
-- `pytest` (external library) - testing framework and fixture management
-- `tempfile` (external library) - temporary directory creation for isolated testing
-- `unittest.mock:AsyncMock` (external library) - mock object creation for context isolation
-
-**← Outbound:**
-- `pytest.main()` - test execution entry point when run as script
-- File system operations through `Path.mkdir()`, `Path.write_text()`, and `Path.exists()`
-- Console output via `pytest` test result reporting
-
-**⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring `OrphanedAnalysisCleanup` reliability within Jesse Framework MCP knowledge base maintenance workflows
-- **Ecosystem Position**: Core testing infrastructure validating cleanup subsystem correctness and preventing knowledge base corruption
-- **Integration Pattern**: Executed by developers and CI/CD systems to validate cleanup implementation before deployment, ensuring knowledge base integrity and preventing orphaned file accumulation
-
-######### Edge Cases & Error Handling
-
-Validates preservation of directories with existing source counterparts even when empty, ensuring source-mirrored directory structures remain intact. Tests cleanup behavior when no orphaned files exist, verifying zero-impact operations on clean knowledge bases. Handles nested directory structures with proper leaf-first traversal to prevent directory deletion order conflicts. Validates content preservation logic by ensuring directories containing analysis files or subdirectories are never removed regardless of source file status.
-
-########## Internal Implementation Details
-
-Test fixtures create temporary directory structures with `source/` and `knowledge/project-base/` hierarchies. Analysis files use `.analysis.md` extension while knowledge files use `_kb.md` suffix for directory-level knowledge. Cleanup statistics are tracked through dedicated counter fields in the cleanup result object. Leaf-first directory collection is validated by creating `level1/level2/level3/` nested structures and verifying traversal order through list index comparisons of directory names.
-
-########### Code Usage Examples
-
-**Basic orphaned analysis file cleanup test setup:**
-```python
-# Creates test environment with source file and corresponding analysis file, plus orphaned analysis file
-source_file = source_root / "existing_file.py"
-source_file.write_text("print('hello world')")
-valid_analysis = project_base_dir / "existing_file.py.analysis.md"
-valid_analysis.write_text("# Analysis of existing_file.py")
-orphaned_analysis = project_base_dir / "deleted_file.py.analysis.md"
-orphaned_analysis.write_text("# Analysis of deleted_file.py")
-```
-
-**Cleanup execution and validation pattern:**
-```python
-# Executes cleanup operation and validates results through statistics checking
-cleanup = OrphanedAnalysisCleanup(indexing_config)
-stats = await cleanup.cleanup_orphaned_files(knowledge_root, source_root, mock_context)
-assert stats.analysis_files_deleted == 1
-assert not orphaned_analysis.exists()
-assert valid_analysis.exists()
-```
-
-**Leaf-first directory traversal validation:**
-```python
-# Validates proper directory collection order for safe deletion operations
-directories = cleanup._collect_directories_leaf_first(project_base)
-directory_names = [d.name for d in directories]
-assert directory_names.index("level3") < directory_names.index("level2")
-assert directory_names.index("level2") < directory_names.index("level1")
+# Verify knowledge resources register without errors
+register_knowledge_resources()
+print("✅ Knowledge resources registered successfully")
+# Confirms MCP server can access knowledge base resources
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_project_base_indexing_rule.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
@@ -1244,254 +1335,419 @@ assert deep_path == expected_deep_path
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_project_indexing_integration.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This integration test validates the Knowledge Bases Hierarchical Indexing System by executing real-world indexing operations on the actual Jesse Framework project root, providing comprehensive verification of system functionality with authentic project complexity. The test provides end-to-end validation of hierarchical indexing capabilities, error detection mechanisms, and performance monitoring through real project structures and files. Key semantic entities include `HierarchicalIndexer`, `IndexingConfig`, `IndexingMode`, `ProcessingStatus`, `MockContext`, `FileProcessingConfig`, `ChangeDetectionConfig`, `ErrorHandlingConfig`, `DebugConfig`, `ensure_project_root`, `asyncio`, `tempfile`, `shutil`, `pathlib.Path`, and `datetime`. The testing framework validates real-world project indexing through `FULL_KB_REBUILD` mode with comprehensive message capture, debug artifact generation, and success criteria analysis including file processing rates and error thresholds.
+This file provides comprehensive integration testing for the `HierarchicalIndexer` system by executing real-world project indexing on the actual JESSE Framework codebase. It validates the knowledge base indexing system's ability to handle authentic project complexity, file structures, and processing scenarios through direct execution against the live project root. The integration test offers configurable rebuild modes (`--full-rebuild`, `--kb-only-rebuild`) enabling targeted testing strategies from complete system rebuilds to surgical KB regeneration. Key semantic entities include `HierarchicalIndexer`, `IndexingConfig`, `MockContext`, `ProcessingStatus`, `ensure_project_root`, `get_default_config`, `IndexingMode`, `ProcessingStats`, and `FastMCP` protocol simulation, enabling comprehensive validation of the knowledge base hierarchical indexing pipeline with real project data and authentic edge cases.
 
 ##### Main Components
 
-The test contains two primary functions: `test_real_project_indexing()` executes comprehensive integration testing on the actual project root with real file structures and complexity, and `main()` serves as the test runner providing clear pass/fail determination and result reporting. Supporting components include `MockContext` class for capturing all indexing messages (info, debug, warning, error) with real-time display and categorized storage, project structure analysis logic for counting processable vs excluded files and directories, comprehensive configuration setup using hierarchical config objects, and detailed success criteria evaluation including processing statistics and debug artifact verification.
+The test suite centers around the `MockContext` class that simulates `FastMCP` Context interface for message capture and monitoring, the `test_real_project_indexing` async function that orchestrates the complete integration test workflow, and utility functions `delete_kb_files` and `delete_analysis_files` for managing rebuild scenarios. The `main` function provides command-line interface with argument parsing for different rebuild modes. The integration leverages `HierarchicalIndexer` as the primary system under test, configured through `IndexingConfig` with project-specific settings and exclusions.
 
 ###### Architecture & Design
 
-The testing architecture follows a single comprehensive integration test pattern targeting the actual Jesse Framework project root for authentic complexity validation. The design uses `MockContext` for complete message capture with categorized storage and real-time display, enabling comprehensive monitoring of indexing operations. The architecture includes hierarchical configuration construction using specific config objects (`FileProcessingConfig`, `ChangeDetectionConfig`, `ErrorHandlingConfig`, `DebugConfig`) with conservative settings for stability. The test creates isolated debug directories for artifact preservation and implements comprehensive success criteria analysis with multiple validation checkpoints.
+The architecture follows a comprehensive integration testing pattern with mock context simulation, real project targeting, and configurable rebuild strategies. The design separates concerns between message capture (`MockContext`), file management utilities, and the main test orchestration. The system employs a three-tier rebuild approach: incremental mode for normal operation, KB-only rebuild for surgical testing, and full rebuild for complete system validation. Debug artifact preservation enables post-test analysis through dedicated temporary directories with structured output organization.
 
 ####### Implementation Approach
 
-The implementation uses dynamic project root detection through `ensure_project_root()` with comprehensive error handling for environment validation. The approach includes pre-indexing project structure analysis to count total vs processable files and identify excluded directories, providing baseline metrics for success evaluation. Configuration uses conservative settings (batch_size=5, max_concurrent_operations=1, continue_on_file_errors=True) to maximize stability during integration testing. The test captures comprehensive timing information, processing statistics, and message categorization for detailed analysis, with success criteria based on completion status, file processing rates, and debug artifact generation.
+The implementation uses async/await patterns throughout for compatibility with the `HierarchicalIndexer` async interface. Project root detection employs `ensure_project_root()` with comprehensive error handling for dynamic environment adaptation. Configuration management leverages `get_default_config('project-base')` with targeted overrides for integration testing parameters including file size limits, batch processing, and concurrency controls. Success criteria evaluation uses multiple validation checkpoints including completion status, file processing statistics, message analysis, and debug artifact generation.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - core indexing system validation
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration model integration
-- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:ProcessingStatus` - status tracking validation
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - core indexing system under test
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration management
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:ProcessingStatus` - status enumeration
 - `jesse_framework_mcp.helpers.path_utils:ensure_project_root` - dynamic project root detection
-- `asyncio` (standard library) - async execution framework for indexing operations
-- `tempfile` (standard library) - debug directory creation and management
-- `pathlib.Path` (standard library) - file system path manipulation and analysis
+- `jesse_framework_mcp.knowledge_bases.indexing.defaults:get_default_config` - default configuration provider
+- `argparse` (external library) - command-line argument parsing
+- `asyncio` (external library) - async execution framework
+- `pathlib.Path` (external library) - path manipulation utilities
 
 **← Outbound:**
-- Integration test results consumed by CI/CD validation systems
-- Debug artifacts preserved in `/tmp/jesse_project_indexing_integration_test/` for analysis
-- Processing statistics and success metrics for system reliability monitoring
+- `/tmp/jesse_project_indexing_integration_test/` - debug artifact directory for analysis
+- `project_root/.knowledge/` - knowledge base output directory structure
+- `stdout` - comprehensive test progress and result reporting
+- `exit codes` - process exit status for CI/CD integration
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical end-to-end validation ensuring the hierarchical indexing system works correctly with real-world project complexity and file structures
-- **Ecosystem Position**: Core integration testing infrastructure validating the complete indexing workflow from project discovery through knowledge base generation
-- **Integration Pattern**: Executed by developers and CI systems to validate system reliability before deployment, ensuring real project indexing capabilities work correctly
+- **System Role**: Critical integration validation component ensuring the knowledge base indexing system functions correctly with real-world project complexity and file structures
+- **Ecosystem Position**: Core testing infrastructure component validating the entire indexing pipeline from configuration through execution to output generation
+- **Integration Pattern**: Executed by developers and CI/CD systems for comprehensive system validation, consuming actual project files and generating debug artifacts for analysis
 
 ######### Edge Cases & Error Handling
 
-The test validates project root detection failures (should provide clear error messages and exit gracefully), indexing system initialization errors (should capture setup failures with detailed diagnostics), and individual file processing failures (should continue processing with error tracking). Error handling includes comprehensive exception capture with traceback preservation, message categorization for different error types, and success criteria that allow partial failures while detecting critical system issues. The test specifically handles missing project root scenarios, configuration initialization failures, and indexing execution exceptions with detailed error reporting and debug artifact preservation.
+The test handles project root detection failures with specific error messages and graceful degradation. File processing errors are captured through the `MockContext` message system with categorized error collection and analysis. The system accommodates partial failures through success rate calculations allowing up to 50% file processing failures while maintaining overall test validity. Configuration errors, indexing exceptions, and setup failures are caught with detailed traceback reporting. Debug directory creation failures and cleanup issues are handled with appropriate fallback mechanisms.
 
 ########## Internal Implementation Details
 
-Internal mechanisms include dynamic project structure analysis using `iterdir()` and `rglob()` for comprehensive file counting and processability assessment, debug directory management with automatic cleanup and recreation for isolated test runs, and comprehensive message capture through `MockContext` with separate lists for different message types. The test includes detailed timing measurement from start to completion, processing statistics extraction from indexing results, and success criteria evaluation based on multiple checkpoints including completion status, file processing rates, message counts, and debug artifact generation. Configuration uses hierarchical object construction with specific parameter values optimized for integration testing stability.
+The `MockContext` class maintains separate message lists (`info_messages`, `debug_messages`, `warning_messages`, `error_messages`) with real-time console output for monitoring. File deletion utilities use `rglob` patterns for comprehensive file discovery with relative path reporting for user feedback. Configuration overrides target specific integration testing requirements including 2MB file size limits, batch size of 5, and single concurrent operation for stability. Success criteria evaluation uses dictionary-based validation with boolean logic for clear pass/fail determination. Debug artifact preservation uses temporary directory structures with systematic file organization for post-test analysis.
 
 ########### Code Usage Examples
 
-Essential integration test configuration pattern for real project indexing:
-
+**Basic integration test execution with incremental processing:**
 ```python
-# This pattern demonstrates comprehensive configuration setup for real-world project indexing validation
-# Conservative settings ensure stability while providing thorough testing of indexing capabilities
-file_processing = FileProcessingConfig(
-    max_file_size=2 * 1024 * 1024,  # 2MB limit
-    batch_size=5,                    # Moderate batch size for stability
-    max_concurrent_operations=1      # Conservative concurrency
-)
-
-change_detection = ChangeDetectionConfig(
-    indexing_mode=IndexingMode.FULL_KB_REBUILD  # Thorough rebuild for integration testing
-)
-
-config = IndexingConfig(
-    handler_type="project-base",
-    description="Integration test configuration",
-    file_processing=file_processing,
-    change_detection=change_detection,
-    error_handling=error_handling,
-    debug_config=debug_config
-)
+# Run standard integration test with existing cache
+python test_project_indexing_integration.py
 ```
 
-Project structure analysis and validation pattern:
-
+**KB-only rebuild for testing synthesis improvements:**
 ```python
-# This pattern demonstrates comprehensive project analysis before indexing execution
-# Provides baseline metrics for success evaluation and identifies processing scope
-total_files = 0
-processable_files = 0
-excluded_dirs = 0
-
-for item in project_root.iterdir():
-    if item.is_dir():
-        if config.should_process_directory(item):
-            dir_files = list(item.rglob("*"))
-            total_in_dir = len([f for f in dir_files if f.is_file()])
-            processable_in_dir = len([f for f in dir_files if f.is_file() and config.should_process_file(f)])
-            processable_files += processable_in_dir
-        else:
-            excluded_dirs += 1
-
-print(f"SUMMARY: {processable_files}/{total_files} files processable, {excluded_dirs} directories excluded")
+# Fast rebuild preserving analysis files, regenerating only KB files
+python test_project_indexing_integration.py --kb-only-rebuild
 ```
 
-Comprehensive success criteria evaluation pattern:
-
+**Complete system rebuild for comprehensive validation:**
 ```python
-# This pattern demonstrates multi-faceted success evaluation for integration testing
-# Combines multiple validation checkpoints to determine overall system functionality
-success_criteria = {
-    "Indexing completed": result.overall_status == ProcessingStatus.COMPLETED,
-    "Files discovered": stats.total_files_discovered > 0,
-    "Some files processed": stats.files_processed > 0,
-    "Progress messages": len(ctx.info_messages) > 0,
-    "No critical failure": len(ctx.error_messages) < stats.total_files_discovered,
-    "Debug files generated": len(debug_files) > 0
-}
+# Nuclear rebuild deleting all cached files and regenerating everything
+python test_project_indexing_integration.py --full-rebuild
+```
 
-files_success_rate = (stats.files_completed / max(stats.total_files_discovered, 1)) * 100
-integration_success = all_criteria_met and files_success_rate > 50
+**Programmatic test execution with custom configuration:**
+```python
+# Execute integration test programmatically
+success = await test_real_project_indexing(
+    full_rebuild=False,
+    kb_only_rebuild=True
+)
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_project_root.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This file provides comprehensive testing capabilities for the Jesse Framework MCP server's project root detection and session initialization functionality, validating the core project setup workflow that enables proper MCP resource operation. The test suite validates `get_project_root`, `ensure_project_root`, `get_project_relative_path`, and `validate_project_setup` functions from `jesse_framework_mcp.helpers.path_utils`, along with `get_project_setup_guidance` from `jesse_framework_mcp.helpers.project_setup` and `get_session_init_context` from `jesse_framework_mcp.resources.session_init`. Key semantic entities include `test_project_root_detection` async function, `test_session_init_with_project_root` async function, `TestContext` mock class, `JESSE_PROJECT_ROOT` environment variable detection, `unwrap_fastmcp_function` utility integration, `argparse` command-line interface with `--dump` flag, and comprehensive emoji-based status reporting (✅, ❌, ℹ️, 🧪, 📋, 📊). The testing framework implements both summary and content dump modes for debugging session initialization resource generation.
+This comprehensive test script validates project root detection functionality within the JESSE Framework MCP Server, specifically designed to verify project structure identification, environment variable detection, and session initialization capabilities. The script provides extensive testing capabilities for project root discovery mechanisms, Git repository detection, setup guidance generation, and session context initialization with dual-mode operation supporting both testing and content dumping. Key semantic entities include `get_project_root`, `ensure_project_root`, `get_project_relative_path`, `validate_project_setup`, `get_project_setup_guidance`, `get_session_init_context`, `test_project_root_detection`, `test_session_init_with_project_root`, `TestContext`, `unwrap_fastmcp_function`, `JESSE_PROJECT_ROOT` environment variable, `argparse.ArgumentParser`, `asyncio` async execution, and `.git/` directory detection patterns. The testing framework implements five-phase validation through project root detection, environment variable verification, Git repository discovery, setup guidance generation, and project validation with comprehensive session initialization testing.
 
 ##### Main Components
 
-The file contains five primary test functions: `test_project_root_detection` validates basic project root discovery through environment variables and Git repository detection, `test_session_init_with_project_root` tests MCP resource session initialization with project context, `main` orchestrates test execution with conditional dump mode support, `parse_arguments` handles command-line argument parsing with `argparse.ArgumentParser`, and the `TestContext` class provides mock MCP context interface with async logging methods (`info`, `error`, `warning`, `debug`, `report_progress`). The test suite implements dual execution modes through the `dump_content` parameter, enabling both comprehensive testing and direct resource content inspection for debugging purposes.
+The script contains two primary async test functions: `test_project_root_detection()` implementing comprehensive project root validation with five distinct test phases, and `test_session_init_with_project_root()` validating session initialization with project context and dual-mode operation. The `TestContext` class provides mock context functionality with async logging methods for session testing. The `main()` function orchestrates test execution with mode switching, while `parse_arguments()` handles command-line argument processing for dump mode operation. Each test function implements detailed console output with emoji-based status indicators and comprehensive validation reporting.
 
 ###### Architecture & Design
 
-The architecture follows a modular testing pattern that separates project root detection validation from session initialization testing, enabling independent verification of each component while supporting integrated workflow testing. The design implements a mock context pattern through `TestContext` that simulates the MCP server's logging interface without requiring full server infrastructure, while the dual-mode execution pattern allows switching between comprehensive test reporting and raw resource content dumping. The structure uses progressive test numbering (🧪 Test 1-5) for clear test phase identification and implements conditional output formatting based on execution mode to support both developer debugging and automated testing scenarios.
+The architecture follows a comprehensive testing pattern with isolated test functions for different project detection aspects, utilizing mock context objects and dual-mode operation for both testing and content dumping. The design implements systematic validation through sequential test phases and detailed result inspection with console output formatting. Session initialization testing is structured with FastMCP function unwrapping and context mocking for dependency satisfaction. The testing framework uses realistic project detection scenarios combined with session context validation to ensure proper project root identification and initialization behavior.
 
 ####### Implementation Approach
 
-The implementation uses async/await patterns throughout to match the MCP server's asynchronous execution model, with `unwrap_fastmcp_function` handling FastMCP framework integration for testing MCP resources directly. The testing strategy employs sequential validation steps with immediate visual feedback through emoji-based indicators, comprehensive environment detection including `JESSE_PROJECT_ROOT` variable and `.git` directory traversal, and detailed result analysis with character counting and content sampling. The approach implements exception handling with `traceback.print_exc()` for debugging, command-line argument processing with help text and examples, and conditional content dumping that outputs complete resource content for integration testing.
+The implementation uses direct function calls to project utility functions for validation and systematic testing through sequential phases with detailed console output. Project root detection employs multiple detection mechanisms including environment variable checking, Git repository discovery, and directory hierarchy traversal. Session initialization testing uses `unwrap_fastmcp_function` for FastMCP decorator removal and mock context creation for dependency injection. The testing strategy implements both positive path validation and comprehensive error handling with detailed result analysis including content length measurement and section counting.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.helpers.path_utils:get_project_root` - core project root detection function
-- `jesse_framework_mcp.helpers.path_utils:validate_project_setup` - project validation functionality
+- `jesse_framework_mcp.helpers.path_utils:get_project_root` - primary project root detection function
+- `jesse_framework_mcp.helpers.path_utils:ensure_project_root` - project root validation utility
+- `jesse_framework_mcp.helpers.path_utils:get_project_relative_path` - relative path calculation
+- `jesse_framework_mcp.helpers.path_utils:validate_project_setup` - project validation function
 - `jesse_framework_mcp.helpers.project_setup:get_project_setup_guidance` - setup guidance generation
-- `jesse_framework_mcp.resources.session_init:get_session_init_context` - MCP session initialization resource
-- `utils:unwrap_fastmcp_function` - FastMCP function unwrapping utility
-- `asyncio` (external library) - Python async event loop management
+- `jesse_framework_mcp.resources.session_init:get_session_init_context` - session initialization resource
+- `utils:unwrap_fastmcp_function` - FastMCP decorator removal utility
+- `asyncio` (external library) - async execution framework
 - `argparse` (external library) - command-line argument parsing
-- `pathlib.Path` (external library) - modern path manipulation
+- `pathlib:Path` (external library) - cross-platform path manipulation
+- `os` (external library) - environment variable access
 
 **← Outbound:**
-- Direct script execution via `python test_project_root.py` - standalone testing tool
-- Console output for developer debugging sessions - formatted test results and resource content
-- Command-line interface with `--dump` flag - resource content extraction for integration testing
+- Console test output with detailed project detection validation reporting
+- Session initialization content dumping for resource inspection
+- Project validation results for development environment verification
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Serves as the primary validation tool for Jesse Framework MCP server project setup and session initialization, ensuring proper project root detection before MCP resource operation
-- **Ecosystem Position**: Critical testing component that validates the foundation layer of the MCP server, particularly the project context establishment that all other MCP resources depend on
-- **Integration Pattern**: Used by developers during setup validation, CI/CD pipelines for project verification, and debugging sessions when session initialization fails or returns setup guidance instead of project context
+- **System Role**: Critical validation component ensuring project root detection reliability and session initialization functionality within the JESSE Framework MCP Server ecosystem
+- **Ecosystem Position**: Essential testing utility for project structure validation, supporting development workflow and deployment verification through comprehensive project detection testing
+- **Integration Pattern**: Executed by developers for project setup validation and CI/CD systems for deployment verification, providing dual-mode operation for both testing and content inspection of session initialization resources
 
 ######### Edge Cases & Error Handling
 
-The test suite handles multiple failure scenarios including missing project root when neither `JESSE_PROJECT_ROOT` environment variable nor Git repository detection succeeds, import failures when required helper modules or MCP resources are unavailable, session initialization failures during FastMCP function unwrapping or execution, and context interface mismatches between `TestContext` mock and actual MCP context requirements. The comprehensive exception handling uses `traceback.print_exc()` for detailed error diagnosis, while the conditional testing approach allows graceful handling of setup guidance generation when project root detection fails. The dual-mode execution pattern provides fallback debugging capabilities when normal test execution encounters issues, and the emoji-based status indicators clearly distinguish between different types of failures and warnings.
+Error handling covers missing project root scenarios with setup guidance generation, environment variable detection failures with informational reporting, and Git repository detection issues with hierarchy traversal validation. The script handles session initialization failures through comprehensive exception catching with traceback reporting and mock context dependency satisfaction. Edge cases include missing FastMCP dependencies, invalid project structures, and session initialization timeout scenarios. The testing framework provides comprehensive error scenario coverage through try-catch blocks, detailed console output for debugging, and graceful handling of missing project components.
 
 ########## Internal Implementation Details
 
-The `TestContext` class implements a minimal MCP context interface with async methods that print formatted messages using emoji prefixes, with conditional output suppression in dump mode to prevent interference with resource content extraction. The main testing functions use structured print statements with section dividers and progress indicators, implement try-catch blocks around critical operations to prevent test termination, and perform detailed analysis including character counting, content sampling, and section counting for HTTP-formatted responses. The argument parsing uses `argparse.RawDescriptionHelpFormatter` for proper help text formatting with examples, while the path manipulation leverages `pathlib.Path` for cross-platform compatibility and the Git detection implements manual directory traversal using parent directory iteration.
+Project root detection testing uses direct function calls with result validation and detailed console output formatting using emoji prefixes. Environment variable detection employs `os.getenv()` calls with conditional reporting based on variable presence. Git repository detection implements directory hierarchy traversal with `.git/` directory existence checking. Session initialization testing uses FastMCP function unwrapping with mock context creation and comprehensive result analysis including content length measurement and section counting for HTTP response validation.
 
 ########### Code Usage Examples
 
-**Direct execution for comprehensive project root testing:**
+**Basic project root detection with comprehensive validation:**
+
+This example demonstrates how to test project root detection functionality with multiple validation phases. The test validates project root discovery, environment variables, Git repository detection, and project validation.
+
 ```python
-# Run complete test suite with detailed output
-python test_project_root.py
+# Test comprehensive project root detection with validation phases
+project_root = get_project_root()
+if project_root:
+    print(f"✅ Project root detected: {project_root}")
+    validation = validate_project_setup()
+    for key, value in validation.items():
+        print(f"   {key}: {value}")
 ```
 
-**Content dump mode for debugging session initialization resource:**
-```python
-# Extract complete session initialization resource content
-python test_project_root.py --dump
-```
+**Session initialization testing with mock context and content analysis:**
 
-**Integration pattern for testing MCP resource functions:**
+This snippet shows how to test session initialization with project root detection and comprehensive result analysis. The test validates session context generation and content structure inspection.
+
 ```python
-# Example of how the test unwraps and executes MCP resources
-from utils import unwrap_fastmcp_function
+# Test session initialization with mock context and result analysis
+class TestContext:
+    async def info(self, message): print(f"ℹ️  {message}")
+    async def error(self, message): print(f"❌ {message}")
+ctx = TestContext()
 session_init_func = unwrap_fastmcp_function(get_session_init_context)
 result = await session_init_func(ctx)
-# Provides direct access to MCP resource output for validation
+section_count = result.count("Content-Type:")
+print(f"📊 HTTP sections: {section_count}")
 ```
 
-**Mock context implementation for isolated MCP resource testing:**
+**Dual-mode operation with argument parsing and content dumping:**
+
+This example demonstrates how to implement dual-mode operation for both testing and content dumping functionality. The script supports command-line arguments for different operational modes.
+
 ```python
-# TestContext class pattern for simulating MCP server context
-class TestContext:
-    async def info(self, message):
-        print(f"ℹ️  {message}")
-    async def error(self, message):
-        print(f"❌ {message}")
-# Enables testing MCP resources without full server infrastructure
+# Implement dual-mode operation with argument parsing
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Test project root detection")
+    parser.add_argument("--dump", action="store_true", help="Dump complete resource content")
+    return parser.parse_args()
+args = parse_arguments()
+await main(dump_content=args.dump)
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_root_kb_generation.py
+
+*Last Updated: 2025-07-06T23:03:54Z*
+
+#### Functional Intent & Features
+
+This focused test script validates the knowledge base filename generation fix within the JESSE Framework MCP Server hierarchical indexing system, specifically designed to verify that root directories generate `root_kb.md` files instead of `{directory_name}_kb.md` files. The test provides comprehensive validation capabilities for root directory detection, knowledge file path generation, and handler root identification logic. Key semantic entities include `KnowledgeBuilder`, `IndexingConfig`, `DirectoryContext`, `FileContext`, `ProcessingStatus`, `MockContext`, `test_root_kb_filename_generation`, `_get_knowledge_file_path`, `_is_handler_root_directory`, `asyncio` async execution, `tempfile` temporary directory management, and `project-base` handler type configuration. The testing framework implements four-phase validation through project root testing, subdirectory testing, git clone `.kb` directory testing, and root detection logic verification with detailed console output and assertion-based validation.
+
+##### Main Components
+
+The test script contains two primary components: `MockContext` class providing simplified logging functionality without LLM integration, and `test_root_kb_filename_generation()` async function implementing comprehensive filename generation validation. The main execution function `main()` orchestrates test execution with error handling and result reporting. The test function implements four distinct test phases: project root directory validation, regular subdirectory validation, git clone `.kb` directory validation, and root detection logic verification with detailed console output and boolean success tracking.
+
+###### Architecture & Design
+
+The architecture follows a focused testing pattern with isolated validation of specific knowledge base filename generation functionality, utilizing temporary directory structures for realistic testing scenarios. The design implements comprehensive root directory detection testing through multiple directory type scenarios including project roots, subdirectories, and git clone `.kb` directories. Error handling is structured with try-catch blocks and detailed console logging for debugging. The testing framework uses realistic directory structures combined with `KnowledgeBuilder` integration to validate end-to-end filename generation behavior.
+
+####### Implementation Approach
+
+The implementation uses temporary directory creation with `tempfile.TemporaryDirectory()` for isolated testing environments and realistic file system operations. Knowledge builder testing employs direct method calls to `_get_knowledge_file_path()` and `_is_handler_root_directory()` for targeted validation. Configuration setup uses dictionary-based `IndexingConfig.from_dict()` construction with minimal required parameters for testing focus. The testing strategy implements both positive and negative validation through different directory types and root detection scenarios with detailed path comparison and boolean assertion validation.
+
+######## External Dependencies & Integration Points
+
+**→ Inbound:**
+- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder:KnowledgeBuilder` - primary knowledge building class
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration management
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:DirectoryContext` - directory context modeling
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:FileContext` - file context modeling
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:ProcessingStatus` - processing status tracking
+- `asyncio` (external library) - async execution framework
+- `tempfile` (external library) - temporary directory and file management
+- `pathlib:Path` (external library) - cross-platform path manipulation
+- `datetime` (external library) - timestamp handling for testing
+
+**← Outbound:**
+- Console test output with detailed validation reporting
+- Test result validation for knowledge base filename generation integrity
+- Exit code reporting for CI/CD pipeline integration
+
+**⚡ System role and ecosystem integration:**
+- **System Role**: Focused validation component ensuring knowledge base filename generation correctness within the JESSE Framework MCP Server hierarchical indexing system
+- **Ecosystem Position**: Critical testing utility for knowledge builder functionality, validating the fix for root directory filename generation that addresses missing global summary issues
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify knowledge base filename generation behavior after bug fixes, ensuring consistent root_kb.md generation for handler root directories
+
+######### Edge Cases & Error Handling
+
+Error handling covers temporary directory creation failures with automatic cleanup, knowledge builder initialization errors with detailed error reporting, and path generation validation failures with specific assertion messages. The test handles different directory type scenarios including project roots, subdirectories, and git clone `.kb` directories through conditional validation logic. Edge cases include missing source root parameters, invalid configuration dictionaries, and filesystem permission issues during temporary directory operations. The testing framework provides comprehensive error scenario coverage through exception handling and detailed console output for debugging failed assertions.
+
+########## Internal Implementation Details
+
+Root directory detection uses `_is_handler_root_directory()` method calls with different parameter combinations for project roots versus git clone directories. Knowledge file path generation employs `_get_knowledge_file_path()` with source root and directory path parameters for different scenarios. Configuration creation uses minimal dictionary structures with required fields including `handler_type`, `file_processing`, `content_filtering`, `llm_config`, `change_detection`, `error_handling`, `output_config`, and `debug_config` sections. Test validation uses direct path comparison with expected path construction and boolean assertion logic for success tracking.
+
+########### Code Usage Examples
+
+**Basic root directory filename generation testing:**
+
+This example demonstrates how to test knowledge base filename generation for root directories. The test validates that project root directories generate `root_kb.md` files instead of directory-specific names.
+
+```python
+# Test project root directory filename generation
+config = IndexingConfig.from_dict(config_dict)
+knowledge_builder = KnowledgeBuilder(config)
+root_kb_path = knowledge_builder._get_knowledge_file_path(project_root, project_root)
+expected_root_path = knowledge_dir / "project-base" / "root_kb.md"
+assert root_kb_path == expected_root_path
+```
+
+**Root detection logic validation with different directory types:**
+
+This snippet shows how to test root directory detection logic for different scenarios. The test verifies that root detection works correctly for project roots, subdirectories, and git clone `.kb` directories.
+
+```python
+# Test root detection logic for different directory types
+is_project_root = knowledge_builder._is_handler_root_directory(project_root, project_root)
+is_subdir_root = knowledge_builder._is_handler_root_directory(subdir, project_root)
+is_kb_root = knowledge_builder._is_handler_root_directory(git_clone_kb_dir, None)
+assert is_project_root and not is_subdir_root and is_kb_root
+```
+
+**Comprehensive test configuration with minimal required fields:**
+
+This example demonstrates how to create minimal test configuration for knowledge builder testing. The configuration includes all required sections with minimal values for focused testing scenarios.
+
+```python
+# Create minimal configuration for knowledge builder testing
+config_dict = {
+    "handler_type": "project-base",
+    "file_processing": {"max_file_size": 1024, "batch_size": 1},
+    "content_filtering": {"excluded_extensions": [], "excluded_directories": []},
+    "llm_config": {"llm_model": "claude-4-sonnet", "temperature": 0.3},
+    "output_config": {"knowledge_output_directory": str(knowledge_dir)}
+}
+config = IndexingConfig.from_dict(config_dict)
+```
+
+### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_scratchpad_exclusion.py
+
+*Last Updated: 2025-07-06T23:03:54Z*
+
+#### Functional Intent & Features
+
+This test suite validates the exclusion of scratchpad directories from all indexing handlers within the JESSE Framework MCP Server knowledge base system, specifically designed to verify that temporary workspace directories are consistently excluded across all supported handler types. The test suite provides comprehensive validation capabilities for directory exclusion configuration, handler type coverage verification, and path structure testing with various directory hierarchies. Key semantic entities include `test_scratchpad_in_base_exclusions`, `test_scratchpad_excluded_in_all_handlers`, `test_indexing_config_excludes_scratchpad`, `test_scratchpad_exclusion_with_different_paths`, `get_default_config`, `get_supported_handler_types`, `BASE_EXCLUDED_DIRECTORIES`, `IndexingConfig`, `should_process_directory`, `tempfile.TemporaryDirectory`, `pathlib.Path`, and `content_filtering.excluded_directories` configuration structure. The testing framework implements four-phase validation through base exclusion verification, handler type coverage testing, configuration behavior validation, and path structure testing with comprehensive directory hierarchy scenarios.
+
+##### Main Components
+
+The test suite contains four primary test functions: `test_scratchpad_in_base_exclusions()` verifying scratchpad presence in base excluded directories constant, `test_scratchpad_excluded_in_all_handlers()` validating exclusion across all supported handler types, `test_indexing_config_excludes_scratchpad()` testing configuration behavior with directory processing decisions, and `test_scratchpad_exclusion_with_different_paths()` validating exclusion across various path structures. The main execution block orchestrates sequential test execution with detailed console output and success reporting. Each test function implements assertion-based validation with specific focus areas: constant verification, handler coverage, configuration behavior, and path structure testing.
+
+###### Architecture & Design
+
+The architecture follows a comprehensive testing pattern with isolated test functions for different exclusion validation aspects, utilizing temporary directory structures and realistic path scenarios for validation. The design implements systematic testing through handler type iteration and configuration validation across all supported indexing handlers. Directory exclusion validation is structured with temporary directory creation and path manipulation testing. The testing framework uses realistic directory structures combined with configuration behavior validation to ensure consistent scratchpad exclusion across different handler types and path configurations.
+
+####### Implementation Approach
+
+The implementation uses direct constant inspection for base exclusion verification and handler type iteration through `get_supported_handler_types()` for comprehensive coverage testing. Configuration testing employs `IndexingConfig.from_dict()` construction with default configurations and `should_process_directory()` method validation. Path structure testing uses `tempfile.TemporaryDirectory()` for isolated directory creation and various path hierarchy construction including nested and absolute path scenarios. The testing strategy implements both positive validation through exclusion verification and comprehensive coverage testing across all supported handler types.
+
+######## External Dependencies & Integration Points
+
+**→ Inbound:**
+- `jesse_framework_mcp.knowledge_bases.indexing.defaults:get_default_config` - default configuration retrieval
+- `jesse_framework_mcp.knowledge_bases.indexing.defaults:get_supported_handler_types` - handler type enumeration
+- `jesse_framework_mcp.knowledge_bases.indexing.defaults:BASE_EXCLUDED_DIRECTORIES` - base exclusion constants
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration model with directory processing logic
+- `tempfile` (external library) - temporary directory creation and management
+- `pathlib:Path` (external library) - cross-platform path manipulation
+
+**← Outbound:**
+- Console test output with detailed exclusion validation reporting
+- Test result validation for scratchpad exclusion configuration integrity
+- Handler coverage verification for consistent exclusion behavior
+
+**⚡ System role and ecosystem integration:**
+- **System Role**: Critical validation component ensuring scratchpad directory exclusion consistency across all indexing handlers within the JESSE Framework MCP Server knowledge base system
+- **Ecosystem Position**: Essential testing utility for indexing configuration integrity, validating that temporary workspace directories are properly excluded from knowledge base processing across all handler types
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify scratchpad exclusion behavior across all supported indexing handlers, ensuring consistent temporary directory handling before knowledge base system deployment
+
+######### Edge Cases & Error Handling
+
+Error handling covers missing handler types through iteration validation, configuration creation failures with detailed error reporting, and temporary directory creation issues with automatic cleanup. The test suite handles edge cases including nested directory structures, various path formats, and handler type configuration variations through comprehensive path testing. Directory creation scenarios validate exclusion behavior across different path hierarchies including project-relative, nested, and deep directory structures. The testing framework provides comprehensive error scenario coverage through assertion-based validation and detailed console output for debugging failed exclusion checks.
+
+########## Internal Implementation Details
+
+Base exclusion testing uses direct constant inspection with string containment validation for scratchpad presence verification. Handler type testing employs iteration through `get_supported_handler_types()` with configuration dictionary access and excluded directories list validation. Configuration behavior testing uses `IndexingConfig.from_dict()` construction with `should_process_directory()` method calls and boolean result validation. Path structure testing creates temporary directories with various hierarchy patterns and validates exclusion behavior through directory processing decision testing.
+
+########### Code Usage Examples
+
+**Base exclusion constant verification with handler coverage:**
+
+This example demonstrates how to verify scratchpad exclusion in base constants and across all handler types. The test validates that scratchpad is consistently excluded in both base configuration and all supported handler configurations.
+
+```python
+# Verify scratchpad in base exclusions and all handler types
+assert 'scratchpad' in BASE_EXCLUDED_DIRECTORIES
+handler_types = get_supported_handler_types()
+for handler_type in handler_types:
+    config_dict = get_default_config(handler_type)
+    excluded_dirs = config_dict['content_filtering']['excluded_directories']
+    assert 'scratchpad' in excluded_dirs
+```
+
+**Configuration behavior testing with directory processing validation:**
+
+This snippet shows how to test IndexingConfig behavior for scratchpad directory processing decisions. The test validates that configuration properly excludes scratchpad directories through should_process_directory method calls.
+
+```python
+# Test configuration behavior for scratchpad directory processing
+config = IndexingConfig.from_dict(get_default_config('project-base'))
+with tempfile.TemporaryDirectory() as temp_dir:
+    scratchpad_path = Path(temp_dir) / 'scratchpad'
+    scratchpad_path.mkdir()
+    should_process = config.should_process_directory(scratchpad_path)
+    assert not should_process
+```
+
+**Path structure testing with various directory hierarchies:**
+
+This example demonstrates how to test scratchpad exclusion across different path structures and directory hierarchies. The test validates that scratchpad directories are excluded regardless of their location in the directory tree.
+
+```python
+# Test scratchpad exclusion with various path structures
+test_paths = ['scratchpad', 'project/scratchpad', 'deep/nested/scratchpad']
+for path_str in test_paths:
+    with tempfile.TemporaryDirectory() as temp_dir:
+        full_path = Path(temp_dir) / path_str
+        full_path.mkdir(parents=True)
+        should_process = config.should_process_directory(full_path)
+        assert not should_process
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_session_init_resource.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This test script validates the `jesse://session/init-context` meta-resource functionality for the JESSE Framework MCP Server, specifically testing comprehensive session initialization for Cline AI assistant integration. The script provides automated validation of multi-section HTTP response formatting, resource aggregation correctness, and individual component isolation testing. Key semantic entities include `get_session_init_context`, `TestContext` class, `unwrap_fastmcp_function` utility, `asyncio` async execution, `fastmcp.Context` integration, and `jesse_framework_mcp.resources` module ecosystem. The testing framework enables developers to verify that all essential project resources (framework rules, project context, WIP tasks, workflows, knowledge, gitignore) are properly aggregated into a single meta-resource endpoint with appropriate HTTP Content-Type boundaries and criticality levels.
+This test script validates the `jesse://session/init-context` meta-resource functionality within the JESSE Framework MCP Server, specifically designed to verify comprehensive session initialization for Cline IDE integration. The script provides automated testing capabilities for multi-section HTTP response validation, resource aggregation verification, and individual component isolation testing. Key semantic entities include `get_session_init_context`, `TestContext` class, `unwrap_fastmcp_function` utility, `asyncio` async execution, `fastmcp.Context` integration, and `jesse_framework_mcp.resources` module imports. The testing framework implements progress reporting through emoji-based status indicators and detailed section analysis with criticality level validation (`CRITICAL`, `INFORMATIONAL`).
 
 ##### Main Components
 
-The script contains three primary async functions: `test_session_init_resource()` for comprehensive meta-resource validation, `test_individual_sections()` for isolated component testing, and `main()` for orchestrated test execution. A custom `TestContext` class provides mock context implementation with logging methods (`info`, `error`, `warning`, `debug`, `report_progress`) that simulate the MCP server context interface. The testing logic includes result analysis functionality that counts HTTP sections, verifies key resource sections, and provides detailed output sampling for debugging purposes.
+The script contains three primary async functions: `test_session_init_resource()` for comprehensive meta-resource testing, `test_individual_sections()` for isolated component validation, and `main()` for orchestrated test execution. A custom `TestContext` class provides mock context implementation with logging methods (`info`, `error`, `warning`, `debug`, `report_progress`). The testing logic includes result analysis functionality for HTTP section counting, key section verification against expected patterns, and sample output display for debugging purposes.
 
 ###### Architecture & Design
 
-The test architecture follows an isolation-first testing pattern where individual resource sections are validated before comprehensive integration testing. The design implements a mock context pattern using `TestContext` class to simulate the MCP server environment without requiring full server initialization. The script uses dynamic module importing and function unwrapping to test FastMCP-decorated functions directly, enabling unit-level testing of resource endpoints. Error handling is implemented at multiple levels with detailed traceback reporting and graceful degradation for individual section failures.
+The architecture follows an async testing pattern with mock context injection and progressive validation layers. The design implements separation of concerns through individual section testing followed by comprehensive integration testing. Error handling is structured with graceful degradation and detailed traceback reporting. The testing framework uses a hierarchical approach where individual components are validated before testing the complete meta-resource aggregation functionality.
 
 ####### Implementation Approach
 
-The testing strategy employs async/await patterns throughout with `asyncio.run()` orchestration for proper async context management. Function unwrapping is achieved through the `unwrap_fastmcp_function` utility to bypass FastMCP decorators and enable direct function testing. Result validation uses string analysis techniques including character counting, section boundary detection via "Content-Type:" markers, and pattern matching for expected resource sections. The implementation includes progress reporting simulation and detailed output sampling with truncated display for large responses.
+The implementation uses `unwrap_fastmcp_function()` to handle FastMCP decorator removal before function execution, enabling direct async function calls. Section verification employs pattern matching against predefined tuples containing section identifiers, criticality levels, and display names. Progress reporting utilizes percentage calculation for visual feedback during resource loading. The testing strategy implements both positive path validation and error isolation through individual component testing with exception handling and traceback capture.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.main:server` - MCP server instance for testing context
-- `jesse_framework_mcp.resources.session_init:get_session_init_context` - primary meta-resource function under test
-- `jesse_framework_mcp.resources.framework_rules:get_available_rule_names` - individual framework rules testing
+- `jesse_framework_mcp.main:server` - MCP server instance import
+- `jesse_framework_mcp.resources.session_init:get_session_init_context` - primary meta-resource function
+- `jesse_framework_mcp.resources.framework_rules:get_available_rule_names` - framework rules testing
 - `jesse_framework_mcp.resources.project_resources:get_project_context_summary` - project context validation
-- `jesse_framework_mcp.resources.wip_tasks:get_wip_tasks_inventory` - WIP tasks resource testing
-- `utils:unwrap_fastmcp_function` - FastMCP function unwrapping utility
-- `fastmcp.Context` (external library) - MCP context interface specification
-- `asyncio` (stdlib) - async execution framework
-- `pathlib.Path` (stdlib) - file system path manipulation
+- `jesse_framework_mcp.resources.wip_tasks:get_wip_tasks_inventory` - WIP tasks verification
+- `utils:unwrap_fastmcp_function` - FastMCP function wrapper utility
+- `fastmcp:Context` (external library) - MCP context interface
+- `asyncio` (external library) - async execution framework
 
 **← Outbound:**
-- Test execution reports consumed by developers for validation
-- Console output for debugging and verification purposes
-- Validation results for CI/CD pipeline integration
+- Console output for test results and debugging information
+- Test validation reports for CI/CD pipeline integration
+- Error logs and tracebacks for debugging workflows
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring MCP server resource endpoints function correctly before deployment
-- **Ecosystem Position**: Core testing infrastructure for JESSE Framework MCP server resource validation
-- **Integration Pattern**: Executed by developers during development and CI/CD pipelines for automated resource endpoint validation
+- **System Role**: Validation gateway ensuring session initialization meta-resource reliability before Cline IDE deployment
+- **Ecosystem Position**: Critical testing component for MCP server resource protocol compliance and multi-section HTTP response validation
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify resource aggregation functionality and individual component isolation
 
 ######### Edge Cases & Error Handling
 
-The script handles multiple error scenarios including missing resource sections, empty meta-resource responses, individual section failures, and FastMCP function unwrapping errors. Exception handling includes full traceback printing for debugging with specific error categorization (test failures vs unexpected errors). The testing framework gracefully handles keyboard interrupts and provides detailed failure analysis when resource sections are missing or malformed. Individual section testing isolates failures to specific resource types, enabling targeted debugging when the comprehensive meta-resource fails.
+Error handling covers FastMCP function unwrapping failures, missing resource sections, empty result responses, and individual component failures. The script handles `KeyboardInterrupt` for graceful user termination and captures unexpected exceptions with full traceback reporting. Edge cases include missing criticality markers in HTTP responses, zero-length resource sections, and module import failures during individual section testing. The testing framework provides detailed error context through emoji-based status indicators and section-by-section failure isolation.
 
 ########## Internal Implementation Details
 
-The `TestContext` class implements emoji-based logging (`ℹ️`, `❌`, `⚠️`, `🐛`, `📊`) for visual test output differentiation. Result analysis includes character counting with comma formatting, HTTP section boundary detection, and key section verification against expected patterns. The script uses dynamic module importing with `__import__` and `getattr` for flexible resource function testing. Progress reporting simulation includes percentage calculation and formatted output for testing the meta-resource's progress reporting capabilities.
+The `TestContext` class implements all required context methods as simple print statements with emoji prefixes for visual debugging. Section verification uses string containment checks with case-insensitive matching for robustness. The result analysis calculates character counts, HTTP section counts using `Content-Type:` markers, and displays truncated sample output for manual inspection. Individual section testing uses dynamic module imports with `__import__` and `getattr` for flexible function resolution.
 
 ########### Code Usage Examples
 
@@ -1500,29 +1756,21 @@ The `TestContext` class implements emoji-based logging (`ℹ️`, `❌`, `⚠️
 # Execute comprehensive session initialization test
 success = await test_session_init_resource()
 if success:
-    print("Meta-resource validation passed")
+    print("Session initialization meta-resource validated successfully")
 ```
 
-**Individual resource section testing for debugging:**
+**Individual component testing for debugging:**
 ```python
 # Test specific resource sections in isolation
-sections_to_test = [
-    ("Framework Rules", "framework_rules", "get_available_rule_names"),
-    ("Project Context", "project_resources", "get_project_context_summary")
-]
-for section_name, module_name, function_name in sections_to_test:
-    module = __import__(f'jesse_framework_mcp.resources.{module_name}', fromlist=[function_name])
-    test_func = getattr(module, function_name)
-    unwrapped_func = unwrap_fastmcp_function(test_func)
-    result = await unwrapped_func(ctx)
+await test_individual_sections()
+# Validates framework rules, project context, WIP tasks, and knowledge indexes separately
 ```
 
-**Custom test context implementation for MCP simulation:**
+**Custom context implementation for testing:**
 ```python
 class TestContext:
     async def info(self, message):
         print(f"ℹ️  {message}")
-    
     async def report_progress(self, current, total, message):
         percentage = (current / total) * 100
         print(f"📊 [{percentage:3.0f}%] {message}")
@@ -1530,272 +1778,290 @@ class TestContext:
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_smart_compliance_debug.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This file provides isolated debugging capabilities for the `get_gitignore_compliance_status` function within the Jesse Framework MCP server, specifically testing the smart compliance detection mechanism. The debug test validates that the `get_gitignore_compliance_status` function from `jesse_framework_mcp.resources.gitignore` can be properly imported, unwrapped via `unwrap_fastmcp_function`, and executed to detect gitignore compliance violations. Key semantic entities include `DebugContext` class, `debug_smart_compliance` async function, `get_gitignore_compliance_status` MCP resource function, `unwrap_fastmcp_function` utility, `asyncio` event loop management, and comprehensive error handling with `traceback` analysis. The test implements a structured validation approach using emoji-based status indicators (✅, ❌, ⚠️, 📊) for clear visual feedback during debugging sessions.
+This debug test script validates the `get_gitignore_compliance_status` function isolation within the JESSE Framework MCP Server, specifically designed to test smart compliance functionality through direct function execution and debugging. The script provides isolated testing capabilities for gitignore compliance checking, function unwrapping validation, and detailed result analysis with comprehensive error reporting. Key semantic entities include `get_gitignore_compliance_status`, `debug_smart_compliance`, `DebugContext`, `unwrap_fastmcp_function`, `asyncio` async execution, `traceback` error reporting, and console output formatting with emoji-based status indicators. The debugging framework implements two-phase validation through function import/unwrapping verification and direct execution testing with detailed result inspection and compliance status interpretation.
 
 ##### Main Components
 
-The file contains three primary components: the `DebugContext` class that provides mock logging context with `info` and `error` methods for testing isolation, the `debug_smart_compliance` async function that orchestrates the complete testing workflow, and the main execution block using `asyncio.run` for direct script execution. The `DebugContext` simulates the MCP server context interface required by the compliance function, while `debug_smart_compliance` performs sequential validation steps including function import verification, unwrapping validation, execution testing, and result analysis with detailed output formatting.
+The script contains two primary components: `DebugContext` class providing simplified logging functionality with `info` and `error` methods for console output, and `debug_smart_compliance` async function implementing comprehensive function testing and validation. The main execution block uses `asyncio.run()` for direct script execution. The debug function implements sequential testing phases including function import verification, unwrapping validation, execution testing, and result analysis with detailed output formatting and error handling.
 
 ###### Architecture & Design
 
-The architecture follows a test isolation pattern that decouples the compliance function from the full MCP server context, enabling focused debugging without server infrastructure dependencies. The design implements a mock context pattern through `DebugContext` to satisfy the function's interface requirements, while the sequential testing approach provides step-by-step validation with clear success/failure indicators. The structure separates concerns between context mocking, function testing, and result analysis, allowing developers to identify specific failure points in the compliance detection pipeline.
+The architecture follows a focused debugging pattern with isolated function testing through direct import and execution validation, utilizing simplified context mocking for dependency injection. The design implements comprehensive error handling through try-catch blocks with detailed traceback reporting and console output formatting. Testing validation is structured with sequential phases and detailed result inspection including type analysis, length measurement, and content preview. The debugging framework uses emoji-based status indicators combined with detailed console output for clear test result visualization.
 
 ####### Implementation Approach
 
-The implementation uses async/await patterns throughout to match the MCP server's asynchronous execution model, with `unwrap_fastmcp_function` handling the FastMCP framework's function decoration layer. The testing strategy employs progressive validation steps with immediate feedback, comprehensive exception handling using `traceback.print_exc()` for detailed error diagnosis, and result analysis including type inspection, length measurement, and content preview. The approach prioritizes developer experience through emoji-based visual indicators and structured output formatting that clearly distinguishes between different test phases and outcomes.
+The implementation uses direct function import from `jesse_framework_mcp.resources.gitignore` module and function unwrapping through `unwrap_fastmcp_function` utility for FastMCP decorator removal. Context mocking employs simple class definition with async logging methods for dependency satisfaction. Result analysis implements comprehensive inspection including type checking, content length measurement, and preview generation with string representation. The testing strategy uses sequential validation phases with detailed console output and error isolation through exception handling with full traceback capture.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.resources.gitignore:get_gitignore_compliance_status` - core compliance detection function being tested
-- `utils:unwrap_fastmcp_function` - utility for unwrapping FastMCP decorated functions
-- `asyncio` (external library) - Python async event loop management
-- `traceback` (external library) - Python exception stack trace analysis
+- `jesse_framework_mcp.resources.gitignore:get_gitignore_compliance_status` - primary compliance checking function
+- `utils:unwrap_fastmcp_function` - FastMCP decorator removal utility
+- `asyncio` (external library) - async execution framework
+- `traceback` (external library) - error reporting and stack trace generation
 
 **← Outbound:**
-- Direct script execution via `python test_smart_compliance_debug.py` - standalone debugging tool
-- Console output for developer debugging sessions - formatted test results and error diagnostics
+- Console debug output with detailed function testing results
+- Compliance status validation for gitignore configuration verification
+- Error reporting for debugging failed compliance checks
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Serves as an isolated testing harness for the Jesse Framework MCP server's gitignore compliance detection functionality, enabling developers to debug compliance issues without full server startup
-- **Ecosystem Position**: Peripheral debugging tool that validates core MCP resource functionality outside the main server execution context
-- **Integration Pattern**: Used by developers during debugging sessions to isolate and test the `get_gitignore_compliance_status` function, particularly when troubleshooting compliance detection failures or validating function behavior changes
+- **System Role**: Isolated debugging utility for gitignore compliance function validation within the JESSE Framework MCP Server testing ecosystem
+- **Ecosystem Position**: Auxiliary debugging tool for compliance function isolation, supporting development and troubleshooting of gitignore resource functionality
+- **Integration Pattern**: Executed manually by developers for debugging compliance function behavior, providing detailed inspection of function execution and result analysis for troubleshooting
 
 ######### Edge Cases & Error Handling
 
-The debug script handles multiple error scenarios including import failures when `get_gitignore_compliance_status` or `unwrap_fastmcp_function` are unavailable, unwrapping failures if the FastMCP decoration is incompatible, execution failures during compliance function runtime, and context interface mismatches between `DebugContext` and expected MCP context. The comprehensive exception handling uses `traceback.print_exc()` to provide full stack traces for debugging, while the sequential testing approach isolates failure points to specific operations. Result validation includes empty string detection for no compliance issues versus content detection for compliance violations, with type and length analysis for unexpected return formats.
+Error handling covers function import failures with detailed error reporting, FastMCP unwrapping errors with traceback capture, and function execution failures with comprehensive exception handling. The script handles missing dependencies through import error catching and provides detailed error context through `traceback.print_exc()` for debugging support. Edge cases include empty result handling with compliance status interpretation, function execution timeouts, and context dependency failures. The debugging framework provides comprehensive error scenario coverage through exception catching and detailed console output for troubleshooting failed compliance checks.
 
 ########## Internal Implementation Details
 
-The `DebugContext` class implements a minimal interface with async `info` and `error` methods that print formatted messages, satisfying the compliance function's logging requirements without full MCP context overhead. The main debugging function uses structured print statements with emoji prefixes for visual parsing, implements try-catch around the entire testing sequence to prevent script termination, and performs detailed result analysis including `type()`, `len()`, and `repr()` inspection. The script uses `if __name__ == "__main__"` pattern for direct execution while maintaining importability, and the `asyncio.run()` call handles the async context management for the debugging session.
+Function testing uses direct import and unwrapping through `unwrap_fastmcp_function` utility for decorator removal before execution. Context mocking implements simple async methods with formatted console output using emoji prefixes for visual debugging. Result analysis employs comprehensive inspection including `type()` checking, `len()` measurement, and `repr()` preview generation with string slicing for content examination. Error reporting uses `traceback.print_exc()` for full stack trace capture and detailed exception information display.
 
 ########### Code Usage Examples
 
-**Direct script execution for debugging compliance detection:**
-```python
-# Run the debug script directly to test compliance function
-python test_smart_compliance_debug.py
-```
+**Basic compliance function debugging with unwrapping:**
 
-**Expected output format for successful compliance testing:**
-```python
-# Console output showing test progression
-=== DEBUGGING SMART COMPLIANCE ===
-1. Testing function import...
-✅ Function imported and unwrapped successfully
-2. Testing function execution...
-✅ Function executed successfully
-📊 Result type: <class 'str'>
-📊 Result length: 0 chars
-📊 Result preview: ''
-✅ No compliance issues - function returned empty string
-```
+This example demonstrates how to debug the gitignore compliance function through direct import and unwrapping. The test validates that the function can be imported and unwrapped successfully before execution.
 
-**Integration pattern for testing compliance function in isolation:**
 ```python
-# Example of how the debug script isolates and tests the compliance function
+# Debug compliance function import and unwrapping
 compliance_func = unwrap_fastmcp_function(get_gitignore_compliance_status)
+print("✅ Function imported and unwrapped successfully")
 result = await compliance_func(ctx)
-# Provides detailed analysis without full MCP server context
+print(f"📊 Result type: {type(result)}")
+```
+
+**Comprehensive result analysis with detailed inspection:**
+
+This snippet shows how to analyze compliance function results with detailed inspection and status interpretation. The analysis includes type checking, content measurement, and compliance status determination.
+
+```python
+# Analyze compliance function results with detailed inspection
+print(f"📊 Result length: {len(result)} chars")
+print(f"📊 Result preview: {repr(result[:200])}")
+if result.strip():
+    print("⚠️ Compliance issues detected - function returned content")
+else:
+    print("✅ No compliance issues - function returned empty string")
+```
+
+**Error handling with comprehensive traceback reporting:**
+
+This example demonstrates how to handle errors during compliance function testing with detailed error reporting. The error handling provides full traceback information for debugging failed compliance checks.
+
+```python
+# Handle errors with comprehensive traceback reporting
+try:
+    result = await compliance_func(ctx)
+    print(f"✅ Function executed successfully")
+except Exception as e:
+    print(f"❌ Error in smart compliance: {e}")
+    import traceback
+    traceback.print_exc()
+    return None
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_strands_driver.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This test suite validates the `StrandsClaude4Driver` implementation for AWS Bedrock Claude 4 Sonnet integration within the Jesse Framework MCP ecosystem. It provides comprehensive testing capabilities for configuration validation, driver lifecycle management, conversation handling, caching mechanisms, and error scenarios. The suite enables developers to verify driver functionality independently from the main MCP server, supporting both structural validation and integration testing. Key semantic entities include `StrandsClaude4Driver`, `Claude4SonnetConfig`, `ConversationMemoryStrategy`, `PromptCache`, `StrandsDriverError`, `asyncio`, `logging`, AWS Bedrock integration, and conversation management patterns. The implementation leverages async/await patterns for non-blocking test execution and context manager protocols for proper resource cleanup.
+This test script validates the `StrandsClaude4Driver` integration within the JESSE Framework MCP Server, specifically designed to verify AWS Bedrock Claude 4 Sonnet model functionality through the Strands Agent SDK. The script provides comprehensive testing capabilities for LLM driver configuration, conversation management, caching systems, and AWS integration validation. Key semantic entities include `StrandsClaude4Driver`, `Claude4SonnetConfig`, `ConversationMemoryStrategy`, `PromptCache`, `strands-agents` package integration, `AWS_REGION` and `AWS_PROFILE` environment variables, and `asyncio` async execution patterns. The testing framework implements structured validation through context manager patterns and provides detailed logging with emoji-based status indicators for driver initialization, conversation lifecycle management, and AWS credential validation.
 
 ##### Main Components
 
-The test suite contains five primary test functions: `test_basic_configuration()` validates configuration creation and parameter validation, `test_driver_initialization()` verifies driver lifecycle and context manager usage, `test_conversation_management()` tests conversation operations without API calls, `test_mock_responses()` validates driver structure and error handling, and `test_caching_system()` independently tests the `PromptCache` implementation. Supporting components include `run_all_tests()` for orchestrating test execution and result reporting, `main()` for environment validation and entry point coordination, and comprehensive logging setup with structured output formatting.
+The script contains five primary async test functions: `test_basic_configuration()` for configuration validation and optimization presets, `test_driver_initialization()` for context manager lifecycle testing, `test_conversation_management()` for conversation state and statistics validation, `test_mock_responses()` for driver structure verification without API calls, and `test_caching_system()` for independent cache functionality testing. The `run_all_tests()` function orchestrates sequential test execution with result aggregation, while `main()` provides entry point functionality with environment validation and AWS credential checking.
 
 ###### Architecture & Design
 
-The test architecture follows an async-first design pattern with each test function operating independently while sharing common configuration and logging infrastructure. The suite implements a layered testing approach: structural validation tests verify component initialization and configuration without external dependencies, integration tests validate AWS Bedrock connectivity when credentials are available, and isolated unit tests verify individual components like caching. Error handling uses try-catch blocks with graceful degradation, allowing tests to continue even when external dependencies are unavailable. The design separates concerns between driver functionality testing and infrastructure validation.
+The architecture follows a comprehensive testing pattern with isolated test functions for each driver component, utilizing async context managers for proper resource cleanup. The design implements graceful degradation for missing AWS credentials, treating them as warnings rather than failures for structural validation. Error handling is structured with try-catch blocks around each test function, providing detailed logging and result tracking. The testing framework uses assertion-based validation combined with mock response testing to verify driver functionality without requiring actual AWS Bedrock API access.
 
 ####### Implementation Approach
 
-Test execution uses `asyncio.run()` for async coordination with individual test functions returning boolean success indicators. Configuration testing employs factory methods like `create_optimized_for_conversations()`, `create_optimized_for_analysis()`, and `create_optimized_for_performance()` to validate different optimization strategies. Driver testing utilizes async context managers (`async with StrandsClaude4Driver(config)`) to ensure proper resource cleanup. The caching system tests implement time-based validation with `asyncio.sleep()` for TTL verification and sequential operations for eviction testing. Error scenarios are tested through invalid parameter injection and exception capture patterns.
+The implementation uses configuration factory methods (`create_optimized_for_conversations()`, `create_optimized_for_analysis()`, `create_optimized_for_performance()`) to test different optimization presets. Driver testing employs async context manager patterns with `async with StrandsClaude4Driver(config)` for proper initialization and cleanup. Caching system validation uses direct `PromptCache` instantiation with TTL expiration testing and LRU eviction verification. The testing strategy implements both positive path validation and error condition testing through invalid configuration attempts and missing dependency handling.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.llm.strands_agent_driver` - core driver classes and configuration
+- `jesse_framework_mcp.llm.strands_agent_driver:StrandsClaude4Driver` - primary LLM driver class
+- `jesse_framework_mcp.llm.strands_agent_driver:Claude4SonnetConfig` - configuration management
+- `jesse_framework_mcp.llm.strands_agent_driver:ConversationMemoryStrategy` - memory strategy enum
+- `jesse_framework_mcp.llm.strands_agent_driver.conversation:PromptCache` - caching system
 - `strands` (external library) - Strands Agent SDK for AWS Bedrock integration
-- `asyncio` (stdlib) - async execution and sleep operations
-- `logging` (stdlib) - structured test output and debugging
-- `pathlib.Path` (stdlib) - project root path resolution
-- `os` (stdlib) - environment variable access for AWS configuration
+- `asyncio` (external library) - async execution framework
+- `logging` (external library) - structured logging system
+- `AWS_REGION` environment variable - AWS region configuration
+- `AWS_PROFILE` environment variable - AWS credential profile
+- `AWS_ACCESS_KEY_ID` environment variable - AWS access credentials
 
 **← Outbound:**
-- Test execution reports consumed by CI/CD systems
-- Validation results for Jesse Framework MCP server integration
-- AWS credential validation for deployment environments
-- Driver functionality verification for dependent components
+- Console test output with structured logging and emoji status indicators
+- Test result aggregation for CI/CD pipeline integration
+- AWS credential validation reports for deployment verification
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring Strands Claude 4 driver reliability before MCP server deployment
-- **Ecosystem Position**: Development and testing infrastructure component supporting the Jesse Framework MCP server's LLM integration capabilities
-- **Integration Pattern**: Executed by developers during development, CI/CD pipelines for automated validation, and deployment processes for environment verification
+- **System Role**: Validation gateway ensuring Strands Claude 4 driver reliability and AWS Bedrock integration before JESSE MCP Server deployment
+- **Ecosystem Position**: Critical testing component for LLM driver functionality within the MCP server architecture, validating conversation management and caching systems
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify AWS Bedrock connectivity and driver configuration before production deployment
 
 ######### Edge Cases & Error Handling
 
-The suite handles missing `strands-agents` package installation with graceful ImportError catching and installation guidance. AWS credential absence is managed through environment variable detection with warning messages rather than test failures. Invalid configuration parameters trigger validation error testing to ensure proper boundary checking. Driver initialization failures are caught and logged as warnings when external dependencies are unavailable, allowing structural tests to continue. The caching system handles TTL expiration, maximum entry limits, and concurrent access scenarios. Test interruption via KeyboardInterrupt is managed with cleanup messaging and proper exit codes.
+Error handling covers missing `strands-agents` package installation with graceful exit and installation instructions, invalid configuration parameters with validation error capture, and missing AWS credentials with warning-level reporting. The script handles driver initialization failures through try-catch blocks with detailed error logging and continues with structural validation. Edge cases include AWS credential misconfiguration, Bedrock API access restrictions, cache TTL expiration timing, and conversation memory strategy validation. The testing framework provides differentiated error reporting through structured logging with emoji indicators and maintains test execution continuity despite individual test failures.
 
 ########## Internal Implementation Details
 
-Logging configuration uses `basicConfig` with timestamp, logger name, level, and message formatting for comprehensive test traceability. Path manipulation adds the project root to `sys.path` using `Path(__file__).parent.parent` for reliable import resolution. Test result tracking uses tuple lists with test names and boolean outcomes for summary generation. The caching test creates a `PromptCache` instance with `max_entries=3` and `ttl_seconds=1` for rapid validation cycles. Configuration validation tests inject invalid parameters like `temperature=1.5` to trigger validation exceptions. AWS environment detection checks both `AWS_ACCESS_KEY_ID` and `AWS_PROFILE` environment variables for credential availability assessment.
+Configuration testing uses factory method validation with parameter inspection and invalid value rejection testing. Driver initialization employs context manager lifecycle verification with `is_initialized` property checking and conversation creation validation. Cache testing implements direct `PromptCache` manipulation with TTL timing validation using `asyncio.sleep()` and LRU eviction verification through entry count assertions. The test orchestration uses tuple-based test definition with function references and result aggregation through boolean return values.
 
 ########### Code Usage Examples
 
-**Basic test execution pattern:**
-```python
-# Run the complete test suite
-python test_strands_driver.py
-```
+**Basic driver configuration and testing setup:**
 
-**Configuration testing demonstrates factory method usage:**
-```python
-# Create optimized configurations for different use cases
-conversation_config = Claude4SonnetConfig.create_optimized_for_conversations()
-analysis_config = Claude4SonnetConfig.create_optimized_for_analysis()
-performance_config = Claude4SonnetConfig.create_optimized_for_performance()
-```
+This example demonstrates how to create optimized configurations and test driver initialization with proper error handling. The configuration factory methods provide preset optimizations for different use cases.
 
-**Driver lifecycle testing with proper resource management:**
 ```python
-# Test driver initialization and cleanup
+# Create optimized configurations for different scenarios
+config = Claude4SonnetConfig.create_optimized_for_performance()
 async with StrandsClaude4Driver(config) as driver:
     conversation_id = "test_conversation_001"
     context = await driver.start_conversation(conversation_id)
-    stats = await driver.get_conversation_stats(conversation_id)
+    logger.info(f"Started conversation: {context.conversation_id}")
 ```
 
-**Independent cache validation for TTL and eviction behavior:**
+**Comprehensive test execution with result aggregation:**
+
+This snippet shows how to run all validation tests with structured result reporting and error handling. The test runner provides detailed logging and summary reporting for CI/CD integration.
+
 ```python
-# Test caching system independently
+# Execute all driver validation tests with result tracking
+success = asyncio.run(run_all_tests())
+if success:
+    logger.info("🎉 All tests passed! The Strands Claude 4 driver is ready for use.")
+else:
+    logger.warning("⚠️ Some tests failed. Please check the implementation.")
+```
+
+**Cache system validation with TTL and eviction testing:**
+
+This example demonstrates independent cache testing with expiration and eviction validation. The cache system supports TTL-based expiration and LRU eviction for memory management.
+
+```python
+# Test cache operations with TTL expiration and LRU eviction
 cache = PromptCache(max_entries=3, ttl_seconds=1)
 await cache.set("test prompt", "test_conversation", "config_hash", "test response")
 cached_response = await cache.get("test prompt", "test_conversation", "config_hash")
+assert cached_response == "test response", "Cache retrieval failed"
 ```
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/test_upfront_cache_structure_preparation.py
 
-*Last Updated: 2025-07-05T18:23:26Z*
+*Last Updated: 2025-07-06T23:03:54Z*
 
 #### Functional Intent & Features
 
-This test script validates upfront cache structure preparation implementation for the Jesse Framework MCP system, specifically testing the `prepare_cache_structure` method and its integration with `HierarchicalIndexer`. The script provides comprehensive validation of race condition elimination, concurrent cache operations safety, and fallback behavior mechanisms. Key semantic entities include `FileAnalysisCache`, `HierarchicalIndexer`, `IndexingConfig`, `DirectoryContext`, `FileContext`, `ProcessingStatus`, `MockContext`, `MockKnowledgeBuilder`, `tempfile`, `asyncio`, `pathlib.Path`, and `datetime`. The testing framework validates upfront directory creation, concurrent operation safety, hierarchical indexer integration, and on-demand fallback directory creation when structure preparation fails.
+This comprehensive test suite validates the upfront cache structure preparation implementation within the JESSE Framework MCP Server knowledge building system, specifically designed to verify the `prepare_cache_structure` method and its integration with hierarchical indexing workflows. The test suite provides extensive validation capabilities for cache directory pre-creation, race condition prevention, concurrent operation safety, and fallback behavior verification. Key semantic entities include `FileAnalysisCache`, `HierarchicalIndexer`, `IndexingConfig`, `DirectoryContext`, `FileContext`, `ProcessingStatus`, `MockContext`, `MockKnowledgeBuilder`, `test_cache_structure_preparation`, `test_hierarchical_indexer_integration`, `test_fallback_behavior`, `prepare_cache_structure`, `get_cache_path`, `cache_analysis`, `get_cached_analysis`, `_collect_all_files_recursive`, `_discover_directory_structure`, `OutputConfig`, `DebugConfig`, and `asyncio.gather` concurrent execution patterns. The testing framework implements three-phase validation through basic cache structure preparation testing, hierarchical indexer integration verification, and fallback behavior validation with comprehensive race condition detection.
 
 ##### Main Components
 
-The script contains three primary test functions: `test_cache_structure_preparation()` validates basic cache structure preparation functionality, `test_hierarchical_indexer_integration()` tests integration with the hierarchical indexer including concurrent operations, and `test_fallback_behavior()` validates on-demand directory creation when preparation fails. Supporting components include `MockContext` class for async logging simulation, `MockKnowledgeBuilder` class for avoiding actual LLM calls during testing, `create_directory_context()` helper function for building directory structures from file lists, and `run_all_tests()` orchestration function for comprehensive test execution.
+The test suite contains three primary async test functions: `test_cache_structure_preparation()` implementing basic cache directory pre-creation validation with complex directory structure testing, `test_hierarchical_indexer_integration()` validating integration with hierarchical indexing workflows including concurrent operation safety, and `test_fallback_behavior()` testing on-demand directory creation when structure preparation is bypassed. The `MockContext` class provides simplified logging functionality, while `MockKnowledgeBuilder` extends knowledge building capabilities with simulated processing for realistic testing. The `create_directory_context()` helper function recursively builds directory context structures from file lists, and `run_all_tests()` orchestrates comprehensive test execution with detailed result reporting.
 
 ###### Architecture & Design
 
-The testing architecture follows an isolated environment pattern using `tempfile.TemporaryDirectory()` for each test scenario, ensuring no cross-test contamination. The design validates upfront cache structure preparation by creating complex directory hierarchies with nested subdirectories and multiple files per directory. The `MockKnowledgeBuilder` replaces actual LLM processing to focus purely on cache structure mechanics. Each test creates realistic project structures with multiple levels of nesting to validate comprehensive directory preparation and concurrent access patterns.
+The architecture follows a comprehensive testing pattern with isolated test functions for different cache preparation aspects, utilizing temporary directory structures and realistic file hierarchies for validation. The design implements mock-based testing through `MockKnowledgeBuilder` and `MockContext` to simulate knowledge building workflows without external dependencies. Error handling is structured with assertion-based validation and detailed console output for debugging. The testing framework uses realistic directory structures combined with concurrent operation simulation to validate race condition prevention and cache structure reliability.
 
 ####### Implementation Approach
 
-The implementation uses recursive directory context building through the `create_directory_context()` helper function that processes file lists into hierarchical `DirectoryContext` structures. Tests validate cache structure preparation by creating complex nested directories (`dir_0/subdir_0`, `dir_1/subdir_1`, etc.) and verifying all necessary cache directories are created upfront. Concurrent safety testing uses `asyncio.gather()` to execute multiple cache operations simultaneously, validating race condition prevention. The approach includes fallback testing where cache operations work without upfront preparation through on-demand directory creation.
+The implementation uses temporary directory creation with `tempfile.TemporaryDirectory()` for isolated testing environments and complex directory hierarchy generation through nested loops. Cache structure testing employs direct method calls to `prepare_cache_structure()` and validation through directory existence checking. Concurrent operation testing uses `asyncio.gather()` for parallel cache operations and race condition detection through error message analysis. The testing strategy implements both positive path validation and edge case testing through fallback behavior verification and on-demand directory creation scenarios.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - cache structure preparation testing
-- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - integration validation
-- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration model testing
-- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:DirectoryContext` - context structure validation
-- `tempfile` (standard library) - isolated test environment creation
-- `asyncio` (standard library) - concurrent operation testing framework
-- `pathlib.Path` (standard library) - file system path manipulation
+- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache:FileAnalysisCache` - cache implementation with structure preparation
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer:HierarchicalIndexer` - hierarchical indexing workflow
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:IndexingConfig` - configuration management
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:OutputConfig` - output configuration
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config:DebugConfig` - debug configuration
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:DirectoryContext` - directory context modeling
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:FileContext` - file context modeling
+- `jesse_framework_mcp.knowledge_bases.models.knowledge_context:ProcessingStatus` - processing status tracking
+- `asyncio` (external library) - async execution and concurrent operation management
+- `tempfile` (external library) - temporary directory and file management
+- `pathlib:Path` (external library) - cross-platform path manipulation
+- `datetime` (external library) - timestamp handling for context creation
 
 **← Outbound:**
-- Test execution results consumed by CI/CD validation systems
-- Cache structure validation reports for deployment verification
-- Concurrent operation safety metrics for performance monitoring
+- Console test output with detailed cache structure validation reporting
+- Test result validation for cache preparation functionality integrity
+- Performance metrics for concurrent operation safety verification
+- Exit code reporting for CI/CD pipeline integration
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Critical validation component ensuring cache structure preparation eliminates race conditions and enables safe concurrent operations in the Jesse Framework MCP knowledge base system
-- **Ecosystem Position**: Core testing infrastructure validating the foundation of cache directory management and concurrent access safety
-- **Integration Pattern**: Executed by developers and CI systems to validate cache structure reliability before deployment, ensuring hierarchical indexer can safely perform concurrent operations
+- **System Role**: Critical validation component ensuring upfront cache structure preparation reliability and race condition prevention within the JESSE Framework MCP Server knowledge building ecosystem
+- **Ecosystem Position**: Essential testing utility for cache optimization functionality, validating the bridge between cache structure preparation and hierarchical indexing workflows with concurrent operation safety
+- **Integration Pattern**: Executed by developers and CI/CD systems to verify cache structure preparation behavior, race condition elimination, and performance optimization before knowledge building system deployment
 
 ######### Edge Cases & Error Handling
 
-The tests validate missing cache directories scenarios (should create upfront), concurrent cache operations (should not cause race conditions), hierarchical indexer integration (should prepare structure before processing), and fallback behavior when preparation fails (should create directories on-demand). Error handling includes assertion failures with descriptive messages for missing directories, race condition detection through error message analysis, exception catching with detailed reporting, and comprehensive test result summaries with pass/fail statistics. The tests specifically check for `FileExistsError`, directory creation failures, and concurrent access indicators.
+Error handling covers temporary directory creation failures with automatic cleanup, cache structure preparation errors with detailed error reporting, and concurrent operation race condition detection through message analysis. The test suite handles missing directory scenarios through fallback behavior validation and on-demand directory creation testing. Edge cases include partial directory structure creation, filesystem permission issues, concurrent access conflicts, and cache operation failures during structure preparation. The testing framework provides comprehensive error scenario coverage through assertion-based validation, detailed console output for debugging, and race condition indicator detection through error message pattern matching.
 
 ########## Internal Implementation Details
 
-Internal mechanisms include complex directory structure creation with nested loops generating `dir_{i}/subdir_{j}/file_{k}.py` patterns, recursive directory context building that processes file lists into hierarchical structures, and concurrent operation simulation using `asyncio.gather()` for race condition testing. The `MockKnowledgeBuilder` provides realistic processing simulation without LLM calls, while cache path validation ensures all expected directories exist after preparation. Performance measurement tracks directory creation counts and validates cache operation success rates across concurrent executions.
+Cache structure preparation testing uses complex directory hierarchy generation with nested loops creating multiple levels of directories and files. Directory context creation employs recursive tree building with relative path calculation and subdirectory processing. Concurrent operation testing creates multiple async tasks with `asyncio.gather()` for parallel execution and race condition detection. Mock integration uses class inheritance with method overriding to simulate knowledge building workflows while maintaining actual cache integration behavior. Test orchestration uses tuple-based test definition with comprehensive result aggregation and success rate calculation.
 
 ########### Code Usage Examples
 
-Essential cache structure preparation pattern for upfront directory creation:
+**Basic cache structure preparation with complex directory hierarchy:**
+
+This example demonstrates how to test upfront cache structure preparation with complex directory hierarchies. The test validates that all necessary cache directories are created before any cache operations begin.
 
 ```python
-# This pattern demonstrates upfront cache structure preparation to eliminate race conditions during concurrent operations
-# The preparation phase creates all necessary cache directories before any file processing begins
+# Test cache structure preparation with complex directory hierarchy
 cache = FileAnalysisCache(config)
 root_context = await create_directory_context(source_root, files_created)
-
-# Prepare all cache directories upfront
 await cache.prepare_cache_structure(root_context, source_root, ctx)
-
-# Verify cache root and subdirectories exist
-cache_root = knowledge_dir / "project-base"
-assert cache_root.exists(), "Cache root should exist after preparation"
+all_files = cache._collect_all_files_recursive(root_context)
+expected_dirs = {cache.get_cache_path(file_path, source_root).parent for file_path in all_files}
+assert all(expected_dir.exists() for expected_dir in expected_dirs)
 ```
 
-Concurrent cache operations safety validation:
+**Concurrent cache operation safety testing with race condition detection:**
+
+This snippet shows how to test concurrent cache operations for race condition prevention and safety validation. The test verifies that multiple simultaneous cache operations complete successfully without conflicts.
 
 ```python
-# This pattern validates that concurrent cache operations work safely after structure preparation
-# Multiple async operations can execute simultaneously without race conditions
+# Test concurrent cache operations for race condition prevention
 async def concurrent_cache_operation(file_path, analysis_content):
-    await indexer.knowledge_builder.analysis_cache.cache_analysis(
-        file_path, analysis_content, source_root
-    )
-
-# Execute multiple concurrent cache operations
-tasks = []
-for i, test_file in enumerate(test_files):
-    task = concurrent_cache_operation(test_file, f"Concurrent analysis {i}")
-    tasks.append(task)
-
+    await cache.cache_analysis(file_path, analysis_content, source_root)
+tasks = [concurrent_cache_operation(file, f"Analysis {i}") for i, file in enumerate(test_files)]
 await asyncio.gather(*tasks)
+assert all(cache.get_cache_path(file, source_root).exists() for file in test_files)
 ```
 
-Directory context creation helper for testing:
+**Mock knowledge builder integration with hierarchical indexer testing:**
+
+This example demonstrates how to test cache structure preparation integration with hierarchical indexing workflows using mock components. The test validates that cache preparation occurs seamlessly during indexing operations.
 
 ```python
-# This helper function builds hierarchical DirectoryContext structures from file lists
-# It recursively processes directories and creates proper context relationships
-def build_directory_context(current_path: Path) -> DirectoryContext:
-    file_contexts = []
-    subdirectory_contexts = []
-    processed_subdirs = set()
-    
-    # Find files directly in this directory
-    for file_path in files:
-        if file_path.parent == current_path:
-            file_context = FileContext(
-                file_path=file_path,
-                file_size=file_path.stat().st_size,
-                last_modified=datetime.fromtimestamp(file_path.stat().st_mtime)
-            )
-            file_contexts.append(file_context)
+# Test hierarchical indexer integration with mock knowledge builder
+class MockKnowledgeBuilder:
+    def __init__(self, config):
+        self.analysis_cache = FileAnalysisCache(config)
+    async def build_file_knowledge(self, file_context, ctx, source_root=None):
+        return FileContext(processing_status=ProcessingStatus.COMPLETED)
+indexer.knowledge_builder = MockKnowledgeBuilder(config)
+root_context = await indexer._discover_directory_structure(source_root, ctx)
+await indexer.knowledge_builder.analysis_cache.prepare_cache_structure(root_context, source_root, ctx)
 ```
 
 ---
-*Generated: 2025-07-05T18:23:26Z*
+*Generated: 2025-07-06T23:03:54Z*
 *Source Directory: {PROJECT_ROOT}/jesse-framework-mcp/tests*
-*Total Files: 18*
+*Total Files: 21*
 *Total Subdirectories: 0*
 
 # End of tests_kb.md

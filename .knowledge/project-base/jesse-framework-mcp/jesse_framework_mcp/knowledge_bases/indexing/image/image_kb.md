@@ -8,194 +8,95 @@
 
 #### Functional Intent & Features
 
-This directory represents the image processing subsystem within the Jesse Framework MCP knowledge base indexing pipeline, designed to handle visual content analysis and knowledge extraction from image assets within source code repositories. The directory serves as a specialized processing hub that extends the core indexing capabilities to support image-specific operations, including visual content analysis, metadata extraction, and hierarchical organization of image-related knowledge artifacts. Key semantic entities include `ImageKnowledgeBuilder` classes for content processing, `HierarchicalImageIndexer` components for structured traversal, image processing pipelines, visual content analysis algorithms, directory structure mapping, and integration with the broader `IndexingConfig` and knowledge base management systems. The subsystem provides specialized capabilities for discovering, analyzing, and generating knowledge representations from image content while maintaining consistency with Jesse Framework MCP knowledge base schemas.
+The `image/` directory represents a placeholder or reserved namespace within the Jesse Framework MCP knowledge base indexing system, designed to accommodate future image processing and visual content analysis capabilities. This directory exists as part of the hierarchical indexing architecture but currently contains no implementation, indicating either planned functionality for image-based knowledge extraction or a structural placeholder for visual content handling within the broader knowledge management ecosystem. The empty state suggests this component is either under development, deprecated, or represents a future extension point for multimedia content processing within the `HierarchicalIndexer` system. Key semantic entities that would be expected in this context include image processing handlers, visual content analyzers, OCR integration points, metadata extraction utilities, and multimedia knowledge base generation components, though none are currently present in the directory structure.
 
 ##### Main Components
 
-The directory contains two primary subdirectories representing distinct functional areas within image processing operations. The `knowledge_builder/` subdirectory focuses on image content analysis and knowledge artifact generation, while the `hierarchical_indexer/` subdirectory handles structured directory traversal and hierarchical organization of image content. Both subdirectories currently contain no implemented files, indicating planned or reserved functionality within the Jesse Framework MCP system. Expected components across both areas include image analysis modules, knowledge extraction processors, metadata builders, hierarchical traversal modules, directory structure analyzers, index builders, and integration adapters for connecting with parent indexing systems.
+The directory contains no files, subdirectories, or implementation artifacts, representing a completely empty namespace within the knowledge base indexing system. This absence of components indicates the directory serves as either a structural placeholder for future development or represents removed functionality that has been deprecated. The empty state contrasts with other indexing components that typically contain handler implementations, configuration files, processing utilities, and integration modules. The directory's position within the indexing hierarchy suggests it was intended to house image-specific processing logic, visual content analysis tools, and multimedia knowledge extraction capabilities that would integrate with the broader `HierarchicalIndexer` framework.
 
 ###### Architecture & Design
 
-The architectural design follows the established Jesse Framework MCP pattern of nested component specialization with clear separation of concerns between knowledge building and hierarchical indexing operations. The structure implements a modular approach where image processing capabilities are divided into specialized subsystems that can operate independently while integrating seamlessly with the broader indexing architecture. The design pattern emphasizes builder patterns for knowledge artifact construction and hierarchical indexing patterns for structured content organization, with each subsystem maintaining focused responsibility for specific image processing operations while supporting integration with parent indexing workflows.
+The architectural design follows the established pattern of the Jesse Framework MCP indexing system, where specialized handlers are organized in dedicated directories under the indexing/ namespace. The empty directory structure suggests a modular design approach where image processing capabilities would be isolated from text-based indexing logic, maintaining separation of concerns between different content types. The placement within the indexing hierarchy indicates this component would integrate with the existing `IndexingConfig` system, `KnowledgeBuilder` patterns, and `FileAnalysisCache` mechanisms. The design would likely follow the established handler pattern used by other indexing components, implementing specialized processing logic for visual content while maintaining compatibility with the broader knowledge base generation workflow.
 
 ####### Implementation Approach
 
-The implementation strategy involves dual-track processing approaches that handle both content analysis and structural organization of image assets. Knowledge building operations focus on image format detection, visual content analysis, metadata extraction, and knowledge artifact generation processes that produce structured representations consistent with Jesse Framework MCP schemas. Hierarchical indexing operations implement tree-based directory traversal algorithms that systematically process image content within repository hierarchies, extract contextual information, and generate structured index representations. Both approaches integrate with existing indexing workflows and handle various image formats while maintaining consistency with knowledge base formatting requirements.
+No implementation exists within this directory, but the expected approach would follow the established patterns used throughout the Jesse Framework MCP indexing system. The implementation would likely utilize image processing libraries for content analysis, OCR engines for text extraction from visual content, metadata extraction utilities for image properties, and integration with the existing `HierarchicalIndexer` workflow. The approach would need to handle various image formats, implement caching mechanisms for processed visual content, and generate knowledge base entries that integrate with the existing markdown-based output system. The implementation would require coordination with the `FileAnalysisCache` for performance optimization and integration with the `IndexingConfig` system for configuration management.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `jesse_framework_mcp/knowledge_bases/indexing/` - parent indexing system integration and core infrastructure
-- `jesse_framework_mcp/knowledge_bases/models/` - configuration and data models for indexing operations
-- Image processing libraries - expected external dependencies for visual analysis and format handling
-- Directory traversal libraries - filesystem operations for hierarchical processing
-- File system operations - image discovery and processing capabilities
+- `jesse_framework_mcp.knowledge_bases.indexing.hierarchical_indexer` - would integrate with the main indexing workflow
+- `jesse_framework_mcp.knowledge_bases.models.indexing_config` - would use configuration management for image processing settings
+- `jesse_framework_mcp.knowledge_bases.indexing.file_analysis_cache` - would leverage caching for processed image analysis
+- Image processing libraries (external) - would require PIL, OpenCV, or similar for image manipulation
+- OCR engines (external) - would need Tesseract or cloud OCR services for text extraction
 
 **← Outbound:**
-- Knowledge base artifacts - generated image analysis outputs and structured knowledge representations
-- Hierarchical index artifacts - structured image indexes and directory organization data
-- Indexing pipeline - integration with broader knowledge building and image processing workflows
-- Analysis reports - image-specific knowledge contributions and processing results
+- `jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder` - would provide processed image content for knowledge base generation
+- Knowledge base output files - would generate markdown content with image analysis results
+- Cache storage - would store processed image metadata and extracted content
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Specialized image processing subsystem within the Jesse Framework MCP indexing pipeline providing visual content analysis and hierarchical organization capabilities
-- **Ecosystem Position**: Peripheral component extending core indexing functionality with domain-specific image processing capabilities
-- **Integration Pattern**: Invoked by the main indexing orchestrator when image content is detected in source repositories, with dual processing paths for content analysis and structural organization
+- **System Role**: Placeholder component within the Jesse Framework MCP knowledge base indexing system, intended to handle visual content processing and image-based knowledge extraction
+- **Ecosystem Position**: Peripheral component that would extend the core text-based indexing capabilities to include multimedia content processing
+- **Integration Pattern**: Would follow the established handler pattern used by other indexing components, integrating with the hierarchical indexing workflow while maintaining modular separation of image processing logic
 
 ######### Edge Cases & Error Handling
 
-Edge case scenarios include handling unsupported image formats during content analysis, processing corrupted or incomplete image files, managing large image files that exceed memory constraints, and dealing with images lacking meaningful contextual information for knowledge extraction. Hierarchical processing edge cases involve deeply nested directory structures exceeding system limits, directories with circular symbolic links, mixed content types during image-focused indexing, and permission-restricted directories during traversal operations. Error handling strategies address file access permissions, image decoding failures, filesystem access failures, infinite recursion scenarios in directory traversal, and integration failures with parent indexing systems.
+The empty directory provides no error handling mechanisms, but expected edge cases would include unsupported image formats, corrupted image files, OCR processing failures, and memory limitations with large image files. Error handling would need to address network timeouts for cloud-based image processing services, permission issues accessing image files, and integration failures with the broader indexing system. The implementation would require graceful degradation when image processing capabilities are unavailable, proper cleanup of temporary files created during processing, and appropriate error reporting through the existing logging infrastructure used by other indexing components.
 
 ########## Internal Implementation Details
 
-Internal mechanics involve image format detection pipelines, visual content analysis algorithms, metadata extraction processes, and knowledge artifact generation workflows that maintain consistency with Jesse Framework MCP knowledge base schemas. Hierarchical processing implements recursive directory traversal algorithms, image file discovery and filtering processes, hierarchical index structure generation, and metadata aggregation across directory levels. Both subsystems handle concurrent processing scenarios, provide appropriate logging and monitoring capabilities for debugging operations, and maintain integration consistency with parent indexing workflows while supporting maintenance and troubleshooting requirements.
+No internal implementation details exist due to the empty directory state. Expected internal mechanisms would include image format detection and validation, metadata extraction from EXIF data, OCR text extraction with confidence scoring, image content analysis using computer vision techniques, and integration with the existing knowledge base generation pipeline. The implementation would likely include configuration management for image processing parameters, caching mechanisms for expensive processing operations, and batch processing capabilities for handling multiple images efficiently. Internal details would also cover memory management for large image files and optimization strategies for processing performance.
 
 ########### Usage Examples
 
-This code demonstrates the expected integration pattern for image knowledge building within the indexing workflow. The pattern shows how image processing components would be initialized and executed within the broader system architecture.
+No usage examples are available due to the absence of implementation. Expected usage patterns would demonstrate image directory processing, individual image analysis, OCR text extraction, and integration with knowledge base generation workflows.
+
+This pattern demonstrates how image processing would integrate with the existing indexing system. The code shows the expected interface for handling image analysis and knowledge base generation from visual content.
 
 ```python
-# Image processing subsystem integration pattern
-from jesse_framework_mcp.knowledge_bases.indexing.image.knowledge_builder import ImageKnowledgeBuilder
-from jesse_framework_mcp.knowledge_bases.indexing.image.hierarchical_indexer import HierarchicalImageIndexer
+# Expected image processing integration pattern
+from jesse_framework_mcp.knowledge_bases.indexing.image import ImageHandler
 
-# Initialize image processing components
-knowledge_builder = ImageKnowledgeBuilder(indexing_config)
-hierarchical_indexer = HierarchicalImageIndexer(indexing_config)
-
-# Process image content with dual-track approach
-knowledge_artifacts = await knowledge_builder.process_images(source_directory, output_directory)
-hierarchical_index = await hierarchical_indexer.process_hierarchy(source_directory, output_directory)
+handler = ImageHandler(config)
+image_analysis = await handler.process_image(image_path)
+knowledge_content = handler.generate_knowledge_base_entry(image_analysis)
 ```
 
-This example illustrates the comprehensive image processing workflow that combines both knowledge building and hierarchical indexing operations. The pattern demonstrates how both subsystems would be coordinated within the overall indexing pipeline.
+This command-line usage shows how image indexing would be invoked as part of the broader indexing workflow. The example demonstrates the expected interface for processing image directories through the indexing system.
+
+```bash
+# Expected command-line usage for image processing
+python -m jesse_framework_mcp.knowledge_bases.indexing --handler-type image --source-dir ./images/
+```
+
+This configuration example demonstrates how image processing settings would be configured within the indexing system. The code shows the expected structure for enabling OCR, metadata extraction, and format support.
 
 ```python
-# Comprehensive image processing workflow
-async def process_repository_images(repo_path, knowledge_base_path, config):
-    # Initialize both processing components
-    image_builder = ImageKnowledgeBuilder(config)
-    hierarchical_indexer = HierarchicalImageIndexer(config)
-    
-    # Execute parallel processing operations
-    knowledge_results = await image_builder.build_knowledge(repo_path)
-    hierarchy_results = await hierarchical_indexer.build_hierarchical_index(repo_path)
-    
-    return {
-        'knowledge_artifacts': knowledge_results,
-        'hierarchical_index': hierarchy_results
+# Expected configuration for image processing capabilities
+config = IndexingConfig(
+    handler_type="image",
+    image_processing={
+        "ocr_enabled": True,
+        "metadata_extraction": True,
+        "supported_formats": ["jpg", "png", "pdf", "tiff"]
     }
+)
 ```
 
 ## Subdirectory Knowledge Integration
 
-### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/image/hierarchical_indexer/
-*Last Updated: 2025-07-05T11:43:45Z*
-
-This directory represents a specialized hierarchical indexing component within the Jesse Framework MCP knowledge base system, specifically designed for processing image-related content through structured directory traversal and indexing operations. Based on the directory path structure `knowledge_bases/indexing/image/hierarchical_indexer/`, this component serves as a dedicated indexer that applies hierarchical processing strategies to image content within source code repositories. The directory currently contains no implemented files, indicating it is either a placeholder for future development or represents a planned feature for hierarchical image indexing capabilities. Key semantic entities that would be expected in this context include `HierarchicalImageIndexer` classes, tree traversal algorithms, directory structure mapping, image content processors, and integration with the broader `IndexingConfig` and knowledge base management systems.
-
-##### Main Components
-
-The directory structure suggests a modular approach to hierarchical image indexing within the broader indexing pipeline, though no concrete components are currently present. Expected components would include hierarchical traversal modules, image discovery processors, directory structure analyzers, index builders, and integration adapters for connecting with the parent image indexing system. The empty state indicates this is either a reserved namespace for future hierarchical image processing capabilities or represents a development area not yet implemented within the Jesse Framework MCP system.
-
-###### Architecture & Design
-
-The architectural positioning within `knowledge_bases/indexing/image/hierarchical_indexer/` follows the established Jesse Framework MCP pattern of nested component specialization. The design would likely implement hierarchical indexing patterns for processing image content in a structured, tree-based manner, with separation of concerns between directory traversal, image discovery, content analysis, and index generation. The nested directory structure suggests a specialized subsystem that integrates with the broader image indexing architecture while maintaining focused responsibility for hierarchical processing operations.
-
-####### Implementation Approach
-
-Without concrete implementations present, the approach would likely involve tree-based directory traversal algorithms that systematically process image content within repository hierarchies, extract relevant metadata and contextual information, and generate structured index representations. The implementation strategy would need to handle various directory structures, integrate with existing image indexing workflows, and produce hierarchical index artifacts consistent with the Jesse Framework MCP knowledge base schema and formatting requirements.
-
-######## External Dependencies & Integration Points
-
-**→ Inbound:**
-- `jesse_framework_mcp/knowledge_bases/indexing/image/` - parent image indexing system integration
-- `jesse_framework_mcp/knowledge_bases/models/` - configuration and data models
-- `jesse_framework_mcp/knowledge_bases/indexing/` - core indexing infrastructure
-- Directory traversal libraries - expected external dependencies for filesystem operations
-- Image processing libraries - for content analysis during hierarchical processing
-
-**← Outbound:**
-- Hierarchical index artifacts - generated structured image indexes
-- Image indexing pipeline - integration with broader image processing workflow
-- Knowledge base structures - hierarchical organization contributions
-
-**⚡ System role and ecosystem integration:**
-- **System Role**: Specialized hierarchical processor for image content indexing within the Jesse Framework MCP image indexing pipeline
-- **Ecosystem Position**: Peripheral component providing structured traversal capabilities to the core image indexing system
-- **Integration Pattern**: Would be invoked by the image indexing orchestrator when hierarchical processing of image content is required
-
-######### Edge Cases & Error Handling
-
-Potential edge cases would include handling deeply nested directory structures that exceed system limits, processing directories with circular symbolic links, managing directories with mixed content types during image-focused indexing, and dealing with permission-restricted directories during traversal operations. Error handling strategies would need to address filesystem access failures, infinite recursion scenarios in directory traversal, and integration failures with the parent image indexing system.
-
-########## Internal Implementation Details
-
-Internal mechanics would likely involve recursive directory traversal algorithms, image file discovery and filtering processes, hierarchical index structure generation, and metadata aggregation across directory levels. The implementation would need to maintain consistency with Jesse Framework MCP knowledge base schemas, handle concurrent processing scenarios for large directory hierarchies, and provide appropriate logging and monitoring capabilities for debugging traversal operations and maintenance purposes.
-
-########### Usage Examples
-
-This code demonstrates the expected integration pattern for hierarchical image indexing within the broader indexing workflow. The pattern shows how hierarchical processing would be initialized and executed within the image indexing system architecture.
-
-```python
-
-### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/image/knowledge_builder/
-*Last Updated: 2025-07-05T11:43:45Z*
-
-This directory represents a specialized component within the Jesse Framework MCP knowledge base indexing system, designed to handle image-related knowledge building operations. Based on the directory path structure `knowledge_bases/indexing/image/knowledge_builder/`, this component serves as a dedicated builder for processing and generating knowledge artifacts from image content within source code repositories. The directory currently contains no implemented files, indicating it is either a placeholder for future development or represents a planned feature for image analysis and knowledge extraction. Key semantic entities that would be expected in this context include `ImageKnowledgeBuilder` classes, image processing pipelines, visual content analysis algorithms, and integration with the broader `IndexingConfig` and knowledge base management systems.
-
-##### Main Components
-
-The directory structure suggests a modular approach to image knowledge building within the indexing pipeline, though no concrete components are currently present. Expected components would include image analysis modules, knowledge extraction processors, metadata builders, and integration adapters for connecting with the parent indexing system. The empty state indicates this is either a reserved namespace for future image processing capabilities or represents a development area not yet implemented within the Jesse Framework MCP system.
-
-###### Architecture & Design
-
-The architectural positioning within `knowledge_bases/indexing/image/knowledge_builder/` follows the established Jesse Framework MCP pattern of hierarchical component organization. The design would likely implement the builder pattern for constructing image-related knowledge artifacts, with separation of concerns between image processing, knowledge extraction, and output generation. The nested directory structure suggests a specialized subsystem that integrates with the broader indexing architecture while maintaining focused responsibility for image-specific operations.
-
-####### Implementation Approach
-
-Without concrete implementations present, the approach would likely involve image processing pipelines that analyze visual content within source repositories, extract relevant metadata and contextual information, and generate structured knowledge representations. The implementation strategy would need to handle various image formats, integrate with existing indexing workflows, and produce knowledge artifacts consistent with the Jesse Framework MCP knowledge base schema and formatting requirements.
-
-######## External Dependencies & Integration Points
-
-**→ Inbound:**
-- `jesse_framework_mcp/knowledge_bases/indexing/` - parent indexing system integration
-- `jesse_framework_mcp/knowledge_bases/models/` - configuration and data models
-- Image processing libraries - expected external dependencies for visual analysis
-- File system operations - for image discovery and processing
-
-**← Outbound:**
-- Knowledge base artifacts - generated image analysis outputs
-- Indexing pipeline - integration with broader knowledge building workflow
-- Analysis reports - image-specific knowledge contributions
-
-**⚡ System role and ecosystem integration:**
-- **System Role**: Specialized knowledge builder for image content analysis within the Jesse Framework MCP indexing pipeline
-- **Ecosystem Position**: Peripheral component providing domain-specific image processing capabilities to the core indexing system
-- **Integration Pattern**: Would be invoked by the main indexing orchestrator when image content is detected in source repositories
-
-######### Edge Cases & Error Handling
-
-Potential edge cases would include handling unsupported image formats, processing corrupted or incomplete image files, managing large image files that exceed memory constraints, and dealing with images that lack meaningful contextual information for knowledge extraction. Error handling strategies would need to address file access permissions, image decoding failures, and integration failures with the parent indexing system.
-
-########## Internal Implementation Details
-
-Internal mechanics would likely involve image format detection, metadata extraction pipelines, visual content analysis algorithms, and knowledge artifact generation processes. The implementation would need to maintain consistency with Jesse Framework MCP knowledge base schemas, handle concurrent processing scenarios, and provide appropriate logging and monitoring capabilities for debugging and maintenance purposes.
-
-########### Usage Examples
-
-This code demonstrates the expected integration pattern for image knowledge building within the indexing workflow. The pattern shows how image processing would be initialized and executed within the broader system architecture.
-
-```python
+*No subdirectories processed*
 
 ## File Knowledge Integration
 
 *No files processed*
 
 ---
-*Generated: 2025-07-05T11:43:45Z*
+*Generated: 2025-07-06T14:26:56Z*
 *Source Directory: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/image*
 *Total Files: 0*
-*Total Subdirectories: 2*
+*Total Subdirectories: 0*
 
 # End of image_kb.md

@@ -1,108 +1,93 @@
 <!-- CACHE_METADATA_START -->
 <!-- Source File: {PROJECT_ROOT}/jesse-framework-mcp/pyproject.toml -->
-<!-- Cached On: 2025-07-05T14:53:52.394588 -->
-<!-- Source Modified: 2025-07-01T17:30:44.433518 -->
+<!-- Cached On: 2025-07-06T12:29:39.018002 -->
+<!-- Source Modified: 2025-07-06T00:52:31.904461 -->
 <!-- Cache Version: 1.0 -->
 <!-- CACHE_METADATA_END -->
 
 #### Functional Intent & Features
 
-This file implements the Python package configuration for the Jesse Framework MCP Server, providing comprehensive build system setup with custom build hooks for embedding JESSE framework content at package creation time. The configuration enables automated distribution of a self-contained MCP server that includes all JESSE rules and workflows without requiring separate framework installation. Key semantic entities include build system configuration `hatchling` with `hatch-vcs` for version control integration, project metadata `name = "jesse-framework-mcp"` with `version = "0.1.0"` and `description = "MCP Server for JESSE AI Framework - Complete Rules and Workflows"`, runtime dependencies `fastmcp~=2.9.2`, `boto3>=1.38.46`, `strands-agents>=0.1.0`, and `mistletoe>=1.4.0` for MCP protocol and framework functionality, Python version requirement `requires-python = ">=3.10"` for FastMCP v2.9.2 compatibility, custom build hook configuration `[tool.hatch.build.hooks.custom]` with `path = "build_scripts/copy_jesse_content.py"` for JESSE content embedding, console script entry point `jesse-framework-mcp = "jesse_framework_mcp:main"` for command-line execution, development dependencies including `pytest>=7.0.0`, `black>=22.0.0`, `isort>=5.10.0`, `mypy>=0.950` for code quality, package data configuration for `embedded_content/*.md` and `embedded_content/workflows/*.md` files, and tool configurations for `black`, `isort`, `mypy`, and `pytest` with specific settings for Python 3.10+ development workflows. The system implements build-time integration of JESSE framework content through Hatchling custom hooks enabling portable MCP server distribution.
+This file serves as the Python package configuration for the Jesse Framework MCP Server, defining build system requirements, dependencies, and metadata for distributing the complete JESSE AI Framework rules and workflows as an MCP-compatible server package. The configuration enables build-time embedding of JESSE framework content from the `artifacts/` directory through custom build hooks, providing a self-contained MCP server distribution with integrated framework governance. Key semantic entities include `hatchling` build system with `hatch-vcs` version control integration, `fastmcp~=2.9.2` as the primary MCP protocol implementation, `jesse-framework-mcp` package name with version `0.1.0`, `build_scripts/copy_jesse_content.py` custom build hook for content embedding, `jesse_framework_mcp/embedded_content/` directory for framework rules and workflows, `boto3>=1.38.46` for AWS service integration, `strands-agents>=0.1.0` for agent framework support, `mistletoe>=1.4.0` for markdown processing, `PyYAML>=6.0` for YAML output generation, `requires-python = ">=3.10"` compatibility requirement, and comprehensive development tooling configuration including `pytest`, `black`, `isort`, `flake8`, and `mypy` for code quality assurance.
 
 ##### Main Components
 
-The configuration contains eight primary sections providing comprehensive Python package setup with build-time content embedding capabilities. The `[build-system]` section defines Hatchling as the build backend with version control support. The `[project]` section establishes package metadata including name, version, description, authors, license, Python version requirements, and runtime dependencies. The `[project.urls]` section provides repository and documentation links. The `[project.scripts]` section defines the console script entry point for command-line execution. The `[tool.hatch.build.hooks.custom]` section configures custom build hooks for JESSE content copying. The `[tool.hatch.build.targets.wheel.shared-data]` section includes embedded content in wheel distribution. The `[project.optional-dependencies]` section defines development dependencies for testing and code quality. The tool configuration sections provide settings for Black, isort, mypy, and pytest development tools.
+The configuration contains eight primary sections defining package structure and build behavior: `build-system` section specifying `hatchling` and `hatch-vcs` requirements, `project` section with package metadata including name, version, description, authors, and dependencies, `project.urls` section providing repository and documentation links, `project.scripts` section defining the `jesse-framework-mcp` command-line entry point, `tool.hatch.build.hooks.custom` section configuring the build-time content copying hook, `tool.hatch.build.targets.wheel.shared-data` section for embedded content distribution, `project.optional-dependencies` section with development tools, and comprehensive tool configuration sections for `black`, `isort`, `mypy`, and `pytest`. Supporting components include `tool.setuptools.package-data` for setuptools compatibility, `dependency-groups` for modern dependency management, and detailed Python version classifiers supporting 3.10, 3.11, and 3.12.
 
 ###### Architecture & Design
 
-The architecture implements a modern Python packaging pattern with Hatchling build system integration, following PEP 517/518 standards with custom build hooks for content embedding and comprehensive development tool configuration. The design emphasizes build-time content integration through custom hooks that copy JESSE framework content from `artifacts/` directory to `embedded_content/` for package distribution, runtime dependency management with specific version constraints for MCP protocol compatibility, and development workflow support through comprehensive tool configurations. Key design patterns include the custom build hook pattern enabling build-time content processing, embedded content pattern packaging framework rules and workflows within the distribution, console script pattern providing command-line interface through entry points, development dependency pattern separating runtime and development requirements, and tool configuration pattern centralizing code quality and testing settings. The system uses Hatchling's extensible build system with shared data inclusion for embedded content distribution.
+The architecture implements a build-time content embedding pattern using `hatchling` build system with custom hooks to integrate JESSE framework rules and workflows into the Python package distribution. The design employs a modular dependency structure with `fastmcp` as the core MCP protocol implementation, supplemented by specialized libraries for AWS integration, agent frameworks, markdown processing, and YAML generation. The system uses shared data distribution through wheel packaging to include embedded content in the final package, ensuring framework rules and workflows are available at runtime without external dependencies. The architectural pattern includes comprehensive development tooling integration with code formatting, linting, type checking, and testing frameworks configured for Python 3.10+ compatibility.
 
 ####### Implementation Approach
 
-The implementation uses TOML configuration format with structured sections for build system, project metadata, dependencies, and tool configurations following Python packaging standards. Build-time content embedding employs custom Hatchling hooks executing `build_scripts/copy_jesse_content.py` during package creation. The approach implements version constraint management with tilde requirements for FastMCP compatibility and minimum version specifications for supporting libraries. Development workflow integration uses optional dependencies with comprehensive tool configurations for code formatting, type checking, and testing. Package data inclusion uses both Hatchling shared-data configuration and setuptools compatibility patterns for embedded content distribution. Console script configuration provides direct command-line access through Python entry points. Tool configurations specify Python 3.10+ target versions with appropriate settings for modern development workflows.
+The implementation uses `hatchling` build backend with custom build hooks executing `build_scripts/copy_jesse_content.py` to embed JESSE framework content during package creation. The approach employs version pinning strategies with compatible version ranges (`~=2.9.2` for FastMCP, `>=1.38.46` for boto3) ensuring stable dependency resolution while allowing patch updates. Package data inclusion uses both modern `tool.hatch.build.targets.wheel.shared-data` configuration and legacy `tool.setuptools.package-data` for broad compatibility. Development workflow integration implements standardized tooling with `black` for code formatting, `isort` for import organization, `mypy` for type checking, and `pytest` for testing with asyncio support. The build process coordinates content copying, dependency resolution, and package assembly to produce a self-contained MCP server distribution.
 
 ######## External Dependencies & Integration Points
 
 **→ References:**
-- `hatchling` (external library) - modern Python build backend providing PEP 517/518 compliance and custom hook support
-- `hatch-vcs` (external library) - version control integration for Hatchling build system
-- `fastmcp~=2.9.2` (external library) - FastMCP framework for MCP protocol implementation and server functionality
-- `boto3>=1.38.46` (external library) - AWS SDK for cloud service integration and resource management
-- `strands-agents>=0.1.0` (external library) - agent framework for AI assistant functionality
-- `mistletoe>=1.4.0` (external library) - Markdown parsing and processing for documentation handling
-- `build_scripts/copy_jesse_content.py` - custom build hook script for JESSE framework content embedding
-- `jesse_framework_mcp/__init__.py:main` - package entry point for console script execution
+- `hatchling` (external library) - modern Python build backend providing package creation and distribution capabilities
+- `hatch-vcs` (external library) - version control integration for automatic version management from Git tags
+- `fastmcp~=2.9.2` (external library) - FastMCP framework implementing MCP protocol for server functionality
+- `boto3>=1.38.46` (external library) - AWS SDK for Python enabling cloud service integration
+- `strands-agents>=0.1.0` (external library) - agent framework for AI assistant coordination and management
+- `mistletoe>=1.4.0` (external library) - markdown parser and renderer for processing framework documentation
+- `PyYAML>=6.0` (external library) - YAML processing library for configuration and data serialization
+- `build_scripts/copy_jesse_content.py` - custom build hook script for embedding JESSE framework content
 
 **← Referenced By:**
-- Python package managers - consuming configuration for installation and dependency resolution
-- Build systems - using Hatchling configuration for package creation and distribution
-- Development environments - referencing tool configurations for code quality and testing workflows
-- CI/CD pipelines - using build configuration for automated package creation and testing
-- Distribution platforms - consuming package metadata for PyPI publication and discovery
-- Installation tools - using console script configuration for command-line interface setup
+- Python package installers - `pip`, `poetry`, `conda` consume this configuration for package installation and dependency resolution
+- CI/CD build systems - automated build pipelines reference this configuration for package creation and distribution
+- Development environments - IDEs and development tools use tool configurations for code formatting and quality checks
+- Package distribution platforms - PyPI and other repositories use metadata for package indexing and discovery
+- MCP client applications - consume the built package as an MCP server providing JESSE framework functionality
+- Docker containers and deployment systems - reference package configuration for containerized deployments
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Core package configuration for Jesse Framework MCP Server ecosystem, defining build system, dependencies, and distribution parameters for complete MCP server packaging with embedded JESSE framework content
-- **Ecosystem Position**: Central configuration component enabling automated build processes, dependency management, and development workflows for the entire MCP server project
-- **Integration Pattern**: Used by Python packaging tools for build and distribution, consumed by development environments for tool configuration, integrated with custom build hooks for content embedding, and coordinated with package managers for dependency resolution and installation
+- **System Role**: Central package configuration defining the complete build, distribution, and runtime requirements for the Jesse Framework MCP Server, enabling seamless integration of JESSE framework rules with MCP protocol implementation
+- **Ecosystem Position**: Core infrastructure component that bridges JESSE framework content with Python packaging ecosystem, ensuring framework rules and workflows are distributed as a standard Python package with MCP server capabilities
+- **Integration Pattern**: Consumed by Python build tools for package creation, referenced by dependency managers for installation, and used by development tools for code quality assurance while coordinating build-time content embedding with runtime MCP server functionality
 
 ######### Edge Cases & Error Handling
 
-The configuration addresses Python version compatibility through explicit `requires-python = ">=3.10"` requirement ensuring FastMCP v2.9.2 compatibility. Build hook failures are managed through Hatchling's error handling with custom hook path validation. Dependency conflicts are addressed through specific version constraints with tilde requirements for compatible updates and minimum version specifications for security and functionality requirements. Development environment variations are handled through optional dependencies separating runtime and development requirements. Package data inclusion uses dual configuration patterns for Hatchling and setuptools compatibility ensuring embedded content distribution across different build environments. Tool configuration compatibility addresses Python version targeting with specific settings for modern development workflows. Build system fallbacks are managed through standard Hatchling error handling and build backend specifications.
+The configuration addresses Python version compatibility issues through explicit `requires-python = ">=3.10"` specification ensuring FastMCP v2.9.2 compatibility requirements are met. Build hook failures are mitigated through the custom `copy_jesse_content.py` script which handles missing source content and provides error reporting during package creation. Dependency resolution conflicts are managed through version pinning strategies using compatible version specifiers (`~=` for patch-level updates, `>=` for minimum versions) preventing incompatible library combinations. Development tool configuration includes error handling through `mypy` type checking with `warn_return_any` and `disallow_untyped_defs` flags catching type-related issues. The system handles package data inclusion failures through dual configuration using both modern hatchling and legacy setuptools specifications ensuring broad compatibility across different installation environments.
 
 ########## Internal Implementation Details
 
-The configuration uses TOML syntax with structured sections following Python packaging standards and Hatchling-specific extensions. Project metadata includes comprehensive classifiers for Python versions 3.10, 3.11, and 3.12 with development status and intended audience specifications. Dependency specifications use semantic versioning with tilde constraints for compatible updates and greater-than-equal constraints for minimum requirements. Custom build hook configuration specifies exact path `build_scripts/copy_jesse_content.py` for content copying execution. Shared data configuration maps `embedded_content` directory to `jesse_framework_mcp/embedded_content` for package inclusion. Tool configurations specify line length 88 for Black, profile "black" for isort, Python version "3.10" for mypy, and asyncio mode "auto" for pytest. Console script configuration maps `jesse-framework-mcp` command to `jesse_framework_mcp:main` function for direct execution.
+The build system uses `hatchling.build` backend with custom hook integration executing during package creation to embed JESSE framework content from the `artifacts/` directory into `jesse_framework_mcp/embedded_content/`. Dependency management employs semantic versioning with `fastmcp~=2.9.2` allowing patch updates while preventing minor version changes that could introduce breaking changes. Package data configuration uses `tool.hatch.build.targets.wheel.shared-data` mapping `embedded_content` to the package directory structure ensuring framework rules and workflows are included in wheel distributions. Development tooling configuration implements standardized settings with `black` line length of 88 characters, `isort` black profile compatibility, `mypy` strict type checking for Python 3.10, and `pytest` asyncio mode for testing MCP server functionality. The entry point configuration maps `jesse-framework-mcp` command to `jesse_framework_mcp:main` function enabling command-line server execution.
 
-########### Usage Examples
+########### Code Usage Examples
 
-Package installation demonstrates the primary distribution pattern for Jesse Framework MCP Server with automated dependency resolution. This approach provides complete MCP server installation with embedded JESSE framework content through standard Python packaging tools.
+This example demonstrates the package installation and basic usage pattern for the Jesse Framework MCP Server. The installation process includes all embedded JESSE framework content through the build-time copying mechanism.
 
 ```bash
-# Standard package installation using pip with automatic dependency resolution
-# Installs MCP server with embedded JESSE framework content and all required dependencies
+# Install the Jesse Framework MCP Server package with all dependencies
 pip install jesse-framework-mcp
 
-# Development installation with optional dependencies for code quality and testing
-# Enables complete development workflow with formatting, type checking, and testing tools
-pip install jesse-framework-mcp[dev]
+# Run the MCP server with stdio transport for client communication
+jesse-framework-mcp
 ```
 
-Build configuration showcases the custom hook pattern for JESSE framework content embedding during package creation. This configuration enables automated content copying from development artifacts to package distribution.
+This example shows the development environment setup using the optional development dependencies. The configuration enables comprehensive code quality checking and testing capabilities for framework development.
+
+```bash
+# Install development dependencies for contributing to the framework
+pip install jesse-framework-mcp[dev]
+
+# Run code quality checks using configured tools
+black --check .
+isort --check-only .
+flake8 .
+mypy .
+pytest
+```
+
+This example illustrates the build process configuration showing how JESSE framework content is embedded during package creation. The custom build hook ensures framework rules and workflows are included in the distribution.
 
 ```toml
-# Custom build hook configuration for JESSE framework content embedding
-# Executes content copying script during package build process
+# Build system configuration with custom content embedding
 [tool.hatch.build.hooks.custom]
 path = "build_scripts/copy_jesse_content.py"
 
-# Embedded content inclusion in wheel distribution
-# Maps source directory to package location for runtime access
+# Embedded content distribution in wheel packages
 [tool.hatch.build.targets.wheel.shared-data]
 "embedded_content" = "jesse_framework_mcp/embedded_content"
-```
-
-Development workflow configuration demonstrates the tool integration pattern for code quality and testing. This setup provides comprehensive development environment with consistent formatting, type checking, and testing capabilities.
-
-```toml
-# Development dependencies for comprehensive code quality workflow
-# Provides testing, formatting, linting, and type checking capabilities
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "black>=22.0.0",
-    "isort>=5.10.0",
-    "mypy>=0.950",
-]
-
-# Tool configurations for consistent development environment
-# Specifies Python 3.10+ targeting with modern development practices
-[tool.black]
-line-length = 88
-target-version = ['py310']
-
-[tool.mypy]
-python_version = "3.10"
-disallow_untyped_defs = true
 ```

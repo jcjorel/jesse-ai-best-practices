@@ -330,11 +330,23 @@ The JESSE AI Best Practices Framework is a comprehensive system that transforms 
 
 ## Patterns and Solutions
 
+### Knowledge Base Root Summary File Naming (Project-Base Handler Only)
+**Decision**: Project-base knowledge handler generates `root_kb.md` instead of `{directory_name}_kb.md` for project root
+**Implementation**: 
+- **Project root** generates `.knowledge/project-base/root_kb.md`
+- **NOT** `.knowledge/project-base/{project_name}_kb.md`
+- **Git clones continue unchanged**: `.knowledge/git-clones/[repo-name]_kb.md`
+- **PDF knowledge continues unchanged**: `.knowledge/pdf-knowledge/[source-name]/[source-name]_kb.md`
+**Benefits**: Clear identification of project root global summary, distinguishes from subdirectory summaries in project-base handler
+**Application**: Project-base handler only when processing the actual project root directory
+**Technical Implementation**: `_is_handler_root_directory()` method detects project root context, `_get_knowledge_file_path()` generates `root_kb.md` for project-base handler root
+**Added**: 2025-07-06 (from missing global summary generation issue resolution)
+
 ### MCP Server Context Optimization Patterns
-**Pattern**: Progressive Context Migration from Static to Dynamic Generation  
-**Implementation**: Move from large static markdown files to intelligent Python-based context generation  
-**Benefits**: Reduced context window usage, smarter resource loading, improved performance  
-**Application**: MCP server architecture evolution from embedded content to runtime context generation  
+**Pattern**: Progressive Context Migration from Static to Dynamic Generation
+**Implementation**: Move from large static markdown files to intelligent Python-based context generation
+**Benefits**: Reduced context window usage, smarter resource loading, improved performance
+**Application**: MCP server architecture evolution from embedded content to runtime context generation
 **Added**: 2025-07-01 (from MCP Server Context Size Optimization task)
 
 ### AI Agent Framework Integration Pattern
