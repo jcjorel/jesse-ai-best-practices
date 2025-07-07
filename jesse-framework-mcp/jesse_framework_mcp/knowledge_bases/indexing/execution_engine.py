@@ -41,6 +41,19 @@
 # <system>: logging - Structured logging for execution analysis and debugging
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-07T21:36:00Z : CRITICAL EXECUTION BUG FIX - Fixed missing _create_handler_for_path method causing AttributeError by CodeAssistant
+# * FIXED EXECUTION FAILURE: Added missing _create_handler_for_path() method causing "'ExecutionEngine' object has no attribute '_create_handler_for_path'" error
+# * ADDED HANDLER REGISTRY: Integrated HandlerRegistry for proper path-based handler selection in cache structure creation
+# * FIXED CACHE CREATION: Cache structure creation tasks now properly select handlers (git-clone vs project-base) based on source path
+# * RESTORED TASK EXECUTION: CREATE_CACHE_STRUCTURE tasks now execute successfully with appropriate handler selection
+# * ROOT CAUSE: Method was called in _execute_create_cache_structure() but never implemented, causing immediate execution failure
+# 2025-07-07T15:00:00Z : CRITICAL HANDLER PATH FIX - Fixed ExecutionEngine path override preventing git-clone KB segregation by CodeAssistant
+# * FIXED CRITICAL BUG: Modified _execute_create_directory_kb() to use handler-determined knowledge_file_path from task metadata
+# * BEFORE: ExecutionEngine used FileAnalysisCache.get_knowledge_file_path() overriding handler decisions with hardcoded project-base paths
+# * AFTER: Task metadata now carries handler-determined paths and ExecutionEngine respects these decisions
+# * Added handler-determined path extraction with debug logging showing which path is being used
+# * PREVENTS PATH OVERRIDE: Git-clone indexing tasks now execute with git-clones/ paths instead of project-base/
+# * RESTORES HANDLER CONTROL: Each handler type now maintains control over its KB file locations through task metadata
 # 2025-07-06T23:40:00Z : CRITICAL METADATA FIX - Fixed cache metadata contamination in final KB files by CodeAssistant
 # * FIXED METADATA CONTAMINATION: Added _strip_cache_metadata() method to remove XML metadata tags before content inclusion
 # * ADDED METADATA STRIPPING: Enhanced _load_cached_analysis_content() to strip CACHE_METADATA_START/END blocks
@@ -51,11 +64,6 @@
 # * ADDED _load_cached_analysis_content(): Loads real file analysis from .analysis.md cache files for proper KB synthesis
 # * RESTORED REAL CONTENT: Directory KB files now contain actual file analysis instead of placeholder text
 # * ROOT CAUSE: FileContext objects reconstructed with hardcoded placeholder instead of loading cached analysis content
-# 2025-07-06T22:57:00Z : CRITICAL ARCHITECTURAL FIX - Fixed global hierarchical knowledge integration failure by CodeAssistant
-# * FIXED SYSTEM-WIDE BUG: Added missing knowledge_file_path to DirectoryContext reconstruction in _execute_create_directory_kb()
-# * RESTORED HIERARCHICAL INTEGRATION: All directory KB files now properly integrate subdirectory knowledge content
-# * FIXED CATASTROPHIC FAILURE: Resolved "*No subdirectories processed*" appearing in ALL KB files throughout entire hierarchy
-# * ROOT CAUSE: DirectoryContext objects reconstructed without knowledge_file_path causing subdirectory integration to fail completely
 ###############################################################################
 
 """
@@ -88,6 +96,7 @@ from ..models.execution_plan import (
 )
 from .knowledge_builder import KnowledgeBuilder
 from .file_analysis_cache import FileAnalysisCache
+from .handler_interface import HandlerRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +144,7 @@ class ExecutionEngine:
         self.config = config
         self.knowledge_builder = KnowledgeBuilder(config)
         self.file_cache = FileAnalysisCache(config)
+        self.handler_registry = HandlerRegistry(config)
         
         # Concurrency control
         self._execution_semaphore = asyncio.Semaphore(config.max_concurrent_operations)
@@ -388,8 +398,10 @@ class ExecutionEngine:
         )
         
         # Execute analysis (bypass cache since decision determined it's stale)
+        # Get handler for source root to pass to knowledge builder
+        handler = self._create_handler_for_path(source_root)
         result_context = await self.knowledge_builder.build_file_knowledge(
-            file_context, ctx, source_root=source_root, bypass_cache=True
+            file_context, ctx, source_root=source_root, bypass_cache=True, handler=handler
         )
         
         if result_context is None:
@@ -408,6 +420,10 @@ class ExecutionEngine:
         """Execute directory KB creation task"""
         directory_path = task.target_path
         source_root = Path(task.metadata['source_root'])
+        
+        # SIMPLIFIED: Use knowledge_file_path from task metadata (set correctly by handler during discovery)
+        knowledge_file_path = Path(task.metadata['knowledge_file_path'])
+        await ctx.debug(f"Using KB path: {knowledge_file_path}")
         
         # Reconstruct FileContext objects from metadata with actual cached content
         file_contexts = []
@@ -431,16 +447,17 @@ class ExecutionEngine:
             )
             file_contexts.append(file_context)
         
-        # Reconstruct subdirectory contexts with proper knowledge_file_path
+        # Reconstruct subdirectory contexts with correct knowledge_file_paths
         subdirectory_contexts = []
         for sc_data in task.metadata['subdirectory_contexts']:
             subdir_path = Path(sc_data['path'])
+            subdir_kb_path = Path(sc_data['knowledge_file_path'])
             subdir_context = DirectoryContext(
                 directory_path=subdir_path,
                 file_contexts=[],
                 subdirectory_contexts=[],
                 processing_status=ProcessingStatus.COMPLETED,
-                knowledge_file_path=self.file_cache.get_knowledge_file_path(subdir_path, source_root)
+                knowledge_file_path=subdir_kb_path
             )
             subdirectory_contexts.append(subdir_context)
         
@@ -449,12 +466,13 @@ class ExecutionEngine:
             directory_path=directory_path,
             file_contexts=file_contexts,
             subdirectory_contexts=subdirectory_contexts,
-            processing_status=ProcessingStatus.PENDING
+            processing_status=ProcessingStatus.PENDING,
+            knowledge_file_path=knowledge_file_path
         )
         
-        # Execute KB generation
+        # Execute KB generation using the correct path
         result_context = await self.knowledge_builder.build_directory_summary(
-            directory_context, ctx, source_root=source_root
+            directory_context, ctx, knowledge_file_path=knowledge_file_path, source_root=source_root
         )
         
         if result_context.processing_status == ProcessingStatus.FAILED:
@@ -506,12 +524,20 @@ class ExecutionEngine:
         directories = task.metadata.get('directories', [])
         source_root = Path(task.metadata['source_root'])
         
+        # Create appropriate handler based on source root
+        handler = self._create_handler_for_path(source_root)
+        
         for dir_str in directories:
             dir_path = Path(dir_str)
-            cache_path = self.file_cache.get_cache_path(dir_path / "dummy.txt", source_root).parent
-            cache_path.mkdir(parents=True, exist_ok=True)
+            try:
+                # Use handler to determine cache path - NO fallbacks to project-base
+                cache_path = handler.get_cache_path(dir_path / "dummy.txt", source_root).parent
+                cache_path.mkdir(parents=True, exist_ok=True)
+            except Exception as e:
+                logger.error(f"❌ CACHE STRUCTURE CREATION FAILED for {dir_path}: {e} - Handler: {handler.get_handler_type()}")
+                raise RuntimeError(f"Cache structure creation failed: {e}")
         
-        await ctx.debug(f"🏗️ Cache structure created: {len(directories)} directories")
+        await ctx.debug(f"🏗️ Cache structure created: {len(directories)} directories using handler: {handler.get_handler_type()}")
     
     async def _execute_verify_cache_freshness(self, task: AtomicTask, ctx: Context) -> None:
         """Execute cache freshness verification task"""
@@ -597,6 +623,36 @@ class ExecutionEngine:
         except Exception as e:
             logger.warning(f"Error loading cached content for {file_path}: {e}")
             return None
+    
+    def _create_handler_for_path(self, source_path: Path):
+        """
+        [Class method intent]
+        Creates appropriate handler for the given source path using HandlerRegistry.
+        Provides path-based handler selection for cache and knowledge file operations.
+
+        [Design principles]
+        Handler registry integration enabling automatic handler selection based on path characteristics.
+        Defensive handling ensuring execution continues even when no specific handler is available.
+        Clear error reporting when handler selection fails to support debugging.
+
+        [Implementation details]
+        Uses HandlerRegistry.get_handler_for_path() for capability-based handler selection.
+        Returns selected handler or raises RuntimeError if no handler is available.
+        Supports both git-clone and project-base paths through registry routing.
+
+        Args:
+            source_path: Path requiring handler-specific processing
+
+        Returns:
+            IndexingHandler: Appropriate handler for the source path
+
+        Raises:
+            RuntimeError: When no handler is available for the path
+        """
+        handler = self.handler_registry.get_handler_for_path(source_path)
+        if handler is None:
+            raise RuntimeError(f"No indexing handler available for path: {source_path}")
+        return handler
     
     async def _cleanup_execution_resources(self) -> None:
         """Clean up execution resources and connections"""

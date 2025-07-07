@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Simple integration test for Knowledge Bases Hierarchical Indexing System.
+Enhanced integration test for Knowledge Bases Hierarchical Indexing System.
 
-This test triggers indexing on the actual JESSE Framework project root to verify
-the system works with real-world complexity, real files, and real project structures.
-Focus is on basic functionality verification and error detection without complex scenarios.
+This test triggers indexing on both the JESSE Framework project root AND git-clone repositories
+to verify the system works with real-world complexity, including both project-base and git-clone handlers.
+Tests all 8 available git-clone repositories (strands_*, fastmcp, cline) for comprehensive validation.
 
 Command line options:
   --full-rebuild      Delete all analysis and KB files, rebuild everything from scratch (expensive)
   --kb-only-rebuild   Keep analysis files, regenerate only KB files (fast, for testing KB synthesis)
+  --test-mode         Choose what to test: project, git-clones, or both (default: both)
 """
 
 import argparse
@@ -142,6 +143,212 @@ def delete_analysis_files(project_root: Path):
                 print(f"🗑️ Deleted analysis file: {analysis_file.relative_to(project_root)}")
     print(f"✅ Deleted {analysis_files_deleted} analysis files")
     return analysis_files_deleted
+
+def discover_git_clone_repositories(project_root: Path):
+    """
+    [Function intent]
+    Discovers all available git-clone repositories in .knowledge/git-clones/ directory.
+    Scans for actual git clone directories to determine which repositories are available
+    for comprehensive git-clone indexing testing.
+
+    [Design principles]
+    Dynamic discovery enabling testing of all available git-clone repositories.
+    Real-world repository detection supporting authentic git-clone testing scenarios.
+    Comprehensive repository inventory for accurate git-clone testing coverage.
+
+    [Implementation details]
+    Scans .knowledge/git-clones/ directory for subdirectories containing actual git repositories.
+    Returns list of repository names and paths for git-clone indexing testing.
+    Handles missing git-clones directory gracefully with empty results.
+    """
+    git_clones_dir = project_root / ".knowledge" / "git-clones"
+    repositories = []
+    
+    if not git_clones_dir.exists():
+        print("📁 No .knowledge/git-clones/ directory found")
+        return repositories
+    
+    print(f"🔍 Discovering git-clone repositories in: {git_clones_dir}")
+    
+    try:
+        for item in git_clones_dir.iterdir():
+            if item.is_dir() and not item.name.endswith('.md') and not item.name == 'README.md':
+                # Check if it's actually a git repository
+                if (item / '.git').exists():
+                    repositories.append({
+                        'name': item.name,
+                        'path': item,
+                        'size_mb': sum(f.stat().st_size for f in item.rglob('*') if f.is_file()) / (1024 * 1024)
+                    })
+                    print(f"  📦 Found repository: {item.name} ({repositories[-1]['size_mb']:.1f} MB)")
+                else:
+                    print(f"  🚫 Skipping non-git directory: {item.name}")
+    
+    except Exception as e:
+        print(f"⚠️ Error during git-clone discovery: {e}")
+    
+    return repositories
+
+async def test_git_clone_indexing(project_root: Path, repositories: list, full_rebuild: bool = False, kb_only_rebuild: bool = False):
+    """
+    [Function intent]
+    Tests git-clone indexing functionality by processing all discovered git-clone repositories.
+    Verifies GitCloneHandler works correctly with real git repositories and generates
+    appropriate knowledge files for comprehensive git-clone coverage.
+
+    [Design principles]
+    Comprehensive git-clone testing using all available repositories for authentic validation.
+    Individual repository processing enabling isolated success/failure analysis.
+    Progress reporting supporting user feedback during git-clone repository processing.
+    Error isolation ensuring individual repository failures don't break entire git-clone testing.
+
+    [Implementation details]
+    Processes each discovered git-clone repository individually using GitCloneHandler.
+    Creates git-clone specific configuration for optimal repository processing.
+    Monitors processing success/failure for each repository with detailed statistics.
+    Returns comprehensive git-clone testing results with success rates and error analysis.
+    """
+    print("\n=== GIT-CLONE INDEXING TEST ===")
+    print(f"Testing git-clone indexing with {len(repositories)} repositories")
+    
+    if not repositories:
+        print("⚠️ No git-clone repositories found - skipping git-clone tests")
+        return {
+            'success': True,  # No repositories to test = success
+            'repositories_tested': 0,
+            'repositories_successful': 0,
+            'errors': []
+        }
+    
+    # Create debug directory for git-clone testing
+    debug_dir = Path("/tmp/jesse_git_clone_indexing_test")
+    if debug_dir.exists():
+        shutil.rmtree(debug_dir)
+    debug_dir.mkdir(parents=True)
+    print(f"Git-clone debug directory: {debug_dir}")
+    
+    git_clone_results = {
+        'success': True,
+        'repositories_tested': 0,
+        'repositories_successful': 0,
+        'errors': []
+    }
+    
+    try:
+        # Create git-clone specific configuration
+        from jesse_framework_mcp.knowledge_bases.indexing.defaults import get_default_config
+        
+        config_dict = get_default_config('git-clones')  # Use git-clones specific defaults
+        
+        # Override for git-clone testing
+        config_dict['file_processing'].update({
+            'max_file_size': 1 * 1024 * 1024,  # 1MB limit for git-clones
+            'batch_size': 3,                    # Smaller batch for git repositories
+            'max_concurrent_operations': 1      # Conservative for git-clone processing
+        })
+        
+        config_dict['change_detection'].update({
+            'indexing_mode': 'full_kb_rebuild'  # Force KB rebuild for git-clone testing
+        })
+        
+        config_dict['debug_config'].update({
+            'debug_mode': True,
+            'debug_output_directory': str(debug_dir),
+            'enable_llm_replay': False
+        })
+        
+        config = IndexingConfig.from_dict(config_dict)
+        print(f"Git-clone configuration: {config.indexing_mode.value} mode")
+        
+        # Test each git-clone repository individually
+        for i, repo in enumerate(repositories, 1):
+            print(f"\n--- Testing Repository {i}/{len(repositories)}: {repo['name']} ---")
+            
+            ctx = MockContext()
+            git_clone_results['repositories_tested'] += 1
+            
+            try:
+                # Create hierarchical indexer for this git-clone
+                indexer = HierarchicalIndexer(config)
+                
+                # Record start time for this repository
+                repo_start_time = datetime.now()
+                print(f"🚀 Starting git-clone indexing: {repo['name']} ({repo['size_mb']:.1f} MB)")
+                
+                # Execute indexing on this git-clone repository
+                result = await indexer.index_hierarchy(repo['path'], ctx)
+                
+                repo_end_time = datetime.now()
+                repo_duration = repo_end_time - repo_start_time
+                
+                print(f"✅ Repository {repo['name']} completed in {repo_duration}")
+                
+                # Analyze repository results
+                stats = result.processing_stats
+                print(f"  📊 Files: {stats.files_processed}/{stats.total_files_discovered} processed")
+                print(f"  📂 Directories: {stats.directories_completed}/{stats.total_directories_discovered} completed")
+                print(f"  ⚠️ Warnings: {len(ctx.warning_messages)}, Errors: {len(ctx.error_messages)}")
+                
+                # Check repository success criteria
+                repo_success = (
+                    result.overall_status == ProcessingStatus.COMPLETED and
+                    stats.total_files_discovered > 0 and
+                    len(ctx.error_messages) < stats.total_files_discovered / 2  # Allow 50% error rate
+                )
+                
+                if repo_success:
+                    git_clone_results['repositories_successful'] += 1
+                    print(f"  🎉 Repository {repo['name']}: SUCCESS")
+                else:
+                    git_clone_results['errors'].append(f"Repository {repo['name']} failed processing")
+                    print(f"  ❌ Repository {repo['name']}: FAILED")
+                    
+                    # Show first few errors for failed repository
+                    if ctx.error_messages:
+                        print(f"    First errors:")
+                        for error in ctx.error_messages[:2]:
+                            print(f"      💥 {error}")
+                
+            except Exception as e:
+                repo_end_time = datetime.now()
+                repo_duration = repo_end_time - repo_start_time if 'repo_start_time' in locals() else "unknown"
+                
+                error_msg = f"Repository {repo['name']} failed with exception: {str(e)} (duration: {repo_duration})"
+                git_clone_results['errors'].append(error_msg)
+                print(f"  💥 Repository {repo['name']}: EXCEPTION - {str(e)}")
+        
+        # Calculate overall git-clone success
+        success_rate = git_clone_results['repositories_successful'] / max(git_clone_results['repositories_tested'], 1)
+        git_clone_results['success'] = success_rate >= 0.7  # 70% success rate threshold
+        
+        print(f"\n=== GIT-CLONE TESTING RESULTS ===")
+        print(f"Repositories tested: {git_clone_results['repositories_tested']}")
+        print(f"Repositories successful: {git_clone_results['repositories_successful']}")
+        print(f"Success rate: {success_rate:.1%}")
+        
+        if git_clone_results['errors']:
+            print(f"\nGit-clone errors ({len(git_clone_results['errors'])}):")
+            for error in git_clone_results['errors']:
+                print(f"  ❌ {error}")
+        
+        if git_clone_results['success']:
+            print("🎉 GIT-CLONE INDEXING: SUCCESS")
+        else:
+            print("❌ GIT-CLONE INDEXING: FAILED")
+        
+        return git_clone_results
+        
+    except Exception as e:
+        error_msg = f"Git-clone testing setup failed: {str(e)}"
+        git_clone_results['errors'].append(error_msg)
+        git_clone_results['success'] = False
+        print(f"🚨 GIT-CLONE TEST SETUP FAILED: {e}")
+        import traceback
+        traceback.print_exc()
+        return git_clone_results
+    
+    finally:
+        print(f"🔧 Git-clone debug artifacts: {debug_dir}")
 
 async def test_real_project_indexing(full_rebuild: bool = False, kb_only_rebuild: bool = False):
     """
@@ -426,28 +633,32 @@ async def test_real_project_indexing(full_rebuild: bool = False, kb_only_rebuild
 async def main():
     """
     [Function intent]
-    Main test runner for real project indexing integration test.
-    Executes comprehensive integration testing and provides clear pass/fail determination.
+    Enhanced main test runner for project-base AND git-clone integration testing.
+    Executes comprehensive integration testing covering both handler types and provides
+    clear pass/fail determination with detailed analysis for each testing phase.
 
     [Design principles]
-    Single comprehensive integration test focusing on real-world project complexity.
-    Clear result reporting enabling easy assessment of system functionality.
+    Comprehensive integration testing covering project-base and git-clone scenarios.
+    Flexible test mode selection enabling targeted testing of specific handler types.
+    Clear result reporting enabling easy assessment of system functionality across both modes.
     Preservation of debug artifacts for detailed analysis when needed.
-    Command line argument support for different rebuild modes.
+    Command line argument support for different rebuild modes and test scope selection.
 
     [Implementation details]
-    Parses command line arguments for rebuild modes.
-    Executes real project indexing test with comprehensive error monitoring.
-    Reports final success/failure status with detailed analysis information.
+    Parses command line arguments for rebuild modes and test scope selection.
+    Coordinates both project-base and git-clone testing with isolated success/failure analysis.
+    Reports combined success/failure status with detailed analysis information for each phase.
     Preserves all debug output for post-test analysis and troubleshooting.
     """
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="JESSE Framework Knowledge Base Integration Test",
+        description="Enhanced JESSE Framework Knowledge Base Integration Test",
         epilog="Examples:\n"
-               "  python test_project_indexing_integration.py                    # Incremental mode\n"
-               "  python test_project_indexing_integration.py --kb-only-rebuild # Fast KB rebuild\n"
-               "  python test_project_indexing_integration.py --full-rebuild    # Complete rebuild",
+               "  python test_project_indexing_integration.py                              # Test both project-base and git-clones\n"
+               "  python test_project_indexing_integration.py --test-mode project         # Test project-base only\n"
+               "  python test_project_indexing_integration.py --test-mode git-clones      # Test git-clones only\n"
+               "  python test_project_indexing_integration.py --kb-only-rebuild           # Fast KB rebuild for both\n"
+               "  python test_project_indexing_integration.py --full-rebuild              # Complete rebuild for both",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     
@@ -463,37 +674,125 @@ async def main():
         help='Keep analysis files, regenerate only KB files (fast, perfect for testing KB synthesis fixes)'
     )
     
+    parser.add_argument(
+        '--test-mode',
+        choices=['project', 'git-clones', 'both'],
+        default='both',
+        help='Choose what to test: project-base only, git-clones only, or both (default: both)'
+    )
+    
     args = parser.parse_args()
     
-    print("JESSE Framework - Project Root Indexing Integration Test")
-    print("=" * 60)
+    print("Enhanced JESSE Framework Knowledge Base Integration Test")
+    print("=" * 65)
     
-    # Show selected mode
+    # Show selected modes
+    print(f"🎯 Test Mode: {args.test_mode.upper()}")
     if args.full_rebuild:
-        print("🔥 Mode: FULL REBUILD (Nuclear - deletes everything)")
+        print("🔥 Rebuild Mode: FULL REBUILD (Nuclear - deletes everything)")
     elif args.kb_only_rebuild:
-        print("🔧 Mode: KB-ONLY REBUILD (Surgical - preserves analysis)")
+        print("🔧 Rebuild Mode: KB-ONLY REBUILD (Surgical - preserves analysis)")
     else:
-        print("📈 Mode: INCREMENTAL (Uses existing cache)")
+        print("📈 Rebuild Mode: INCREMENTAL (Uses existing cache)")
+    
+    # Get project root for git-clone discovery
+    try:
+        project_root = ensure_project_root()
+    except Exception as e:
+        print(f"❌ PROJECT ROOT ERROR: {e}")
+        return False
+    
+    # Test execution coordination
+    results = {
+        'project_base': {'tested': False, 'success': False},
+        'git_clones': {'tested': False, 'success': False, 'repositories': 0}
+    }
+    
+    overall_start_time = datetime.now()
     
     try:
-        success = await test_real_project_indexing(
-            full_rebuild=args.full_rebuild,
-            kb_only_rebuild=args.kb_only_rebuild
-        )
+        # Phase 1: Project-Base Testing
+        if args.test_mode in ['project', 'both']:
+            print(f"\n{'='*20} PHASE 1: PROJECT-BASE TESTING {'='*20}")
+            results['project_base']['tested'] = True
+            results['project_base']['success'] = await test_real_project_indexing(
+                full_rebuild=args.full_rebuild,
+                kb_only_rebuild=args.kb_only_rebuild
+            )
         
-        print("\n" + "=" * 60)
-        if success:
-            print("🎉 INTEGRATION TEST RESULT: SUCCESS")
-            print("✅ Real project indexing system verified working")
+        # Phase 2: Git-Clone Testing  
+        if args.test_mode in ['git-clones', 'both']:
+            print(f"\n{'='*20} PHASE 2: GIT-CLONE TESTING {'='*20}")
+            
+            # Discover available git-clone repositories
+            repositories = discover_git_clone_repositories(project_root)
+            results['git_clones']['repositories'] = len(repositories)
+            
+            if repositories:
+                results['git_clones']['tested'] = True
+                git_clone_results = await test_git_clone_indexing(
+                    project_root, repositories,
+                    full_rebuild=args.full_rebuild,
+                    kb_only_rebuild=args.kb_only_rebuild
+                )
+                results['git_clones']['success'] = git_clone_results['success']
+                results['git_clones']['details'] = git_clone_results
+            else:
+                print("⚠️ No git-clone repositories found - skipping git-clone testing")
+                results['git_clones']['success'] = True  # No repos = success
+        
+        # Calculate overall results
+        overall_end_time = datetime.now()
+        total_duration = overall_end_time - overall_start_time
+        
+        print(f"\n{'='*20} COMPREHENSIVE TEST RESULTS {'='*20}")
+        print(f"Total Test Duration: {total_duration}")
+        
+        # Project-Base Results
+        if results['project_base']['tested']:
+            status = "✅ SUCCESS" if results['project_base']['success'] else "❌ FAILED"
+            print(f"Project-Base Testing: {status}")
         else:
-            print("❌ INTEGRATION TEST RESULT: FAILURE")
-            print("💥 Issues detected - system needs investigation")
+            print("Project-Base Testing: ⏭️ SKIPPED")
         
-        return success
+        # Git-Clone Results
+        if results['git_clones']['tested']:
+            status = "✅ SUCCESS" if results['git_clones']['success'] else "❌ FAILED"
+            print(f"Git-Clone Testing: {status} ({results['git_clones']['repositories']} repositories)")
+            if 'details' in results['git_clones']:
+                details = results['git_clones']['details']
+                print(f"  Repositories: {details['repositories_successful']}/{details['repositories_tested']} successful")
+        else:
+            print(f"Git-Clone Testing: ⏭️ SKIPPED ({results['git_clones']['repositories']} repositories available)")
+        
+        # Overall determination
+        tested_phases = [phase for phase, result in results.items() if result['tested']]
+        successful_phases = [phase for phase, result in results.items() if result['tested'] and result['success']]
+        
+        overall_success = len(tested_phases) > 0 and len(successful_phases) == len(tested_phases)
+        
+        print(f"\n{'='*25} FINAL RESULT {'='*25}")
+        if overall_success:
+            print("🎉 ENHANCED INTEGRATION TEST: SUCCESS")
+            print("✅ All tested components verified working")
+            if results['project_base']['tested']:
+                print("✅ Project-base indexing system functional")
+            if results['git_clones']['tested']:
+                print("✅ Git-clone indexing system functional")
+        else:
+            print("❌ ENHANCED INTEGRATION TEST: FAILURE")
+            print("💥 Issues detected in one or more components")
+            if results['project_base']['tested'] and not results['project_base']['success']:
+                print("❌ Project-base indexing system has issues")
+            if results['git_clones']['tested'] and not results['git_clones']['success']:
+                print("❌ Git-clone indexing system has issues")
+        
+        print(f"📊 Test Summary: {len(successful_phases)}/{len(tested_phases)} phases successful")
+        
+        return overall_success
         
     except Exception as e:
-        print(f"🚨 INTEGRATION TEST EXECUTION FAILED: {e}")
+        print(f"🚨 ENHANCED INTEGRATION TEST EXECUTION FAILED: {e}")
         import traceback
         traceback.print_exc()
         return False

@@ -39,6 +39,13 @@
 # <system>: logging - Structured logging for plan generation analysis
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-07T15:02:00Z : CRITICAL HANDLER PATH FIX - Fixed task metadata to include handler-determined KB paths by CodeAssistant
+# * FIXED CRITICAL BUG: Modified _generate_directory_tasks_recursive() to include knowledge_file_path in task metadata
+# * BEFORE: Task metadata contained only paths but not handler-determined KB file paths causing ExecutionEngine to use cache defaults
+# * AFTER: Task metadata now includes both main directory KB path and subdirectory KB paths from DirectoryContext
+# * Added knowledge_file_path extraction from DirectoryContext.knowledge_file_path for main directory tasks
+# * Added knowledge_file_path extraction for each subdirectory context in metadata
+# * ENABLES HANDLER CONTROL: ExecutionEngine can now access handler-determined paths from task metadata instead of computing its own
 # 2025-07-06T20:10:00Z : Initial implementation of Plan Generator for Plan-then-Execute architecture by CodeAssistant
 # * Created comprehensive decision-to-plan translation converting RebuildDecisionEngine decisions into atomic tasks
 # * Implemented dependency-aware task creation ensuring proper execution ordering for hierarchical knowledge building
@@ -563,6 +570,8 @@ class PlanGenerator:
             priority=priority,
             metadata={
                 'source_root': str(source_root),
+                # SIMPLIFIED: knowledge_file_path is now correctly set by handler during discovery
+                'knowledge_file_path': str(directory_context.knowledge_file_path),
                 'file_contexts': [
                     {
                         'path': str(fc.file_path),
@@ -572,7 +581,11 @@ class PlanGenerator:
                     for fc in directory_context.file_contexts
                 ],
                 'subdirectory_contexts': [
-                    {'path': str(sc.directory_path)}
+                    {
+                        'path': str(sc.directory_path),
+                        # SIMPLIFIED: knowledge_file_path is now correctly set by handler
+                        'knowledge_file_path': str(sc.knowledge_file_path)
+                    }
                     for sc in directory_context.subdirectory_contexts
                 ],
                 'child_dependencies': len(subdirectory_task_ids),

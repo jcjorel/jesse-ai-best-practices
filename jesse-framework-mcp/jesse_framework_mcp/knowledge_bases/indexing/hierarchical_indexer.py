@@ -40,6 +40,14 @@
 # <system>: logging - Structured logging and error reporting
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-07T14:45:00Z : CRITICAL HANDLER INTEGRATION FIX - Fixed GitCloneHandler and ProjectBaseHandler integration preventing KB file deletion by CodeAssistant
+# * FIXED CRITICAL BUG: Added proper special handler integration in discovery phase preventing cross-contamination between handler types
+# * BEFORE: Git-clone indexing used generic processing deleting existing project-base KB files, handlers were imported but never called
+# * AFTER: Path type detection delegates to GitCloneHandler for git-clone paths and ProjectBaseHandler for project roots
+# * Added _build_directory_context_with_handlers() with path type detection and proper handler delegation
+# * Added _is_project_base_root() for project root identification and handler selection
+# * PREVENTS KB FILE DELETION: Git-clone processing now isolated to git-clone KB files only, never touches project-base files
+# * RESTORES LEAF-FIRST PROCESSING: Both handlers now properly integrated in Plan-then-Execute architecture
 # 2025-07-06T17:12:00Z : CRITICAL EXECUTION ORDER FIX - Fixed file-first processing to prevent stale KB generation by CodeAssistant
 # * FIXED FUNDAMENTAL LOGICAL BUG: Corrected execution order in _process_directory_leaf_first to implement true file-first optimization
 # * BEFORE: Generated directory KB files FIRST using stale analysis cache, then processed individual files (defeating optimization)
@@ -55,10 +63,6 @@
 # * Added RebuildDecisionEngine integration consolidating decision logic from HierarchicalIndexer, ChangeDetector, and FileAnalysisCache
 # * Replaced scattered change detection and rebuild logic with unified decision engine providing comprehensive audit trails
 # * Simplified indexing workflow by delegating all decision-making to centralized engine with clear reasoning
-# 2025-07-06T14:09:00Z : Fixed empty directory rebuild loops and missing project root summary by CodeAssistant
-# * Enhanced empty directory detection with improved logging (📁 EMPTY message) to prevent infinite rebuild cycles
-# * Added project root forced processing (🏗️ PROJECT ROOT message) ensuring root_kb.md generation in incremental mode
-# * Integrated FileAnalysisCache._is_directory_empty_of_processable_content() to skip knowledge file generation for empty directories
 ###############################################################################
 
 """
@@ -234,20 +238,20 @@ class HierarchicalIndexer:
     async def _discover_directory_structure(self, root_path: Path, ctx: Context) -> DirectoryContext:
         """
         [Class method intent]
-        Recursively discovers and builds directory structure context for the entire hierarchy.
-        Creates DirectoryContext and FileContext objects for all discoverable files and directories
-        while respecting configuration filtering rules.
+        Discovers directory structure using appropriate special handler based on path type.
+        Delegates to GitCloneHandler for git-clone directories and ProjectBaseHandler
+        for project roots, ensuring proper handler integration and leaf-first processing.
 
         [Design principles]
-        Recursive discovery building complete hierarchy context before processing begins.
-        Configuration-driven filtering preventing processing of excluded files and directories.
+        Handler delegation based on path type ensuring specialized processing for different scenarios.
+        Special handler integration preserving Plan-then-Execute architecture with proper discovery.
         Accurate statistics collection enabling progress calculation and performance monitoring.
-        Error handling ensuring discovery continues despite individual file access failures.
+        Error handling ensuring discovery continues despite individual handler failures.
 
         [Implementation details]
-        Uses configuration filtering methods to exclude unwanted files and directories.
-        Builds FileContext objects with metadata for all discoverable files.
-        Creates nested DirectoryContext structure mirroring filesystem hierarchy.
+        Detects directory type (git-clone vs project-base vs generic) using path analysis.
+        Delegates discovery to appropriate special handler when detected.
+        Falls back to generic discovery for non-specialized directory types.
         Updates processing statistics for accurate progress reporting and metrics.
         """
         if not root_path.exists():
@@ -258,8 +262,8 @@ class HierarchicalIndexer:
         
         await ctx.info(f"Discovering structure for: {root_path}")
         
-        # Build directory context recursively
-        directory_context = await self._build_directory_context(root_path, ctx)
+        # Detect directory type and delegate to appropriate handler
+        directory_context = await self._build_directory_context_with_handlers(root_path, ctx)
         
         # Update statistics
         stats = self._current_status.processing_stats
@@ -269,6 +273,72 @@ class HierarchicalIndexer:
         await ctx.info(f"Discovery complete: {stats.total_files_discovered} files, {stats.total_directories_discovered} directories")
         
         return directory_context
+    
+    async def _build_directory_context_with_handlers(self, root_path: Path, ctx: Context) -> DirectoryContext:
+        """
+        [Class method intent]
+        Builds DirectoryContext using appropriate special handler based on path type detection.
+        Delegates to GitCloneHandler for git-clone paths and ProjectBaseHandler for project roots,
+        ensuring proper handler integration and preventing cross-contamination between handler types.
+
+        [Design principles]
+        Path type detection enabling proper handler delegation for specialized processing scenarios.
+        Handler isolation ensuring git-clone processing never affects project-base KB files.
+        Fallback to generic processing for non-specialized directory types.
+        Special handler integration preserving leaf-first processing and Plan-then-Execute architecture.
+
+        [Implementation details]
+        Detects git-clone paths using GitCloneHandler.is_git_clone_path() method.
+        Detects project-base scenarios using root path analysis and configuration context.
+        Delegates discovery to appropriate special handler when path type is detected.
+        Falls back to generic _build_directory_context for non-specialized directories.
+        """
+        # Initialize special handlers for path type detection and delegation
+        git_clone_handler = GitCloneHandler(self.config)
+        project_base_handler = ProjectBaseHandler(self.config)
+        
+        # Path type detection and handler delegation
+        if git_clone_handler.is_git_clone_path(root_path):
+            # Git-clone path detected - delegate to GitCloneHandler
+            await ctx.info(f"🔗 GIT-CLONE HANDLER: Processing git-clone directory: {root_path}")
+            return await git_clone_handler.process_git_clone_structure(root_path, ctx)
+            
+        elif self._is_project_base_root(root_path, ctx):
+            # Project-base root detected - delegate to ProjectBaseHandler  
+            await ctx.info(f"📁 PROJECT-BASE HANDLER: Processing project root: {root_path}")
+            return await project_base_handler.process_project_structure(root_path, ctx)
+            
+        else:
+            # Generic directory - use standard processing
+            await ctx.info(f"📂 GENERIC HANDLER: Processing directory: {root_path}")
+            return await self._build_directory_context(root_path, ctx)
+    
+    def _is_project_base_root(self, root_path: Path, ctx: Context) -> bool:
+        """
+        [Class method intent]
+        Determines if the given path is a project-base root requiring ProjectBaseHandler processing.
+        Uses path analysis and configuration context to identify project root scenarios
+        enabling proper handler delegation and preventing generic processing of project roots.
+
+        [Design principles]
+        Project root detection enabling specialized ProjectBaseHandler processing for whole codebase scenarios.
+        Clear identification logic preventing project roots from being processed as generic directories.
+        Integration with configuration context enabling flexible project root identification.
+
+        [Implementation details]
+        Checks if root_path matches the source root indicating whole project processing.
+        Uses configuration context and path analysis for project root identification.
+        Returns boolean decision enabling proper handler delegation in discovery phase.
+        """
+        # Project-base detection: if we're processing the source root itself
+        # This indicates whole project indexing rather than subdirectory processing
+        is_project_root = (
+            hasattr(self, '_source_root') and 
+            root_path == self._source_root and
+            not GitCloneHandler(self.config).is_git_clone_path(root_path)
+        )
+        
+        return is_project_root
     
     async def _build_directory_context(self, directory_path: Path, ctx: Context) -> DirectoryContext:
         """

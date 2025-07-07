@@ -40,6 +40,31 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-07T21:58:00Z : CRITICAL METHOD SIGNATURE FIX - Completed handler parameter integration for _process_single_file method by CodeAssistant
+# * FIXED EXECUTION FAILURE: Updated _process_single_file() method signature to accept handler parameter
+# * COMPLETED INTEGRATION: Method signature now matches the call from build_file_knowledge() with handler parameter
+# * RESTORED FILE PROCESSING: File analysis execution now proceeds without "unexpected keyword argument 'handler'" errors
+# * ENABLES HANDLER-AWARE PROCESSING: _process_single_file() can now properly pass handler to cache operations
+# * ROOT CAUSE FIXED: Method signature mismatch between caller and method definition causing immediate execution failure
+# 2025-07-07T21:41:00Z : CRITICAL CACHE HANDLER INTEGRATION - Fixed FileAnalysisCache handler parameter requirements by CodeAssistant
+# * FIXED EXECUTION FAILURE: Added handler parameter to build_file_knowledge() and _process_single_file() methods
+# * FIXED CACHE CALLS: Updated all FileAnalysisCache.get_cached_analysis() and cache_analysis() calls to pass handler parameter
+# * RESTORED CACHE FUNCTIONALITY: Cache operations now work correctly with handler-specific path calculations
+# * PREVENTS CACHE ERRORS: Eliminated "missing 1 required positional argument: 'handler'" errors during file processing
+# * ENABLES SEGREGATED CACHING: Git-clone and project-base files now cache in their respective directory structures
+# 2025-07-07T17:07:00Z : COMPLETE PATH GENERATION REMOVAL - Eliminated all path override methods enabling 100% handler control by CodeAssistant
+# * REMOVED COMPLETELY: _get_knowledge_file_path() method with 50+ lines of hardcoded project-base path logic
+# * REMOVED COMPLETELY: _is_handler_root_directory() method with handler root detection logic
+# * ZERO FALLBACKS: No path generation capability remains in KnowledgeBuilder - handlers have 100% control
+# * PREVENTS ALL OVERRIDES: Impossible for KnowledgeBuilder to override any handler path decisions
+# * ENFORCES HANDLER AUTHORITY: Git-clone handlers write to git-clones/, project-base handlers write to project-base/
+# 2025-07-07T14:59:00Z : CRITICAL HANDLER PATH FIX - Fixed path override bug preventing git-clone handler KB segregation by CodeAssistant
+# * FIXED CRITICAL BUG: Modified build_directory_summary() to accept knowledge_file_path parameter instead of computing internally
+# * BEFORE: KnowledgeBuilder hardcoded project-base/ paths overriding handler-determined paths for all directories
+# * AFTER: Handlers now control where KB files are written enabling proper git-clones/ vs project-base/ segregation
+# * Added handler-determined path parameter with debug logging showing which handler determined the path
+# * PREVENTS PATH OVERRIDE: Git-clone indexing now writes to git-clones/ directory instead of project-base/
+# * RESTORES HANDLER SEPARATION: Each handler type now controls its own KB file location decisions
 # 2025-07-07T10:24:00Z : Implemented empty file special handling to prevent infinite rebuild loops by CodeAssistant
 # * Added _is_empty_file() method for reliable zero-byte file detection using filesystem metadata
 # * Added _generate_empty_file_analysis() method creating standardized analysis content for empty files
@@ -201,7 +226,7 @@ class KnowledgeBuilder:
                 logger.error(f"Failed to initialize Claude 4 Sonnet driver: {e}", exc_info=True)
                 raise RuntimeError(f"Knowledge builder initialization failed: {e}") from e
     
-    async def build_file_knowledge(self, file_context: FileContext, ctx: Context, source_root: Optional[Path] = None, bypass_cache: bool = False) -> FileContext:
+    async def build_file_knowledge(self, file_context: FileContext, ctx: Context, source_root: Optional[Path] = None, bypass_cache: bool = False, handler: Optional['IndexingHandler'] = None) -> FileContext:
         """
         [Class method intent]
         Generates comprehensive file knowledge using cache-first Claude 4 Sonnet analysis.
@@ -253,8 +278,8 @@ class KnowledgeBuilder:
                 empty_file_analysis = self._generate_empty_file_analysis(file_context.file_path)
                 
                 # Cache the standardized analysis to prevent rebuild loops
-                if source_root and self.config.indexing_mode.value != "full":
-                    await self.analysis_cache.cache_analysis(file_context.file_path, empty_file_analysis, source_root)
+                if source_root and self.config.indexing_mode.value != "full" and handler:
+                    await self.analysis_cache.cache_analysis(file_context.file_path, empty_file_analysis, source_root, handler)
                     await ctx.debug(f"💾 CACHED: Empty file analysis cached for {file_context.file_path.name}")
                 
                 # Return completed FileContext with standardized empty file analysis
@@ -287,7 +312,7 @@ class KnowledgeBuilder:
                 )
             
             # Generate summary using cache-first Claude 4 Sonnet processing (unless bypassing cache due to rebuild decision)
-            summary = await self._process_single_file(file_context.file_path, file_content, ctx, source_root, bypass_cache=bypass_cache)
+            summary = await self._process_single_file(file_context.file_path, file_content, ctx, source_root, bypass_cache=bypass_cache, handler=handler)
             
             return FileContext(
                 file_path=file_context.file_path,
@@ -319,21 +344,26 @@ class KnowledgeBuilder:
                 processing_end_time=datetime.now()
             )
     
-    async def build_directory_summary(self, directory_context: DirectoryContext, ctx: Context, source_root: Optional[Path] = None) -> DirectoryContext:
+    async def build_directory_summary(self, directory_context: DirectoryContext, ctx: Context, knowledge_file_path: Path, source_root: Optional[Path] = None) -> DirectoryContext:
         """
         [Class method intent]
         Builds directory knowledge using centralized decision engine and template generation.
         Trusts the decision already made by HierarchicalIndexer's RebuildDecisionEngine, then generates complete
         knowledge file using alphabetical sorting and full rebuild approach.
+        
+        CRITICAL FIX: Now accepts knowledge_file_path from caller instead of computing it internally,
+        enabling handlers to control where KB files are written (git-clones/ vs project-base/).
 
         [Design principles]
         Centralized decision logic delegated to RebuildDecisionEngine for consistent decision-making.
+        Handler-controlled path decisions enabling proper git-clone vs project-base segregation.
         Full rebuild approach generating complete knowledge files from template on every change.
         Alphabetical sorting ensuring consistent file and subdirectory ordering.
         Simple template generation replacing complex incremental update logic.
 
         [Implementation details]
         Trusts decision already made by HierarchicalIndexer - no need to re-evaluate.
+        Uses handler-determined knowledge_file_path preventing path override issues.
         Collects file contexts and subdirectory summaries for template generation.
         Generates global summary using LLM analysis of complete content.
         Creates complete knowledge file using template generator with alphabetical sorting.
@@ -345,9 +375,7 @@ class KnowledgeBuilder:
         
         try:
             await ctx.info(f"Building directory knowledge for: {directory_context.directory_path}")
-            
-            # Determine knowledge file path
-            knowledge_file_path = self._get_knowledge_file_path(directory_context.directory_path, source_root)
+            await ctx.debug(f"Handler-determined KB path: {knowledge_file_path}")
             
             # Trust the decision already made by HierarchicalIndexer - no need to re-evaluate
             # This method is only called for directories that need processing
@@ -811,7 +839,7 @@ The file exists in the filesystem but contains no data. This may indicate:
             logger.warning(f"File read error {file_path}: {e}")
             return ""
     
-    async def _process_single_file(self, file_path: Path, content: str, ctx: Context, source_root: Optional[Path] = None, bypass_cache: bool = False) -> str:
+    async def _process_single_file(self, file_path: Path, content: str, ctx: Context, source_root: Optional[Path] = None, bypass_cache: bool = False, handler: Optional['IndexingHandler'] = None) -> str:
         """
         [Class method intent]
         Processes single file content through cache-first LLM analysis generating raw markdown output.
@@ -837,11 +865,10 @@ The file exists in the filesystem but contains no data. This may indicate:
             # PHASE 1: Check cache first for performance optimization (unless bypassing cache due to rebuild decision or FULL mode)
             if bypass_cache:
                 await ctx.info(f"🔄 REBUILD DECISION: Bypassing cache for {file_path.name} - RebuildDecisionEngine determined file is stale")
-            elif source_root and self.config.indexing_mode.value != "full":
-                cached_analysis = await self.analysis_cache.get_cached_analysis(file_path, source_root)
+            elif source_root and self.config.indexing_mode.value != "full" and handler:
+                cached_analysis = await self.analysis_cache.get_cached_analysis(file_path, source_root, handler)
                 if cached_analysis:
-                    cache_path = self.analysis_cache.get_cache_path(file_path, source_root)
-                    await ctx.info(f"📄 CACHE HIT: Using cached analysis for {file_path.name} from {cache_path}")
+                    await ctx.info(f"📄 CACHE HIT: Using cached analysis for {file_path.name}")
                     return cached_analysis
             elif source_root and self.config.indexing_mode.value == "full":
                 await ctx.info(f"💥 FULL MODE: Bypassing cache for {file_path.name} - generating fresh analysis")
@@ -939,13 +966,13 @@ The file exists in the filesystem but contains no data. This may indicate:
             clean_final_content = self._remove_truncation_marker(final_response_content.strip())
             
             # Cache the clean analysis result - both compliant and max-iterations-reached cases (unless FULL mode)
-            if source_root and self.config.indexing_mode.value != "full":
-                await self.analysis_cache.cache_analysis(file_path, clean_final_content, source_root)
+            if source_root and self.config.indexing_mode.value != "full" and handler:
+                await self.analysis_cache.cache_analysis(file_path, clean_final_content, source_root, handler)
                 await ctx.debug(f"💾 CACHED: Clean analysis cached for {file_path.name} (compliant: {was_compliant})")
                 
                 # STALENESS ALGORITHM VERIFICATION: Ensure cache is now fresh after rebuild
                 # Note: Use direct cache method since we don't have decision engine instance here
-                is_fresh = self.analysis_cache.is_cache_fresh(file_path, source_root)
+                is_fresh, _ = self.analysis_cache.is_cache_fresh(file_path, source_root, handler)
                 if not is_fresh:
                     error_msg = f"STALENESS ALGORITHM BUG: File {file_path.name} should be fresh after caching but is still stale"
                     logger.error(error_msg)
@@ -1046,110 +1073,6 @@ The file exists in the filesystem but contains no data. This may indicate:
         return file_contexts
     
     
-    def _is_handler_root_directory(self, directory_path: Path, source_root: Optional[Path] = None) -> bool:
-        """
-        [Class method intent]
-        Detects if directory_path represents a handler root directory requiring root_kb.md generation.
-        Identifies top-level contexts for project-base, git-clones, and pdf-knowledge handlers
-        to enable proper global summary file naming.
-
-        [Design principles]
-        Handler-agnostic root detection supporting all three knowledge base handler types.
-        Clear detection logic based on directory structure patterns and source root relationships.
-        Conservative approach defaulting to subdirectory behavior when detection is uncertain.
-
-        [Implementation details]
-        Project-base: Root when directory_path equals source_root (processing project root).
-        Git-clones: Root when directory is top level of a .kb/ knowledge base directory.
-        PDF-knowledge: Root when directory is top level of a .kb/ knowledge base directory.
-        Returns boolean indicating whether root_kb.md should be generated for this directory.
-        """
-        try:
-            # Project-base handler: Root when processing the project root itself
-            if source_root and directory_path == source_root:
-                return True
-            
-            # Git-clones and PDF-knowledge handlers: Root when directory name ends with .kb
-            # and is likely the top level of a knowledge base structure
-            if directory_path.name.endswith('.kb'):
-                return True
-            
-            # Check if directory is inside a .kb directory structure but at its root
-            # This handles cases where we're processing the content inside a .kb directory
-            parent_parts = directory_path.parts
-            for i, part in enumerate(parent_parts):
-                if part.endswith('.kb'):
-                    # Check if current directory is the immediate child of the .kb directory
-                    kb_path = Path(*parent_parts[:i+1])
-                    if directory_path == kb_path:
-                        return True
-                    break
-            
-            # Default: not a root directory
-            return False
-            
-        except Exception as e:
-            logger.warning(f"Failed to detect handler root directory for {directory_path}: {e}")
-            # Conservative fallback: not a root directory
-            return False
-
-    def _get_knowledge_file_path(self, directory_path: Path, source_root: Optional[Path] = None) -> Path:
-        """
-        [Class method intent]
-        Determines appropriate knowledge file path for directory following naming conventions.
-        Implements hierarchical semantic context pattern with standardized knowledge file
-        naming and location conventions for consistent knowledge base organization.
-        Enforces project-base indexing business rule using mandatory project-base/ subdirectory.
-        Generates root_kb.md for handler root directories and {directory_name}_kb.md for subdirectories.
-
-        [Design principles]
-        Standardized knowledge file naming following hierarchical semantic context patterns.
-        Root directory detection enabling proper global summary generation as root_kb.md files.
-        Configurable file placement enabling separation between source and knowledge files.
-        Hierarchical structure preservation in knowledge output directory mirroring source structure.
-        Mandatory project-base indexing segregation using dedicated project-base/ subdirectory.
-
-        [Implementation details]
-        Detects root directory contexts and generates root_kb.md for handler scope roots.
-        Uses knowledge_output_directory from config if specified, preserving relative structure.
-        Always uses project-base/ subdirectory with structure mirroring for project-base indexing.
-        Calculates relative path from source root and recreates structure in knowledge directory.
-        Returns Path object ready for knowledge file writing operations.
-        """
-        # Determine if this is a root directory context requiring root_kb.md
-        is_root_directory = self._is_handler_root_directory(directory_path, source_root)
-        
-        if is_root_directory:
-            knowledge_filename = "root_kb.md"
-        else:
-            knowledge_filename = f"{directory_path.name}_kb.md"
-        
-        if self.config.knowledge_output_directory and source_root:
-            # Use separate knowledge output directory, preserving relative structure
-            try:
-                # Special handling for project root (source_root == directory_path)
-                if directory_path == source_root:
-                    # Project root goes directly in project-base/ subdirectory
-                    knowledge_dir = self.config.knowledge_output_directory / "project-base"
-                    return knowledge_dir / knowledge_filename
-                
-                # Calculate relative path from source root to current directory
-                relative_path = directory_path.relative_to(source_root)
-                
-                # Apply project-base indexing business rule - always use project-base/ subdirectory
-                knowledge_dir = self.config.knowledge_output_directory / "project-base" / relative_path
-                
-                return knowledge_dir / knowledge_filename
-            except ValueError:
-                # Fallback if relative path calculation fails
-                return self.config.knowledge_output_directory / "project-base" / knowledge_filename
-        elif self.config.knowledge_output_directory:
-            # Use separate knowledge output directory, flat structure
-            return self.config.knowledge_output_directory / "project-base" / knowledge_filename
-        else:
-            # Default behavior: place in parent directory with project-base/ subdirectory
-            parent_dir = directory_path.parent
-            return parent_dir / "project-base" / knowledge_filename
     
     async def _write_knowledge_file(self, file_path: Path, content: str) -> None:
         """

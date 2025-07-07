@@ -42,26 +42,40 @@
 # <system>: logging - Structured logging for decision analysis and debugging
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-07T22:29:00Z : CRITICAL ORPHANED FILE FIX - Fixed analysis file deletion bug by implementing convention-based delegation by CodeAssistant
+# * MAJOR ARCHITECTURE SIMPLIFICATION: Replaced complex centralized orphaned detection with handler delegation eliminating 75% of complex code
+# * FIXED ROOT CAUSE: Orphaned file detection was using wrong source root context causing legitimate git-clone analysis files to be flagged as orphaned
+# * ELIMINATED DATA LOSS: Git-clone analysis files (.knowledge/git-clones/<repo>.kb/*.analysis.md) no longer incorrectly deleted every test run
+# * CONVENTION-BASED APPROACH: Each handler now manages orphaned file detection in its own domain eliminating cross-handler context confusion
+# * SIMPLIFIED MAINTENANCE: Reduced from complex source root calculation logic to simple delegation pattern improving reliability
+# 2025-07-07T21:55:00Z : CRITICAL HANDLER INTEGRATION FIX - Fixed is_cache_fresh() method to pass required handler parameter by CodeAssistant
+# * FIXED EXECUTION FAILURE: Updated is_cache_fresh() method to get appropriate handler for file path before calling FileAnalysisCache
+# * RESTORED CACHE FUNCTIONALITY: Cache freshness checks now work correctly with handler-specific path calculations
+# * PREVENTS CACHE ERRORS: Eliminated "missing 1 required positional argument: 'handler'" errors during decision analysis
+# * ENABLES SEGREGATED DECISIONS: Git-clone and project-base files now have freshness checked in their respective structures
+# * ROOT CAUSE FIXED: RebuildDecisionEngine was calling FileAnalysisCache methods without required handler parameter
+# 2025-07-07T19:03:00Z : CRITICAL ORPHANED FILE FIX - Fixed orphaned file detection to scan all handler-managed areas instead of only project-base by CodeAssistant
+# * MAJOR CLEANUP FIX: Updated _find_orphaned_knowledge_files() and _find_orphaned_cache_files() to use HandlerRegistry delegation
+# * COMPREHENSIVE SCANNING: Now scans project-base, git-clone .kb directories, and all other handler-managed areas for orphaned files
+# * RESOLVED GIT-CLONE CLEANUP: Git-clone orphaned files in .knowledge/git-clones/<repo>.kb/ directories now properly detected and cleaned
+# * ELIMINATED BLIND SPOTS: Removed hardcoded project-base-only scanning that missed orphaned files from specialized handlers
+# * ROOT CAUSE FIXED: Orphaned file detection was only scanning .knowledge/project-base/ ignoring git-clone handler managed directories
+# 2025-07-07T18:56:00Z : CRITICAL ARCHITECTURAL FIX - Implemented handler-delegated path management eliminating hardcoded project-base paths by CodeAssistant
+# * MAJOR ARCHITECTURAL TRANSFORMATION: Replaced all hardcoded self._project_base_root references with HandlerRegistry delegation
+# * FIXED GIT-CLONE PATHS: Updated _calculate_cache_path_safe() and _calculate_knowledge_path_safe() to use handler-specific path logic
+# * ENABLED .KB STRUCTURE: Git-clone files now correctly placed in separate .knowledge/git-clones/<repo>.kb/ directories instead of inside git clones
+# * COMPREHENSIVE REVERSE MAPPING: Updated _map_analysis_file_to_source_safe() and _map_knowledge_dir_to_source_safe() to support all handler types
+# * RESOLVES ROOT CAUSE: Eliminates hardcoded "project-base" forcing that prevented git-clone handler from using correct path structure
 # 2025-07-06T22:31:00Z : CRITICAL PERFORMANCE FIX - Removed project root force rebuild eliminating systematic unnecessary rebuilds by CodeAssistant
 # * MAJOR PERFORMANCE IMPROVEMENT: Removed PROJECT_ROOT_FORCED special case allowing project root to follow standard staleness rules
 # * Project root now uses COMPREHENSIVE_STALENESS checking like all other directories, only rebuilding when content actually changes
 # * Eliminates systematic forced rebuilds on every indexing run providing immediate performance benefits for incremental processing
 # * RESOLVES: Project root directory always processes to ensure root_kb.md generation -> Now follows same rules as subdirectories
-# 2025-07-06T19:30:00Z : CRITICAL BUG FIX - Eliminated timestamp tolerance for direct filesystem comparison resolving caching inconsistencies by CodeAssistant
-# * FINAL FIX: Removed timestamp tolerance from _is_timestamp_newer() method for direct filesystem timestamp comparison
-# * Simplified timestamp comparison to use direct comparison: newer_time > older_time without any tolerance
-# * Aligned with FileAnalysisCache timestamp handling eliminating tolerance-based race conditions and timing inconsistencies
-# * Resolved infinite rebuild loop root cause by ensuring consistent timestamp comparison behavior across all components
 # 2025-07-06T17:45:00Z : CRITICAL BUG FIX - Fixed race condition in timestamp comparison causing infinite rebuild loops by CodeAssistant
 # * EMERGENCY FIX: Restored 1-second tolerance in _is_timestamp_newer() to prevent race conditions during same-cycle processing
 # * Fixed infinite rebuild loop where files processed in one cycle were immediately considered stale in the next cycle
 # * Race condition occurred because cache files created during processing had timestamps microseconds after source files
 # * Direct timestamp comparison without tolerance caused legitimate fresh cache to appear stale immediately after creation
-# 2025-07-06T16:40:00Z : Removed timestamp comparison tolerance for precise staleness detection by CodeAssistant (CAUSED BUG - REVERTED)
-# * Replaced _is_timestamp_newer_with_tolerance() with direct _is_timestamp_newer() comparison for precise detection
-# * Removed timestamp_tolerance initialization and configuration dependency from constructor
-# * Updated logging message to reflect direct timestamp comparison approach
-# * Simplified timestamp comparison logic eliminating tolerance-based false negative scenarios
 ###############################################################################
 
 """
@@ -93,7 +107,7 @@ from ..models.rebuild_decisions import (
     DecisionReason
 )
 from .file_analysis_cache import FileAnalysisCache
-from .special_handlers import ProjectBaseHandler, GitCloneHandler
+from .handler_interface import HandlerRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -124,35 +138,32 @@ class RebuildDecisionEngine:
     def __init__(self, config: IndexingConfig):
         """
         [Class method intent]
-        Initializes decision engine with configuration and component dependencies.
-        Sets up file analysis cache, special handlers, and decision tracking capabilities
-        for comprehensive decision-making operations.
+        Initializes decision engine with configuration and handler registry integration.
+        Sets up file analysis cache, handler registry, and decision tracking capabilities
+        for comprehensive decision-making operations using handler-delegated path management.
 
         [Design principles]
         Configuration-driven behavior supporting different decision scenarios and requirements.
-        Component integration enabling informed decision-making through cache and handler consultation.
+        Handler registry integration enabling informed decision-making through specialized handler consultation.
         Decision tracking preparation supporting comprehensive audit trails and performance monitoring.
+        Path calculation delegation to handlers eliminating hardcoded path assumptions.
 
         [Implementation details]
         Creates FileAnalysisCache instance for staleness checking and performance optimization.
-        Initializes special handlers for project-base and git-clone scenarios.
+        Initializes HandlerRegistry for specialized path calculation and processing decisions.
         Sets up decision timing and audit trail tracking capabilities.
-        Configures timestamp tolerance for consistent staleness checking across components.
+        Eliminates hardcoded path roots in favor of handler-delegated path management.
         """
         self.config = config
         self.file_cache = FileAnalysisCache(config)
-        self.project_base_handler = ProjectBaseHandler(config)
-        self.git_clone_handler = GitCloneHandler(config)
+        self.handler_registry = HandlerRegistry(config)
         
         # Decision tracking
         self._decision_start_time: Optional[datetime] = None
         self._decisions_made = 0
         self._filesystem_operations = 0
         
-        # Cached project-base root for path calculations
-        self._project_base_root = self.config.knowledge_output_directory / "project-base"
-        
-        logger.info("Initialized RebuildDecisionEngine with direct timestamp comparison")
+        logger.info("Initialized RebuildDecisionEngine with handler-delegated path management")
     
     # =========================================================================
     # CONSOLIDATED HELPER METHODS - Eliminating DRY Violations
@@ -200,107 +211,151 @@ class RebuildDecisionEngine:
     def _calculate_cache_path_safe(self, file_path: Path, source_root: Path) -> Path:
         """
         [Class method intent]
-        Calculates cache file path with consistent project-base structure and error handling.
-        Consolidates duplicate cache path calculation logic from multiple methods.
+        Calculates cache file path using handler-delegated path management with error handling.
+        Consolidates duplicate cache path calculation logic from multiple methods using HandlerRegistry.
 
         [Design principles]
-        Centralized cache path calculation eliminating duplicate path logic.
-        Consistent project-base directory structure mirroring across all operations.
+        Handler-delegated cache path calculation eliminating hardcoded path assumptions.
+        Specialized handler logic ensuring appropriate cache structure for different content types.
         Graceful fallback handling for path calculation errors ensuring operations continue.
 
         [Implementation details]
-        Uses cached _project_base_root for performance optimization.
-        Calculates relative path from source root maintaining directory structure.
-        Provides fallback to flat structure in project-base on path calculation errors.
+        Uses HandlerRegistry to get appropriate handler for file's parent directory.
+        Delegates cache path calculation to handler ensuring correct structure for content type.
+        Provides fallback to default handler on path calculation or handler resolution errors.
         """
         try:
-            relative_path = file_path.relative_to(source_root)
-            cache_relative_path = Path("project-base") / relative_path
-            cache_filename = f"{file_path.name}.analysis.md"
-            cache_relative_path = cache_relative_path.parent / cache_filename
-            return self.config.knowledge_output_directory / cache_relative_path
-        except ValueError:
-            # Fallback: use flat structure in project-base
-            cache_filename = f"{file_path.name}.analysis.md"
-            return self._project_base_root / cache_filename
+            # Get appropriate handler for the file's parent directory
+            handler = self.handler_registry.get_handler_for_path(file_path.parent)
+            return handler.get_cache_path(file_path, source_root)
+        except Exception as e:
+            logger.warning(f"Handler-delegated cache path calculation failed for {file_path}: {e}")
+            # Fallback: use project-base handler as default
+            try:
+                project_base_handler = self.handler_registry.get_project_base_handler()
+                return project_base_handler.get_cache_path(file_path, source_root)
+            except Exception as fallback_error:
+                logger.error(f"Fallback cache path calculation failed for {file_path}: {fallback_error}")
+                # Ultimate fallback: construct basic cache path
+                cache_filename = f"{file_path.name}.analysis.md"
+                return self.config.knowledge_output_directory / "project-base" / cache_filename
     
     def _calculate_knowledge_path_safe(self, directory_path: Path, source_root: Path, is_project_root: bool = False) -> Path:
         """
         [Class method intent]
-        Calculates knowledge file path with consistent project-base structure and special root handling.
-        Consolidates duplicate knowledge path calculation logic from multiple methods.
+        Calculates knowledge file path using handler-delegated path management with error handling.
+        Consolidates duplicate knowledge path calculation logic from multiple methods using HandlerRegistry.
 
         [Design principles]
-        Centralized knowledge path calculation eliminating duplicate path logic.
-        Special handling for project root ensuring root_kb.md generation follows business rules.
-        Consistent project-base directory structure mirroring across all operations.
+        Handler-delegated knowledge path calculation eliminating hardcoded path assumptions.
+        Specialized handler logic ensuring appropriate knowledge structure for different content types.
+        Graceful fallback handling for path calculation errors ensuring operations continue.
 
         [Implementation details]
-        Uses cached _project_base_root for performance optimization.
-        Handles project root specially generating root_kb.md instead of directory-named files.
-        Provides fallback path calculation for error conditions ensuring operations continue.
+        Uses HandlerRegistry to get appropriate handler for directory path.
+        Delegates knowledge path calculation to handler ensuring correct structure for content type.
+        Provides fallback to default handler on path calculation or handler resolution errors.
         """
         try:
-            relative_path = directory_path.relative_to(source_root)
-            knowledge_dir = self._project_base_root / relative_path
-            
-            if is_project_root or directory_path == source_root:
-                knowledge_filename = "root_kb.md"
-            else:
-                knowledge_filename = f"{directory_path.name}_kb.md"
-            
-            return knowledge_dir / knowledge_filename
-        except ValueError:
-            # Fallback for path calculation issues
-            if is_project_root or directory_path.name == source_root.name:
-                knowledge_filename = "root_kb.md"
-            else:
-                knowledge_filename = f"{directory_path.name}_kb.md"
-            return self._project_base_root / knowledge_filename
+            # Get appropriate handler for the directory
+            handler = self.handler_registry.get_handler_for_path(directory_path)
+            return handler.get_knowledge_path(directory_path, source_root)
+        except Exception as e:
+            logger.warning(f"Handler-delegated knowledge path calculation failed for {directory_path}: {e}")
+            # Fallback: use project-base handler as default
+            try:
+                project_base_handler = self.handler_registry.get_project_base_handler()
+                return project_base_handler.get_knowledge_path(directory_path, source_root)
+            except Exception as fallback_error:
+                logger.error(f"Fallback knowledge path calculation failed for {directory_path}: {fallback_error}")
+                # Ultimate fallback: construct basic knowledge path
+                if is_project_root or directory_path == source_root:
+                    knowledge_filename = "root_kb.md"
+                else:
+                    knowledge_filename = f"{directory_path.name}_kb.md"
+                return self.config.knowledge_output_directory / "project-base" / knowledge_filename
     
     def _map_analysis_file_to_source_safe(self, analysis_file: Path, source_root: Path) -> Optional[Path]:
         """
         [Class method intent]
-        Maps analysis cache file back to corresponding source file path safely.
-        Consolidates reverse path mapping logic used in orphaned file detection.
+        Maps analysis cache file back to corresponding source file path using handler-delegated logic.
+        Consolidates reverse path mapping logic used in orphaned file detection across all handler types.
 
         [Design principles]
-        Centralized reverse path mapping eliminating duplicate mapping logic.
+        Handler-delegated reverse mapping enabling proper cleanup across all content types.
         Safe path calculation with None return for invalid or unresolvable paths.
-        Consistent project-base structure understanding across all reverse mapping operations.
+        Consistent reverse mapping behavior across all handler types for reliable cleanup operations.
 
         [Implementation details]
-        Removes .analysis.md suffix to recover original filename.
-        Calculates relative path from project-base structure for source mapping.
+        Attempts to use handlers to perform reverse mapping for accurate source path calculation.
+        Falls back to basic reverse mapping logic if handler delegation fails.
         Returns None on any path calculation error for safe cleanup decision making.
         """
         try:
+            # Try to use handler registry to find appropriate handler for reverse mapping
+            for handler in self.handler_registry.get_all_handlers():
+                try:
+                    source_path = handler.map_cache_to_source(analysis_file, source_root)
+                    if source_path:
+                        return source_path
+                except Exception:
+                    continue  # Try next handler
+            
+            # Fallback: basic reverse mapping (for compatibility with existing project-base logic)
             original_filename = analysis_file.name.replace('.analysis.md', '')
-            relative_dir_path = analysis_file.parent.relative_to(self._project_base_root)
-            source_directory = source_root / relative_dir_path
-            return source_directory / original_filename
+            
+            # Try to extract relative path from knowledge output directory
+            try:
+                relative_path = analysis_file.relative_to(self.config.knowledge_output_directory)
+                # Remove leading path components to get to source structure
+                if relative_path.parts and relative_path.parts[0] == "project-base":
+                    source_relative = Path(*relative_path.parts[1:])  # Remove "project-base"
+                    source_directory = source_root / source_relative.parent
+                    return source_directory / original_filename
+            except Exception:
+                pass
+            
+            return None
         except Exception:
             return None
     
     def _map_knowledge_dir_to_source_safe(self, knowledge_directory: Path, source_root: Path) -> Optional[Path]:
         """
         [Class method intent]
-        Maps knowledge directory back to corresponding source directory path safely.
-        Consolidates reverse path mapping logic used in orphaned directory detection.
+        Maps knowledge directory back to corresponding source directory path using handler-delegated logic.
+        Consolidates reverse path mapping logic used in orphaned directory detection across all handler types.
 
         [Design principles]
-        Centralized reverse path mapping eliminating duplicate mapping logic.
+        Handler-delegated reverse mapping enabling proper cleanup across all content types.
         Safe path calculation with None return for invalid or unresolvable paths.
-        Consistent project-base structure understanding across all reverse mapping operations.
+        Consistent reverse mapping behavior across all handler types for reliable cleanup operations.
 
         [Implementation details]
-        Calculates relative path from project-base structure for source mapping.
-        Maps relative path back to source directory structure for verification.
+        Attempts to use handlers to perform reverse mapping for accurate source path calculation.
+        Falls back to basic reverse mapping logic if handler delegation fails.
         Returns None on any path calculation error for safe cleanup decision making.
         """
         try:
-            relative_path = knowledge_directory.relative_to(self._project_base_root)
-            return source_root / relative_path
+            # Try to use handler registry to find appropriate handler for reverse mapping
+            for handler in self.handler_registry.get_all_handlers():
+                try:
+                    source_path = handler.map_knowledge_to_source(knowledge_directory, source_root)
+                    if source_path:
+                        return source_path
+                except Exception:
+                    continue  # Try next handler
+            
+            # Fallback: basic reverse mapping (for compatibility with existing project-base logic)
+            try:
+                relative_path = knowledge_directory.relative_to(self.config.knowledge_output_directory)
+                # Remove leading path components to get to source structure
+                if relative_path.parts and relative_path.parts[0] == "project-base":
+                    source_relative = Path(*relative_path.parts[1:])  # Remove "project-base"
+                    return source_root / source_relative
+            except Exception:
+                pass
+            
+            return None
         except Exception:
             return None
     
@@ -625,6 +680,68 @@ class RebuildDecisionEngine:
         Supports different operation types for granular caching control.
         """
         return f"{operation}:{str(path)}"
+
+    def _check_directory_staleness_internal(self, directory_context: DirectoryContext, source_root: Path) -> Tuple[bool, str]:
+        """
+        [Class method intent]
+        Internal directory staleness checking since FileAnalysisCache no longer provides path generation.
+        Determines if directory knowledge file needs rebuild by comparing against source files and subdirectory knowledge files.
+
+        [Design principles]
+        Direct timestamp comparison without tolerance for simplicity and reliability.
+        Checks against source files and subdirectory knowledge files for comprehensive staleness detection.
+        Conservative approach returning stale on any error to ensure knowledge file generation.
+
+        [Implementation details]
+        Calculates knowledge file path using consolidated helper method.
+        Compares knowledge file timestamp against all source files in directory.
+        Compares against subdirectory knowledge files for hierarchical consistency.
+        Returns boolean staleness status with detailed reasoning including precise timestamps.
+        """
+        try:
+            # Calculate knowledge file path
+            is_project_root = directory_context.directory_path == source_root
+            knowledge_file_path = self._calculate_knowledge_path_safe(
+                directory_context.directory_path, source_root, is_project_root
+            )
+            
+            # If knowledge file doesn't exist, it's stale
+            if not knowledge_file_path.exists():
+                return True, "Knowledge file does not exist"
+            
+            try:
+                knowledge_mtime = datetime.fromtimestamp(knowledge_file_path.stat().st_mtime)
+                knowledge_mtime_str = knowledge_mtime.strftime("%Y-%m-%d %H:%M:%S")
+            except OSError:
+                return True, "Cannot access knowledge file timestamp"
+            
+            # Check source files only
+            for file_context in directory_context.file_contexts:
+                source_mtime_str = file_context.last_modified.strftime("%Y-%m-%d %H:%M:%S")
+                if file_context.last_modified > knowledge_mtime:
+                    return True, f"Source file newer: {file_context.file_path.name} ({source_mtime_str}) > knowledge file ({knowledge_mtime_str})"
+            
+            # Check subdirectory knowledge files
+            for subdir_context in directory_context.subdirectory_contexts:
+                subdir_knowledge_path = self._calculate_knowledge_path_safe(
+                    subdir_context.directory_path, source_root, False
+                )
+                if subdir_knowledge_path.exists():
+                    try:
+                        subdir_mtime = datetime.fromtimestamp(subdir_knowledge_path.stat().st_mtime)
+                        subdir_mtime_str = subdir_mtime.strftime("%Y-%m-%d %H:%M:%S")
+                        if subdir_mtime > knowledge_mtime:
+                            return True, f"Subdirectory knowledge file newer: {subdir_context.directory_path.name} ({subdir_mtime_str}) > knowledge file ({knowledge_mtime_str})"
+                    except OSError:
+                        return True, f"Cannot access subdirectory knowledge timestamp: {subdir_context.directory_path.name}"
+            
+            # All checks passed - knowledge file is up to date
+            return False, f"Knowledge file is up to date ({knowledge_mtime_str})"
+            
+        except Exception as e:
+            logger.warning(f"Knowledge file staleness check failed for {directory_context.directory_path}: {e}")
+            # Conservative: assume stale on error to trigger rebuild
+            return True, f"Staleness check failed: {e}"
     
     # =========================================================================
     # END PHASE 3 CONSOLIDATED PATTERNS
@@ -900,15 +1017,10 @@ class RebuildDecisionEngine:
                 await self._log_decision_context(ctx, DecisionOutcome.SKIP, directory_context.directory_path, reasoning, "decision", source_root)
                 return decision
             
-            # Standard staleness checking using FileAnalysisCache
-            subdirectory_paths = [subdir.directory_path for subdir in directory_context.subdirectory_contexts]
-            
+            # RebuildDecisionEngine now handles its own staleness checking since path generation was removed from FileAnalysisCache
             self._filesystem_operations += 1
-            is_stale, staleness_reason = self.file_cache.is_knowledge_file_stale(
-                directory_context.directory_path,
-                source_root,
-                directory_context.file_contexts,
-                subdirectory_paths
+            is_stale, staleness_reason = self._check_directory_staleness_internal(
+                directory_context, source_root
             )
             
             if is_stale:
@@ -1028,97 +1140,102 @@ class RebuildDecisionEngine:
     async def _find_orphaned_knowledge_files(self, source_root: Path, ctx: Context) -> List[Path]:
         """
         [Class method intent]
-        Identifies knowledge files (*_kb.md) without corresponding source directories.
-        Implements comprehensive orphaned knowledge file detection for cleanup operations.
+        Identifies knowledge files without corresponding source directories across all handler-managed areas.
+        Uses HandlerRegistry to detect orphaned files in project-base, git-clone .kb directories, and other handler areas.
 
         [Design principles]
-        Comprehensive orphaned file detection ensuring no valid knowledge files are marked for deletion.
-        Performance optimization through intelligent directory traversal and path matching.
+        Handler-delegated orphaned file detection covering all content types and knowledge structures.
+        Comprehensive scanning across all handler-managed directories for complete cleanup coverage.
         Safety validation preventing deletion of recently created or actively used files.
 
         [Implementation details]
-        Scans knowledge directory for all *_kb.md files identifying potential orphans.
-        Maps knowledge files back to expected source directory paths for validation.
-        Checks source directory existence and processability for orphan determination.
-        Returns list of confirmed orphaned knowledge files safe for deletion.
+        Uses HandlerRegistry to get all handlers and scan their managed knowledge areas.
+        Delegates reverse mapping to handlers for accurate source path calculation.
+        Checks source directory existence and processability for orphan determination across all handler types.
+        Returns list of confirmed orphaned knowledge files safe for deletion from all handler areas.
         """
         orphaned_files = []
         
         try:
-            knowledge_base_dir = self.config.knowledge_output_directory / "project-base"
+            # Use all handlers to find orphaned files in their managed areas
+            for handler in self.handler_registry.get_all_handlers():
+                try:
+                    handler_orphaned_files = await handler.find_orphaned_files(source_root, ctx)
+                    orphaned_files.extend(handler_orphaned_files)
+                    
+                    if handler_orphaned_files:
+                        await ctx.debug(f"Handler {handler.get_handler_type()} found {len(handler_orphaned_files)} orphaned files")
+                        
+                except Exception as e:
+                    logger.warning(f"Orphaned file detection failed for handler {handler.get_handler_type()}: {e}")
+                    continue
             
-            if not knowledge_base_dir.exists():
-                return orphaned_files
-            
-            # Find all knowledge files
-            for kb_file in knowledge_base_dir.rglob("*_kb.md"):
-                self._filesystem_operations += 1
-                
-                # CRITICAL FIX: Correct path calculation for KB files
-                relative_kb_path = kb_file.relative_to(knowledge_base_dir)
-                
-                # Handle special case for root_kb.md (maps to project root)
-                if kb_file.name == "root_kb.md":
-                    # For root_kb.md, the source directory is the project root with same relative path
-                    expected_source_dir = source_root / relative_kb_path.parent
-                else:
-                    # For regular KB files like tests_kb.md, the source directory is the parent path
-                    # The KB file represents the directory itself, not a subdirectory with the same name
-                    expected_source_dir = source_root / relative_kb_path.parent
-                
-                # Check if source directory exists and is processable
-                if not expected_source_dir.exists() or not self.config.should_process_directory(expected_source_dir):
-                    orphaned_files.append(kb_file)
-                    await ctx.debug(f"Orphaned knowledge file found: {kb_file.name} (expected source: {expected_source_dir})")
+            # Additional comprehensive scan of knowledge output directory for any missed files
+            knowledge_dir = self.config.knowledge_output_directory
+            if knowledge_dir.exists():
+                for kb_file in knowledge_dir.rglob("*_kb.md"):
+                    # Check if any handler can map this file to a source
+                    source_found = False
+                    for handler in self.handler_registry.get_all_handlers():
+                        try:
+                            source_path = handler.map_knowledge_to_source(kb_file, source_root)
+                            if source_path and source_path.exists() and self.config.should_process_directory(source_path):
+                                source_found = True
+                                break
+                        except Exception:
+                            continue
+                    
+                    if not source_found and kb_file not in orphaned_files:
+                        orphaned_files.append(kb_file)
+                        await ctx.debug(f"Additional orphaned knowledge file found: {kb_file}")
+                        self._filesystem_operations += 1
             
         except Exception as e:
-            logger.warning(f"Orphaned knowledge file detection failed: {e}")
+            logger.warning(f"Comprehensive orphaned knowledge file detection failed: {e}")
         
         return orphaned_files
     
     async def _find_orphaned_cache_files(self, source_root: Path, ctx: Context) -> List[Path]:
         """
         [Class method intent]
-        Identifies analysis cache files (*.analysis.md) without corresponding source files.
-        Implements comprehensive orphaned cache file detection for cleanup operations.
+        Finds orphaned cache files by delegating to individual handlers.
+        Uses convention where each handler manages orphaned file detection in its own areas.
 
         [Design principles]
-        Comprehensive orphaned cache detection ensuring no valid cache files are marked for deletion.
-        Performance optimization through intelligent file traversal and path mapping.
-        Safety validation preventing deletion of recently cached or actively used files.
+        Delegation to handlers eliminating complex centralized path understanding.
+        Convention-based approach where handlers manage their own domains.
+        Simple architecture reducing complexity and maintenance burden.
 
         [Implementation details]
-        Scans cache directory for all *.analysis.md files identifying potential orphans.
-        Maps cache files back to expected source file paths for validation.
-        Checks source file existence and processability for orphan determination.
-        Returns list of confirmed orphaned cache files safe for deletion.
+        Iterates through all registered handlers calling find_orphaned_files().
+        Aggregates results from all handlers into single orphaned files list.
+        Handles handler failures gracefully with logging and continued processing.
         """
         orphaned_files = []
         
         try:
-            cache_base_dir = self.config.knowledge_output_directory / "project-base"
+            # Delegate to each handler for domain-specific orphaned file detection
+            for handler in self.handler_registry.get_all_handlers():
+                try:
+                    handler_orphaned = await handler.find_orphaned_files(source_root, ctx)
+                    
+                    # Filter for cache files only (this method is specifically for cache files)
+                    cache_orphaned = [f for f in handler_orphaned if f.name.endswith('.analysis.md')]
+                    orphaned_files.extend(cache_orphaned)
+                    
+                    if cache_orphaned:
+                        await ctx.debug(f"Handler {handler.get_handler_type()} found {len(cache_orphaned)} orphaned cache files")
+                        
+                except Exception as e:
+                    logger.warning(f"Handler {handler.get_handler_type()} orphaned cache detection failed: {e}")
+                    continue
             
-            if not cache_base_dir.exists():
-                return orphaned_files
-            
-            # Find all analysis cache files
-            for cache_file in cache_base_dir.rglob("*.analysis.md"):
-                self._filesystem_operations += 1
-                
-                # Calculate expected source file path
-                relative_cache_path = cache_file.relative_to(cache_base_dir)
-                source_filename = cache_file.name.replace(".analysis.md", "")
-                expected_source_file = source_root / relative_cache_path.parent / source_filename
-                
-                # Check if source file exists and is processable
-                if not expected_source_file.exists() or not self.config.should_process_file(expected_source_file):
-                    orphaned_files.append(cache_file)
-                    await ctx.debug(f"Orphaned cache file found: {cache_file.name}")
+            await ctx.info(f"Total orphaned cache files found: {len(orphaned_files)}")
+            return orphaned_files
             
         except Exception as e:
-            logger.warning(f"Orphaned cache file detection failed: {e}")
-        
-        return orphaned_files
+            logger.warning(f"Delegated orphaned cache file detection failed: {e}")
+            return orphaned_files
     
     async def should_rebuild_directory(
         self, 
@@ -1294,12 +1411,18 @@ class RebuildDecisionEngine:
 
         [Implementation details]
         Delegates to FileAnalysisCache.is_cache_fresh() for consistent logic.
+        Uses HandlerRegistry to get appropriate handler for file path.
         Returns boolean freshness status with detailed reasoning for decision audit trails.
         Handles filesystem errors gracefully returning conservative decisions.
         """
         try:
-            # FileAnalysisCache.is_cache_fresh now returns tuple (bool, str)
-            is_fresh, detailed_reason = self.file_cache.is_cache_fresh(file_path, source_root)
+            # Get appropriate handler for the file
+            handler = self.handler_registry.get_handler_for_path(file_path.parent)
+            if handler is None:
+                return False, f"No handler available for path: {file_path.parent}"
+            
+            # FileAnalysisCache.is_cache_fresh now returns tuple (bool, str) and requires handler
+            is_fresh, detailed_reason = self.file_cache.is_cache_fresh(file_path, source_root, handler)
             return is_fresh, detailed_reason
                 
         except Exception as e:

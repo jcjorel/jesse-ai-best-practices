@@ -35,6 +35,14 @@
 # <system>: typing - Type hints for prompt template parameters and response structures
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-07T22:12:00Z : COMPLETELY SIMPLIFIED LEVEL 8 SPECIFICATION - Removed all outbound and integration tracking requirements by CodeAssistant
+# * REMOVED COMPLETELY: "← Outbound:" section from code files specification eliminating downstream dependency tracking
+# * REMOVED COMPLETELY: "← Referenced By:" section from non-code files specification eliminating consumer tracking
+# * REMOVED COMPLETELY: "⚡ Integration:" section from all specifications eliminating system role integration requirements
+# * UPDATED MANDATORY REQUIREMENTS: Changed from three subsections (Inbound, Outbound, Integration) to one (Inbound only)
+# * SIMPLIFIED VISUAL SYMBOLS: Removed "←", "⚡" symbol descriptions - only "→" (inbound) remains
+# * MAINTAINED INBOUND TRACKING ONLY: Preserved only "→ Inbound:" and "→ References:" sections for dependency analysis
+# * COMPLETE SIMPLIFICATION: Level 8 now focuses exclusively on what files/content depend on (inbound dependencies only)
 # 2025-07-04T13:26:00Z : Reordered hierarchical levels moving code snippets from Level 8 to Level 11 and shifting other levels by CodeAssistant
 # * Moved current Level 8 (Code snippets and usage examples) to new Level 11 for better knowledge progression
 # * Shifted Level 9 (External dependencies) to Level 8, Level 10 (Edge cases) to Level 9, Level 11 (Internal implementation) to Level 10
@@ -150,16 +158,6 @@ HIERARCHY DESIGN PRINCIPLES:
 - `identifier` - description of dependency and usage
 - `path/to/file.py:function` - specific function dependency
 - `external_library` (external library) - library usage pattern
-
-**← Outbound:** [what depends on this file]
-- `dependent/file.py:Class` - class that uses this file's exports
-- `external_system` - system that consumes this file's output
-- `generated/artifact.ext` - output consumed elsewhere
-
-**⚡ Integration:** [how connections work]
-- Protocol: REST/GraphQL/gRPC/Event-driven/Direct-import
-- Interface: Class.method(), API endpoint, data format
-- Coupling: tight/loose, sync/async, required/optional
 ```
 
 **For Non-Code Files:**
@@ -168,16 +166,6 @@ HIERARCHY DESIGN PRINCIPLES:
 - `external/doc.md` - referenced documentation
 - `data/source.json` - required data input
 - `https://external-api.com/spec` - external specification
-
-**← Referenced By:** [what uses this content]
-- `consumer/system.py` - system that processes this content
-- `build/generated.html` - generated output from this content
-- `workflow/process.yml` - workflow that depends on this content
-
-**⚡ Integration:** [relationship mechanisms]
-- Format: JSON/XML/Markdown/YAML/Binary
-- Access: File/API/Database/Manual/Automated
-- Sync: Real-time/Batch/Manual/Event-driven
 ```
 
 **LOCATION IDENTIFIER FORMATTING RULES:**
@@ -190,16 +178,13 @@ HIERARCHY DESIGN PRINCIPLES:
 
 **VISUAL SYMBOLS MEANINGS:**
 - `→` indicates inbound dependencies (what this file/content depends on)
-- `←` indicates outbound dependencies (what depends on this file/content)
-- `⚡` indicates system role and ecosystem integration (core vs peripheral positioning and integration significance)
 
 **MANDATORY REQUIREMENTS:**
-- Each subsection (Inbound, Outbound, Integration) must be present even if empty
+- Inbound subsection must be present even if empty
 - All identifiers must include location information when available
 - Descriptions must be concise but actionable (focus on "what" and "how")
-- Integration section must specify protocol, interface, and coupling characteristics
 - Use consistent formatting with backticks for all identifiers
-- Follow the exact visual symbol format (→, ←, ⚡) for immediate recognition
+- Follow the exact visual symbol format (→) for immediate recognition
 
 REVIEWER PROMPT SCOPE AND LIMITATIONS:
 --------------------------------------
@@ -341,16 +326,6 @@ allow clear identification**.
 - `identifier` - description of dependency and usage
 - `path/to/file.py:function` - specific function dependency
 - `external_library` (external library) - library usage pattern
-
-**← Outbound:** [what depends on this file]
-- `dependent/file.py:Class` - class that uses this file's exports
-- `external_system` - system that consumes this file's output
-- `generated/artifact.ext` - output consumed elsewhere
-
-**⚡ System role and ecosystem integration:** [core vs peripheral positioning and integration significance]
-- **System Role**: How this file/component fits within the broader system architecture and workflow
-- **Ecosystem Position**: Whether this is central/core, peripheral/support, or auxiliary to system operation
-- **Integration Pattern**: Who is using this file and how (humans, external processes, other codebase parts, and their usage patterns)
 ```
 
 **For Non-Code Files:**
@@ -359,16 +334,6 @@ allow clear identification**.
 - `external/doc.md` - referenced documentation
 - `data/source.json` - required data input
 - `https://external-api.com/spec` - external specification
-
-**← Referenced By:** [what uses this content]
-- `consumer/system.py` - system that processes this content
-- `build/generated.html` - generated output from this content
-- `workflow/process.yml` - workflow that depends on this content
-
-**⚡ System role and ecosystem integration:** [core vs peripheral positioning and integration significance]
-- **System Role**: How this content fits within the broader system architecture and workflow
-- **Ecosystem Position**: Whether this is central/core, peripheral/support, or auxiliary to system operation
-- **Integration Pattern**: Who is using this file and how (humans, external processes, other codebase parts, and their usage patterns)
 ```
 
 **LOCATION IDENTIFIER FORMATTING RULES:**
