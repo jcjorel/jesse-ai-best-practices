@@ -40,6 +40,14 @@
 # <system>: logging - Structured logging for LLM operations and error tracking
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-07T10:24:00Z : Implemented empty file special handling to prevent infinite rebuild loops by CodeAssistant
+# * Added _is_empty_file() method for reliable zero-byte file detection using filesystem metadata
+# * Added _generate_empty_file_analysis() method creating standardized analysis content for empty files
+# * Modified build_file_knowledge() to check for empty files FIRST before LLM initialization to avoid unnecessary resource usage
+# * Implemented cache-first strategy for empty files ensuring standardized analysis is cached and reused preventing rebuild loops
+# * Added comprehensive empty file processing with proper logging and status reporting for transparent operation visibility
+# * Fixed infinite rebuild issue where empty files like working_backwards_stages.md were repeatedly processed without creating stable cache entries
+# * Ensured all empty files receive standardized analysis content maintaining management consistency across all file types
 # 2025-07-06T13:05:00Z : Fixed missing global summary generation by implementing root_kb.md file naming for handler root directories by CodeAssistant
 # * Added _is_handler_root_directory() method detecting project-base, git-clones, and pdf-knowledge handler root contexts
 # * Modified _get_knowledge_file_path() to generate root_kb.md for handler root directories instead of {directory_name}_kb.md
@@ -54,13 +62,6 @@
 # * Implemented progressive continuation supporting multiple truncation scenarios with recursive completion attempts
 # * Enhanced with smart response merging detecting overlapping content at merge boundaries for natural flow
 # * Leveraged conversation continuity maintaining context across truncation recovery attempts for superior response quality
-# 2025-07-04T17:47:00Z : Implemented conversation-specific caching architecture for complete retry mechanism fix by CodeAssistant
-# * Completely redesigned caching system to use conversation_id as part of cache key preventing all cross-conversation cache pollution
-# * Modified PromptCache._generate_key() to include conversation_id ensuring each conversation gets isolated cache space
-# * Updated all cache method signatures throughout strands_agent_driver to pass conversation_id parameter
-# * Removed unnecessary use_cache parameter handling since caching is now properly managed by conversation-specific keys
-# * Fixed fundamental architectural issue where same prompt content would retrieve cached responses regardless of conversation context
-# * Ensured perfect retry isolation where each unique conversation_id generates fresh LLM calls without any cache interference
 ###############################################################################
 
 """
@@ -221,20 +222,61 @@ class KnowledgeBuilder:
         Processes content through Claude 4 Sonnet with retry logic for robustness.
         Returns updated FileContext with generated knowledge content and processing status.
         """
-        if not self.llm_driver:
-            await self.initialize()
-        
         processing_start = datetime.now()
         parsed_sections = None
         
         try:
             await ctx.debug(f"Building summary for file: {file_context.file_path}")
             
-            # Read file content
+            # EMPTY FILE SPECIAL HANDLING: Check for empty files FIRST to avoid unnecessary LLM initialization
+            if self._is_empty_file(file_context.file_path):
+                await ctx.info(f"📄 EMPTY FILE: Processing {file_context.file_path.name}")
+                
+                # Check cache first for empty files (unless bypassing cache or in FULL mode)
+                if not bypass_cache and source_root and self.config.indexing_mode.value != "full":
+                    cached_analysis = await self.analysis_cache.get_cached_analysis(file_context.file_path, source_root)
+                    if cached_analysis:
+                        cache_path = self.analysis_cache.get_cache_path(file_context.file_path, source_root)
+                        await ctx.info(f"📄 CACHE HIT: Using cached empty file analysis for {file_context.file_path.name} from {cache_path}")
+                        return FileContext(
+                            file_path=file_context.file_path,
+                            file_size=file_context.file_size,
+                            last_modified=file_context.last_modified,
+                            processing_status=ProcessingStatus.COMPLETED,
+                            knowledge_content=cached_analysis,
+                            processing_start_time=processing_start,
+                            processing_end_time=datetime.now()
+                        )
+                
+                # Generate standardized empty file analysis content
+                await ctx.info(f"📄 GENERATING: Creating standardized analysis for empty file {file_context.file_path.name}")
+                empty_file_analysis = self._generate_empty_file_analysis(file_context.file_path)
+                
+                # Cache the standardized analysis to prevent rebuild loops
+                if source_root and self.config.indexing_mode.value != "full":
+                    await self.analysis_cache.cache_analysis(file_context.file_path, empty_file_analysis, source_root)
+                    await ctx.debug(f"💾 CACHED: Empty file analysis cached for {file_context.file_path.name}")
+                
+                # Return completed FileContext with standardized empty file analysis
+                return FileContext(
+                    file_path=file_context.file_path,
+                    file_size=file_context.file_size,
+                    last_modified=file_context.last_modified,
+                    processing_status=ProcessingStatus.COMPLETED,
+                    knowledge_content=empty_file_analysis,
+                    processing_start_time=processing_start,
+                    processing_end_time=datetime.now()
+                )
+            
+            # Initialize LLM driver only for non-empty files
+            if not self.llm_driver:
+                await self.initialize()
+            
+            # Read file content for non-empty files
             file_content = await self._read_file_content(file_context.file_path)
             
             if not file_content:
-                await ctx.warning(f"File is empty or unreadable: {file_context.file_path}")
+                await ctx.warning(f"File is unreadable (not empty but content cannot be accessed): {file_context.file_path}")
                 return FileContext(
                     file_path=file_context.file_path,
                     file_size=file_context.file_size,
@@ -655,6 +697,81 @@ class KnowledgeBuilder:
             logger.error(f"Global summary generation from contexts failed for {directory_context.directory_path}: {e}")
             await ctx.warning(f"Error generating global summary: {e}")
             return f"[Global summary generation failed: {e}. Directory contains {len(file_contexts)} files and {len(subdirectory_summaries)} subdirectories.]"
+
+    def _is_empty_file(self, file_path: Path) -> bool:
+        """
+        [Class method intent]
+        Determines if a file is empty (0 bytes) for special handling.
+        Provides reliable empty file detection to prevent infinite rebuild loops
+        by enabling standardized empty file analysis content generation.
+
+        [Design principles]
+        Reliable empty file detection using filesystem metadata for performance.
+        Error handling ensuring detection failures don't break processing.
+        Clear boolean result enabling immediate empty file decision making.
+
+        [Implementation details]
+        Uses Path.stat().st_size for efficient empty file detection without reading content.
+        Handles filesystem errors gracefully returning False to default to content reading.
+        Returns True only for confirmed zero-byte files requiring special handling.
+        """
+        try:
+            return file_path.stat().st_size == 0
+        except (OSError, FileNotFoundError):
+            # If we can't check file size, fall back to content reading
+            return False
+
+    def _generate_empty_file_analysis(self, file_path: Path) -> str:
+        """
+        [Class method intent]
+        Generates standardized analysis content for empty files with consistent format.
+        Creates fixed content that prevents rebuild loops while maintaining management consistency
+        by ensuring every processable file gets an analysis cache entry.
+
+        [Design principles]
+        Consistent standardized content ensuring predictable empty file analysis results.
+        Management consistency providing analysis cache entries for all processable files.
+        Informative content explaining empty file status with technical details.
+        Present tense writing maintaining consistency with LLM-generated analysis content.
+
+        [Implementation details]
+        Creates structured markdown analysis with file metadata and status information.
+        Includes file type detection, timestamp information, and processing status details.
+        Returns ready-to-cache content that matches standard analysis cache format expectations.
+        Provides clear documentation of empty file status for knowledge base understanding.
+        """
+        try:
+            file_stats = file_path.stat()
+            last_modified = datetime.fromtimestamp(file_stats.st_mtime).isoformat()
+            file_extension = file_path.suffix or 'unknown'
+        except Exception:
+            last_modified = "unknown"
+            file_extension = file_path.suffix or 'unknown'
+
+        return f"""# File Analysis: {file_path.name}
+
+## Summary
+This is an empty file with no content to analyze.
+
+## Content Analysis
+- **File Size**: 0 bytes
+- **Content**: No content present
+- **Purpose**: File exists but contains no data
+- **Analysis Status**: Standard empty file - no further analysis required
+
+## Technical Details
+- **File Type**: {file_extension} file
+- **Last Modified**: {last_modified}
+- **Processing Status**: Processed with standard empty file handling
+
+## Empty File Characteristics
+The file exists in the filesystem but contains no data. This may indicate:
+- Placeholder file for future content
+- File cleared of content but structure preserved
+- Template or stub file awaiting implementation
+- Intentionally empty configuration or data file
+
+--END OF LLM OUTPUT--"""
 
     async def _read_file_content(self, file_path: Path) -> str:
         """
