@@ -8,172 +8,166 @@
 
 #### Functional Intent & Features
 
-This directory implements the complete Jesse Framework MCP Server project, providing a comprehensive AI-assisted development platform through `FastMCP` protocol integration with embedded content delivery, hierarchical knowledge base management, and intelligent resource orchestration for modern development workflows. The system delivers complete MCP server functionality through standardized resource endpoints, automated knowledge indexing, LLM-powered content analysis, and embedded framework rules enabling consistent AI-assisted development practices. Key semantic entities include `FastMCP` server instance with `server = FastMCP("JESSE Framework")`, primary entry point `main()` function using `server.run(transport="stdio")`, comprehensive resource handlers including `framework_index()` decorated with `@server.resource("jesse://index")`, knowledge base integration via `register_knowledge_bases_tools()` and `register_knowledge_bases_resources()`, embedded content access through `load_embedded_content()` and `get_jesse_rule_files()`, hierarchical indexing system with `HierarchicalIndexer`, `KnowledgeBuilder`, and `RebuildDecisionEngine` components, LLM integration through `StrandsClaude4Driver` with `Claude4SonnetConfig` factory methods, HTTP formatting utilities `format_http_section()` and `format_multi_section_response()` with `XAsyncContentCriticality` classifications, resource URIs including `jesse://framework/rule/{rule_name}`, `jesse://session/init-context`, `jesse://wip-tasks`, and `file://workflows/{workflow_name}`, comprehensive helper modules for `content_loaders`, `session_management`, `knowledge_scanners`, `path_utils`, and `async_http_formatter`, embedded framework rules `JESSE_KNOWLEDGE_MANAGEMENT.md`, `JESSE_CODE_COMMENTS.md`, `JESSE_CODE_GENERATION.md`, specialized workflow automation through 15 markdown-based workflow definitions, build-time content preparation through `copy_jesse_content.py` with `JesseBuildHook` integration, comprehensive testing infrastructure with `pytest` framework, and complete development governance through consolidated standards documents ensuring consistent AI-assisted development practices across the entire Jesse Framework MCP ecosystem.
+This directory implements the complete Jesse Framework MCP Server package, providing comprehensive AI-assisted development capabilities through `FastMCP` protocol compliance with resource-first architecture, embedded content delivery, and intelligent knowledge base management for modern development workflows. The system enables MCP clients to access framework rules, project contexts, workflows, and knowledge bases through standardized resource endpoints while supporting both granular individual access and consolidated meta-resource delivery for efficient AI assistant integration. Key semantic entities include `FastMCP` server instance with `server = FastMCP("JESSE Framework")`, primary resource handlers `framework_index()`, `jesse_framework_start_prompt()`, `jesse_wip_task_create_prompt()`, and `jesse_knowledge_capture_prompt()`, centralized constants `JESSE_RULE_FILES`, `HTTP_BOUNDARY_MARKER`, and `DEFAULT_CRITICALITY`, comprehensive helper utilities through `content_loaders`, `session_management`, `knowledge_scanners`, `path_utils`, `async_http_formatter`, and `mistletoe_spacing` modules, knowledge base system with `HierarchicalIndexer`, `KnowledgeBuilder`, `FileAnalysisCache`, and `RebuildDecisionEngine`, LLM integration via `StrandsClaude4Driver` and `Claude4SonnetConfig`, resource endpoints including `jesse://index`, `jesse://framework/rule/{rule_name}`, `jesse://session/init-context`, `jesse://project/knowledge`, `jesse://wip-tasks`, and `file://workflows/{workflow_name}`, embedded content access through `JESSE_*.md` rule files and `workflows/` automation definitions, HTTP formatting with `XAsyncContentCriticality.CRITICAL` and `XAsyncContentCriticality.INFORMATIONAL` classifications, portable path variables `{PROJECT_ROOT}`, `{HOME}`, `{CLINE_RULES}`, `{CLINE_WORKFLOWS}`, build-time content embedding through `copy_jesse_content.py` and `JesseBuildHook`, comprehensive testing infrastructure with `pytest` framework and `MockContext` simulation, and complete package distribution through `pyproject.toml` configuration with `hatchling` build system integration.
 
 ##### Main Components
 
-The directory contains comprehensive project structure with core Python package, testing infrastructure, build system integration, documentation, and configuration files providing complete MCP server functionality and development governance. The `jesse_framework_mcp/` subdirectory implements the main Python package with three primary files (`main.py`, `constants.py`, `__init__.py`) and seven specialized subdirectories including `knowledge_bases/` for hierarchical indexing, `helpers/` for utility functions, `llm/` for LLM integration, `resources/` for MCP resource handlers, and `embedded_content/` for framework governance. The `tests/` subdirectory provides comprehensive testing infrastructure with 21 test files covering session initialization, HTTP formatting, knowledge base processing, and integration testing. The `build_scripts/` subdirectory contains build-time infrastructure with `copy_jesse_content.py` for automated framework content preparation during package builds. Project configuration includes `pyproject.toml` for Python packaging with Hatchling build system, `uv.lock` for deterministic dependency resolution, `.gitignore` for version control exclusions, and `README.md` for comprehensive documentation. Supporting files include `utils.py` for FastMCP function unwrapping utilities and development workflow support.
+The directory contains comprehensive MCP server implementation with core server files, specialized functional subdirectories, embedded framework content, build infrastructure, testing suite, and package configuration. Core server files include `jesse_framework_mcp/main.py` implementing the primary `FastMCP` server with resource discovery and prompt handlers, `jesse_framework_mcp/constants.py` providing centralized configuration constants and HTTP formatting standards, and `jesse_framework_mcp/__init__.py` serving as package initialization with version metadata and entry point delegation. Specialized subdirectories encompass `jesse_framework_mcp/knowledge_bases/` implementing hierarchical indexing with Plan-then-Execute architecture, `jesse_framework_mcp/helpers/` providing modular utility functions for content loading and HTTP formatting, `jesse_framework_mcp/llm/` containing Claude 4 Sonnet integration through `strands_agent_driver/` package, `jesse_framework_mcp/resources/` delivering comprehensive MCP resource handlers with individual and meta-resource patterns, and `jesse_framework_mcp/embedded_content/` housing framework rules and workflow definitions with programmatic access interfaces. Supporting infrastructure includes `build_scripts/copy_jesse_content.py` for build-time content preparation, `tests/` directory with 22 comprehensive test files covering all functional areas, package configuration through `pyproject.toml` with `hatchling` build system, dependency management via `uv.lock` with 77 pinned packages, comprehensive documentation in `README.md`, version control exclusions through `.gitignore`, and utility functions in `utils.py` for `FastMCP` function unwrapping.
 
 ###### Architecture & Design
 
-The architecture implements a layered MCP server design with clear separation between protocol handling, resource management, knowledge processing, and embedded content delivery through modular component organization and standardized integration patterns. The design emphasizes resource-first architecture with individual resource access patterns, comprehensive session initialization through meta-resource aggregation, and intelligent knowledge base management through hierarchical processing strategies. The system employs `FastMCP` native transport with automatic lifecycle management, HTTP-formatted resource delivery for consistent AI assistant processing, and embedded content access patterns using `importlib.resources` for package-bundled framework rules and workflows. Key design patterns include the resource handler pattern with `FastMCP` decorators for endpoint registration, Plan-then-Execute architecture separating decision-making from execution through distinct phases, meta-resource aggregation pattern combining multiple contexts into unified responses, async-first architecture with comprehensive context manager support, hierarchical processing pattern ensuring leaf-first dependency ordering, cache-first processing strategies through `FileAnalysisCache` integration, embedded content access pattern for self-contained framework delivery, and build-time content preparation pattern through Hatchling integration. The architectural framework uses composition over inheritance with specialized classes for different concerns, centralized configuration management through constants and helper modules, comprehensive error handling with graceful degradation, and modular organization enabling independent evolution of different system components while maintaining consistent integration patterns.
+The architecture implements a modern resource-first MCP server design with `FastMCP` native transport management, following clean separation between transport layer and resource implementations with automatic lifecycle management through `server.run(transport="stdio")`. The design emphasizes modular organization with dedicated subdirectories for different functional domains, comprehensive HTTP formatting through `async_http_formatter` utilities, embedded content delivery enabling self-contained framework distribution, and build-time content preparation ensuring complete framework packaging. Key design patterns include the resource-first pattern with individual resource access through dedicated URIs, auto-registration pattern leveraging `FastMCP` decorators for automatic resource handler discovery, meta-resource aggregation pattern combining multiple contexts into unified responses, Plan-then-Execute architecture separating decision-making from execution in knowledge base operations, async context manager pattern for LLM integration with proper resource lifecycle handling, embedded content access pattern using `importlib.resources` for package-bundled framework rules and workflows, build hook integration pattern implementing `BuildHookInterface` for automated content preparation, and comprehensive testing pattern with mock-based validation and integration testing. The system uses composition over inheritance with specialized helper modules, centralized configuration through constants, build-time content embedding for self-contained distribution, and comprehensive error handling with individual section failure isolation preventing complete resource delivery failures while maintaining MCP protocol compliance.
 
 ####### Implementation Approach
 
-The implementation uses `FastMCP` native transport with `server.run(transport="stdio")` eliminating manual event loop management and leveraging automatic lifecycle handling for modern MCP protocol compliance. Resource discovery employs dynamic scanning of available components including framework rules enumeration, knowledge base scanning, and WIP task counting through directory iteration with JSON serialization for structured metadata delivery. The approach implements five-phase Plan-then-Execute workflows through recursive directory discovery, centralized decision analysis via `RebuildDecisionEngine`, atomic task generation through `PlanGenerator`, execution preview for debugging validation, and dependency-aware task execution via `ExecutionEngine` with performance metrics collection. Content delivery combines embedded content access using `importlib.resources` for package-bundled rules and workflows, project-specific knowledge loading from `.knowledge/` directory structures, and HTTP formatting through standardized section wrapping with appropriate criticality classifications. LLM integration employs async context manager patterns with `StrandsClaude4Driver` providing streaming capabilities, conversation management, and intelligent caching through SHA-256 hashing with TTL expiration policies. Build system integration uses Hatchling build hooks with `JesseBuildHook` class implementing `BuildHookInterface` for automated content copying from `artifacts/.clinerules/` to `embedded_content/` during package creation. The system implements comprehensive path resolution using portable path variables `{PROJECT_ROOT}`, `{HOME}`, `{CLINE_RULES}`, cross-platform compatibility through `pathlib.Path` operations, and defensive programming patterns with comprehensive error handling and graceful degradation across all operational components.
+The implementation uses `FastMCP` native transport with automatic lifecycle management eliminating manual event loop creation, comprehensive resource discovery through dynamic scanning of available components, and HTTP-formatted content delivery ensuring consistent AI assistant processing. The approach employs async-first patterns throughout with `FastMCP` Context integration for progress reporting, cache-first processing strategies through `FileAnalysisCache` integration avoiding unnecessary LLM calls, and continuation-based retry mechanisms providing 90%+ token savings through intelligent response completion. Knowledge base processing implements Plan-then-Execute architecture with atomic task execution through `ExecutionEngine` and comprehensive decision-making via `RebuildDecisionEngine`, while LLM integration uses async context managers with `StrandsClaude4Driver` for Claude 4 Sonnet capabilities. Content delivery combines JSON serialization for structured data, markdown formatting for documentation, and HTTP section wrapping with appropriate criticality classifications. Build-time content preparation uses `copy_jesse_content()` orchestration with `JesseBuildHook` integration for automated framework copying during package creation. The system implements working directory management with project root detection, sequential loading with progress reporting for meta-resource aggregation, conditional output strategies returning empty responses when compliant for massive context reduction, and comprehensive testing through `pytest` framework with mock context simulation and integration validation. Error handling employs try-catch blocks with specific exception types, graceful degradation with placeholder content, and comprehensive logging through structured error reporting.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `fastmcp:FastMCP` (external library) - MCP server framework providing native transport, resource registration, and protocol compliance with automatic lifecycle management
-- `fastmcp:Context` (external library) - MCP context interface for async progress reporting, error logging, and user interaction throughout all server operations
-- `strands:Agent` (external library) - Strands Agent SDK for Claude 4 Sonnet interaction with real-time streaming capabilities and AWS Bedrock integration
-- `strands.models:BedrockModel` (external library) - Bedrock model wrapper for AWS integration and LLM configuration management
-- `boto3` (external library) - AWS SDK for Python enabling Amazon Bedrock service access and authentication for LLM operations
-- `mistletoe` (external library) - AST-based markdown parsing and rendering for reliable document manipulation and content extraction
-- `pydantic` (external library) - Configuration validation and type safety for indexing parameters and data model integrity
-- `hatchling.builders.hooks.plugin.interface:BuildHookInterface` (external library) - Hatchling build system integration interface for automated content preparation
-- `pytest` (external library) - Comprehensive testing framework with fixtures, parametric testing, and assertion utilities
-- `importlib.resources` (external library) - Embedded content access with Python version compatibility for package-bundled framework rules and workflows
-- `pathlib.Path` (external library) - Cross-platform path operations and filesystem metadata access for directory traversal and file processing
-- `asyncio` (external library) - Async programming patterns and concurrency control for performance optimization and parallel processing
-- AWS environment variables `AWS_REGION`, `AWS_PROFILE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` - Authentication and configuration for LLM services
-- `artifacts/.clinerules/` - Source JESSE framework files for build-time content preparation
+- `fastmcp.FastMCP` (external library) - MCP server framework providing native transport and protocol compliance with automatic lifecycle management
+- `fastmcp.Context` (external library) - progress reporting and logging interface for real-time user feedback during operations
+- `hatchling` (external library) - modern Python build backend providing package creation and distribution capabilities with custom build hook support
+- `importlib.resources` (external library) - embedded content access with Python 3.9+ compatibility and fallback support for package-bundled framework content
+- `mistletoe` (external library) - AST-based markdown parsing and rendering for document structure manipulation and spacing preservation
+- `pydantic` (external library) - configuration validation and type safety for hierarchical parameter management across knowledge base system
+- `strands.Agent` (external library) - Strands Agent SDK for Claude 4 Sonnet interaction and streaming capabilities through AWS Bedrock integration
+- `boto3` (external library) - AWS SDK for Amazon Bedrock service access and authentication for LLM operations
+- `pytest` (external library) - comprehensive testing framework with async support and fixture management for validation infrastructure
+- `pathlib.Path` (external library) - cross-platform filesystem operations throughout the system for portable path handling
+- `asyncio` (external library) - async programming patterns for concurrent operations and context management across all components
+- AWS environment variables `AWS_REGION`, `AWS_PROFILE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` - authentication configuration for Bedrock integration
 
 **← Outbound:**
-- MCP clients - consuming comprehensive framework resources through standardized MCP protocol with resource and prompt endpoints
-- Cline AI assistant - accessing framework initialization prompts, workflow resources as slash commands, and comprehensive session context
-- Development environments - using Jesse Framework resources for AI-assisted development workflows and context delivery
-- AI coding assistants - consuming framework rules with CRITICAL criticality for strict adherence and workflow guidance
-- Package distribution platforms - PyPI and other repositories using package metadata for distribution and installation
-- `{PROJECT_ROOT}/.knowledge/project-base/` - Generated knowledge base files with hierarchical structure mirroring source organization
-- `{PROJECT_ROOT}/.knowledge/git-clones/` - Specialized knowledge structures for git repository processing with read-only mirrored organization
-- `debug_output/llm_debug/` - Debug interaction capture files for development workflow support and LLM interaction replay
-- `cache_files/*.analysis.md` - Cached analysis files for performance optimization and staleness detection
-- AWS Bedrock service integration - Generating actual API calls, streaming responses, and conversation management for live LLM interaction
-- CI/CD pipeline systems - Consuming test results, build artifacts, and deployment validation reports
+- MCP clients - consuming framework resources through standardized MCP protocol with resource and prompt endpoints for AI assistant integration
+- Cline AI assistant - accessing comprehensive session context and workflow resources as slash commands for development workflow automation
+- Development environments - using Jesse Framework resources for AI-assisted development workflows and context delivery through MCP protocol
+- AI coding assistants - consuming framework rules with CRITICAL criticality for strict adherence to development standards and best practices
+- Knowledge management systems - processing generated knowledge base files and cached analysis content for project documentation
+- AWS Bedrock service - generating Claude 4 Sonnet API calls and streaming responses for LLM-powered content analysis
+- PyPI package repository - distributing complete MCP server package with embedded framework content for installation and deployment
+- Generated artifacts including `*.md` knowledge files, `*.analysis.md` cache files, `*.indexing-config.json` configuration files for knowledge base management
+- Console applications - using main entry point for server startup and lifecycle management through `jesse-framework-mcp` command
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Complete MCP server implementation for Jesse Framework ecosystem, serving as the central orchestrator for AI-assisted development workflows with embedded content delivery, hierarchical knowledge management, intelligent resource coordination, and comprehensive testing infrastructure
-- **Ecosystem Position**: Core infrastructure platform providing complete MCP protocol compliance while bridging embedded framework governance with runtime project knowledge loading, LLM-powered content analysis, standardized resource delivery for AI assistants, and automated build-time content preparation
-- **Integration Pattern**: Used by MCP clients through stdio transport for resource and prompt access, consumed by AI assistants for framework initialization and workflow guidance, integrated with AWS Bedrock services through specialized driver implementations, coordinated with development tools through standardized resource endpoints, built through Hatchling with automated content preparation, tested through comprehensive test suites, and distributed through Python packaging ecosystem while supporting comprehensive development workflows through embedded content delivery and intelligent knowledge base management
+- **System Role**: Complete MCP server implementation for Jesse Framework ecosystem, providing comprehensive AI-assisted development capabilities through FastMCP protocol compliance with resource-first architecture, embedded content delivery, intelligent knowledge base management, and build-time content preparation for self-contained distribution
+- **Ecosystem Position**: Central infrastructure component serving as primary MCP protocol interface, coordinating all framework resources including rules, workflows, knowledge bases, and LLM integration while providing unified access point for AI assistants and development tools with complete package distribution capabilities
+- **Integration Pattern**: Used by MCP clients through stdio transport for resource and prompt access, consumed by AI assistants for framework initialization and workflow guidance, integrated with AWS Bedrock for LLM capabilities, coordinated with development tools through standardized MCP protocol, deployed as self-contained package with embedded content enabling framework distribution without external dependencies, and built through automated content preparation ensuring complete framework packaging
 
 ######### Edge Cases & Error Handling
 
-The system implements comprehensive error handling across multiple operational layers including MCP protocol validation, filesystem access restrictions, LLM processing failures, embedded content access issues, build system integration problems, and testing infrastructure challenges. `FastMCP` server startup failures are managed through comprehensive exception handling in `main()` function with descriptive error logging and proper exception propagation for debugging support. Knowledge base processing addresses truncation detection through `TruncationDetectedError` preventing artifact creation when LLM responses are incomplete, empty directory handling by detecting contentless directories and skipping knowledge file generation, and filesystem access restrictions with `OSError` and `PermissionError` catching enabling continued processing. Resource delivery handles missing project root through comprehensive validation with fallback to setup guidance when project structure unavailable, individual resource failures through try-catch blocks preventing complete resource delivery failures, and working directory management with restoration mechanisms preventing directory state corruption. LLM integration manages missing Strands Agent SDK through conditional imports with availability flags and mock class definitions, AWS Bedrock connection failures through specialized exception handling with region context and troubleshooting guidance, and streaming failures through retry logic with exponential backoff for transient network issues. Build system integration handles missing JESSE project root through `find_jesse_project_root()` validation with descriptive error messages, missing source directories through existence checking with specific resolution guidance, and Hatchling build hook failures through proper exception propagation. Testing infrastructure manages test isolation through temporary directory creation, mock context implementation for FastMCP compatibility, and comprehensive assertion-based validation with detailed error reporting. The system handles cross-platform compatibility issues through `pathlib.Path` usage, environment variable resolution, and portable path variable substitution ensuring consistent behavior across Linux, macOS, and Windows systems.
+The system handles comprehensive edge cases including missing project root scenarios through validation with fallback to setup guidance, `FastMCP` server startup failures through exception handling with descriptive error logging, and individual resource failures through isolation preventing complete system failure. Knowledge base processing manages empty files with infinite rebuild loop prevention, missing directories with graceful degradation, and LLM truncation detection through multiple validation strategies including programmatic marker checking and continuation-based recovery. LLM integration addresses missing Strands Agent SDK through conditional imports with mock class definitions, AWS Bedrock connection failures with region context and troubleshooting guidance, and streaming failures with retry logic and exponential backoff. Resource delivery handles missing embedded content through comprehensive error messages, working directory management with restoration mechanisms, and HTTP formatting edge cases including Unicode content handling and byte-perfect content-length calculations. Build-time content preparation manages missing `artifacts/.clinerules/` structure through project root discovery failures with descriptive error messages, missing source files through individual file verification, and build hook integration failures through exception propagation. Testing infrastructure handles mock context simulation failures, temporary directory creation issues with automatic cleanup, and comprehensive validation across all functional areas with individual test isolation. The system provides smart compliance checking with conditional output returning empty responses when compliant for context optimization, comprehensive orphaned file detection with safety validation, configuration validation with descriptive error messages for invalid parameters, and package distribution error handling through `hatchling` build system integration. Error isolation ensures individual component failures don't cascade to complete system failure while maintaining MCP protocol compliance and package integrity.
 
 ########## Internal Implementation Details
 
-The MCP server uses `FastMCP` native transport with `server = FastMCP("JESSE Framework")` initialization and automatic lifecycle management eliminating manual event loop creation while providing comprehensive resource registration through decorator-based auto-registration patterns. Resource index generation employs dynamic component discovery including rule enumeration through `await get_available_rule_names()`, knowledge base scanning with exception handling, and WIP task directory iteration using structured JSON serialization with Unicode support. Knowledge base processing maintains performance tracking through `_decisions_made`, `_filesystem_operations`, and decision timing counters for optimization monitoring across all processing phases while implementing Plan-then-Execute architecture with five distinct phases from discovery through atomic execution. HTTP formatting uses consistent patterns with `format_http_section()` calls including specific content types, criticality classifications using `XAsyncContentCriticality.CRITICAL` and `XAsyncContentCriticality.INFORMATIONAL`, portable location paths with `{PROJECT_ROOT}` placeholders, and additional headers for enhanced metadata delivery. LLM integration employs lazy initialization with thread-safe locks for external SDK component initialization, cache implementation using SHA-256 hash truncation to 16 characters for keys, TTL-based expiration with periodic cleanup, and conversation management through separate dictionaries for contexts and message arrays. Embedded content organization uses module-relative path resolution through `EMBEDDED_CONTENT_DIR = Path(__file__).parent` ensuring consistent access regardless of installation location, rule content retrieval with f-string formatting using `JESSE_{rule_name.upper()}.md` pattern matching, and workflow access with conditional extension appending and comprehensive error handling for missing content scenarios. Build system integration uses `sys.path.insert()` for dynamic import path manipulation, `shutil.copy2()` for metadata-preserving file copying, and `shutil.copytree()` for recursive directory structure preservation. Testing infrastructure employs `MockContext` classes for FastMCP simulation, temporary directory creation with `tempfile.TemporaryDirectory()` for test isolation, and comprehensive assertion-based validation with detailed console output for debugging support.
+The MCP server uses `FastMCP` native transport initialization with `server = FastMCP("JESSE Framework")` and automatic lifecycle management through `server.run(transport="stdio")` eliminating manual event loop creation. Resource discovery employs dynamic component scanning including rule enumeration through `get_available_rule_names()`, knowledge base scanning with exception handling, and workflow file discovery using `get_embedded_workflow_files()`. HTTP formatting applies `format_http_section()` with specific criticality classifications, portable path resolution using placeholder variables, and content type specifications for consistent MCP response delivery. Knowledge base system implements cache-first processing with `FileAnalysisCache` using HTML comment metadata blocks and SHA-256 hashing for key generation, Plan-then-Execute architecture with atomic task processing through `ExecutionEngine`, and comprehensive decision-making via `RebuildDecisionEngine`. LLM integration uses lazy initialization with thread-safe locks, conversation management through in-memory dictionaries, and streaming implementation processing different event types including data, reasoning, and tool usage events. Embedded content access employs module-relative path resolution using `Path(__file__).parent`, automatic file extension handling, and comprehensive error reporting through `FileNotFoundError` exceptions. Build-time content preparation uses `copy_jesse_content()` orchestration with `find_jesse_project_root()` for project discovery, `shutil.copy2()` for individual rule files, and `shutil.copytree()` for complete workflow directory structure with `JesseBuildHook` integration for automated execution. Package configuration employs `hatchling` build backend with custom hook integration executing during package creation, dependency management through `uv.lock` with 77 pinned packages ensuring reproducible builds, and comprehensive metadata including version, authors, and entry points. Testing infrastructure uses `pytest` framework with `MockContext` classes for `FastMCP` simulation, temporary directory creation for isolated testing environments, and comprehensive validation across 22 test files covering all functional areas. The system maintains consistent logging patterns, structured error handling with specific exception types, comprehensive validation protocols ensuring data integrity throughout all operations, and complete package distribution capabilities through automated build processes.
 
 ########### Usage Examples
 
-**Complete MCP server initialization and execution:**
+**Complete MCP server deployment with package installation:**
 
-This example demonstrates the primary startup pattern for Jesse Framework MCP server with comprehensive resource registration and embedded content delivery. The approach provides complete MCP protocol compliance with automatic lifecycle management.
+This example demonstrates the primary deployment pattern for Jesse Framework MCP Server through package installation and execution. The approach provides complete framework functionality through standardized Python packaging with embedded content.
 
-```python
-# Initialize and run Jesse Framework MCP server with comprehensive functionality
-from jesse_framework_mcp.main import main
-from jesse_framework_mcp import __version__
+```bash
+# Install Jesse Framework MCP Server package with all embedded content and dependencies
+# Provides complete JESSE framework functionality through standardized package distribution
+pip install jesse-framework-mcp
 
-# Start server with FastMCP native transport and complete resource registration
-# Provides automatic lifecycle management, embedded content access, and knowledge base integration
-if __name__ == "__main__":
-    print(f"Starting Jesse Framework MCP Server v{__version__}")
-    main()  # Runs with stdio transport managing all MCP protocol communication
+# Execute MCP server with stdio transport for client communication
+# Server includes all embedded framework rules, workflows, and knowledge base capabilities
+jesse-framework-mcp
 ```
 
-**Comprehensive resource access and session initialization:**
+**Comprehensive session initialization through meta-resource aggregation:**
 
-This pattern shows how MCP clients access the complete Jesse Framework context through session initialization and individual resource endpoints. The approach enables efficient AI assistant setup with all essential development contexts.
+This example shows how MCP clients access complete development context through single resource request, demonstrating the meta-resource aggregation pattern for efficient session startup with all framework components.
 
 ```python
-# Access comprehensive Jesse Framework resources through MCP client integration
-# Demonstrates session initialization and individual resource consumption patterns
-
-# Complete session initialization with all essential contexts
-session_context = await mcp_client.read_resource("jesse://session/init-context")
+# Access comprehensive session context for complete development environment setup
 # Returns multi-section HTTP response with framework rules, project context, workflows, and compliance
+session_context = await mcp_client.read_resource("jesse://session/init-context")
 
-# Individual resource access for specific development contexts
-framework_rule = await mcp_client.read_resource("jesse://framework/rule/knowledge_management")
-project_knowledge = await mcp_client.read_resource("jesse://project/knowledge")
-wip_tasks = await mcp_client.read_resource("jesse://wip-tasks")
-workflow = await mcp_client.read_resource("file://workflows/jesse_wip_task_create")
-
-# Knowledge base access with lazy loading and metadata extraction
-knowledge_base = await mcp_client.read_resource("jesse://knowledge/cline_kb")
+# Parse multi-section response for individual framework contexts
+sections = extract_http_sections_from_multi_response(session_context)
+framework_rules = [s for s in sections if s.criticality == "CRITICAL"]
+project_context = [s for s in sections if s.section_type == "project-context"]
+workflows = [s for s in sections if s.section_type == "workflow"]
 ```
 
-**Hierarchical knowledge base processing with Plan-then-Execute architecture:**
+**Knowledge base hierarchical indexing with Plan-then-Execute architecture:**
 
-This example demonstrates the complete knowledge indexing workflow from configuration through execution, showcasing the Plan-then-Execute architecture with comprehensive progress tracking and LLM integration.
+This example demonstrates the advanced knowledge base processing capabilities with LLM integration, comprehensive caching strategies, and Plan-then-Execute workflow coordination for intelligent content analysis.
 
 ```python
-# Execute comprehensive hierarchical knowledge base indexing with Plan-then-Execute workflow
+# Initialize hierarchical knowledge base indexing with Plan-then-Execute workflow coordination
+# Provides comprehensive content analysis with cache optimization and LLM integration
 from jesse_framework_mcp.knowledge_bases import (
-    HierarchicalIndexer, IndexingConfig, IndexingMode,
-    register_knowledge_bases_tools, register_knowledge_bases_resources
+    HierarchicalIndexer, IndexingConfig, IndexingMode
 )
-from jesse_framework_mcp.llm.strands_agent_driver import StrandsClaude4Driver, Claude4SonnetConfig
-from pathlib import Path
 
-# Configure comprehensive indexing with LLM integration
+# Configure indexing with cache optimization, LLM integration, and Plan-then-Execute architecture
 config = IndexingConfig(
     handler_type="project-base",
     indexing_mode=IndexingMode.INCREMENTAL,
     max_concurrent_operations=4,
-    debug_mode=True
+    enable_prompt_caching=True
 )
 
-# Initialize LLM driver for content analysis
-llm_config = Claude4SonnetConfig.create_optimized_for_analysis(
-    enable_prompt_caching=True,
-    aws_region="us-west-2"
-)
-
-async def run_complete_framework_workflow():
-    # Initialize hierarchical indexer with Plan-then-Execute architecture
+# Execute Plan-then-Execute workflow with progress reporting and comprehensive analysis
+async def run_knowledge_indexing():
     indexer = HierarchicalIndexer(config)
-    
-    # Execute five-phase workflow: Discovery, Decision Analysis, Plan Generation, Preview, Execution
-    async with StrandsClaude4Driver(llm_config) as llm_driver:
-        status = await indexer.index_hierarchy(Path("./src"), ctx)
-        
-        print(f"Processing: {status.processing_stats.progress_percentage:.1f}%")
-        print(f"LLM calls: {status.processing_stats.llm_calls_made}")
-        print(f"Files processed: {status.processing_stats.files_processed}")
-        print(f"Knowledge files generated: {status.processing_stats.directories_processed}")
-        
-        return status
+    status = await indexer.index_hierarchy(Path("./src"), ctx)
+    print(f"Processed {status.processing_stats.files_completed} files")
+    print(f"LLM calls: {status.processing_stats.llm_calls_made}")
+    print(f"Cache hits: {status.processing_stats.cache_hits}")
+    return status
+```
 
-# Cleanup resources after processing
-await indexer.cleanup()
+**Build-time content preparation with automated framework embedding:**
+
+This example showcases the build-time content preparation system that automatically embeds complete JESSE framework content during package creation, ensuring self-contained distribution.
+
+```python
+# Build-time content preparation with automated JESSE framework embedding during package creation
+# Provides complete framework content embedding from artifacts/ to embedded_content/ structure
+from build_scripts.copy_jesse_content import copy_jesse_content, JesseBuildHook
+
+# Manual content preparation for development and testing scenarios
+try:
+    copy_jesse_content()
+    print("✅ JESSE framework content copied successfully")
+    print("📦 Package ready for distribution with embedded content")
+except (ValueError, FileNotFoundError) as e:
+    print(f"❌ Content preparation failed: {e}")
+
+# Automated build hook integration for package creation
+# Hatchling automatically triggers content preparation during build process
+hook = JesseBuildHook()
+hook.initialize(version="0.1.0", build_data={})
 ```
 
 ## Subdirectory Knowledge Integration
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/build_scripts/
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
 This directory implements the build-time infrastructure for the Jesse Framework MCP Server, providing automated framework content preparation and distribution packaging through Hatchling build system integration. The directory enables single source of truth copying from `artifacts/.clinerules/` to `embedded_content/` during package builds, ensuring complete JESSE framework content including rules and workflows is embedded in the MCP server package for runtime access. Key semantic entities include the primary build script `copy_jesse_content.py` containing orchestration function `copy_jesse_content()`, specialized copying functions `copy_jesse_rules()` and `copy_jesse_workflows()`, project discovery utility `find_jesse_project_root()`, Hatchling integration class `JesseBuildHook` implementing `BuildHookInterface`, legacy compatibility function `hatch_build_hook()`, imported modules `os`, `shutil`, and `pathlib.Path` for file operations, centralized configuration import `get_jesse_rule_files()` from constants module, source directory structure `artifacts/.clinerules/` containing framework files, destination structure `embedded_content/` for runtime embedding, and comprehensive error handling with `ValueError` and `FileNotFoundError` exceptions for missing components. The system implements defensive programming with descriptive error messages and complete framework copying through build system integration ensuring automated content preparation during package creation.
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
-This directory implements the core Jesse Framework MCP Server package, providing a comprehensive AI-assisted development platform through `FastMCP` protocol integration with embedded content delivery, hierarchical knowledge base management, and intelligent resource orchestration for modern development workflows. The system delivers complete MCP server functionality through standardized resource endpoints, automated knowledge indexing, LLM-powered content analysis, and embedded framework rules enabling consistent AI-assisted development practices. Key semantic entities include `FastMCP` server instance with `server = FastMCP("JESSE Framework")`, primary entry point `main()` function using `server.run(transport="stdio")`, comprehensive resource handlers including `framework_index()` decorated with `@server.resource("jesse://index")`, knowledge base integration via `register_knowledge_bases_tools()` and `register_knowledge_bases_resources()`, embedded content access through `load_embedded_content()` and `get_jesse_rule_files()`, hierarchical indexing system with `HierarchicalIndexer`, `KnowledgeBuilder`, and `RebuildDecisionEngine` components, LLM integration through `StrandsClaude4Driver` with `Claude4SonnetConfig` factory methods, HTTP formatting utilities `format_http_section()` and `format_multi_section_response()` with `XAsyncContentCriticality` classifications, resource URIs including `jesse://framework/rule/{rule_name}`, `jesse://session/init-context`, `jesse://wip-tasks`...
+This directory implements the core Jesse Framework MCP Server, providing comprehensive AI-assisted development capabilities through `FastMCP` protocol compliance with resource-first architecture, embedded content delivery, and intelligent knowledge base management for modern development workflows. The system enables MCP clients to access framework rules, project contexts, workflows, and knowledge bases through standardized resource endpoints while supporting both granular individual access and consolidated meta-resource delivery for efficient AI assistant integration. Key semantic entities include `FastMCP` server instance with `server = FastMCP("JESSE Framework")`, primary resource handlers `framework_index()`, `jesse_framework_start_prompt()`, `jesse_wip_task_create_prompt()`, and `jesse_knowledge_capture_prompt()`, centralized constants `JESSE_RULE_FILES`, `HTTP_BOUNDARY_MARKER`, and `DEFAULT_CRITICALITY`, comprehensive helper utilities through `content_loaders`, `session_management`, `knowledge_scanners`, `path_utils`, `async_http_formatter`, and `mistletoe_spacing` modules, knowledge base system with `HierarchicalIndexer`, `KnowledgeBuilder`, `FileAnalysisCache`, and `RebuildDecisionEngine`, LLM integration via `StrandsClaude4Driver` and `Claude4SonnetConfig`, resource endpoints including `jesse://index`, `jesse://framework/rule/{rule_name}`, `jesse://session/init-context`, `jesse://project/knowledge`, `jesse://wip-tasks`, and `file://workflows/{workflow_name}`, embedded...
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/tests/
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
-Comprehensive test suite validating the Jesse Framework MCP Server's knowledge base indexing system, HTTP formatting infrastructure, and resource endpoint functionality through isolated unit tests, integration testing, and real-world validation scenarios. Provides extensive testing capabilities for hierarchical dependency planning, cache integration, configuration management, project root detection, and MCP resource protocol compliance. Enables developers to verify system reliability through targeted validation of `HierarchicalIndexer`, `RebuildDecisionEngine`, `FileAnalysisCache`, `XAsyncHttpPath`, `IndexingConfig`, session initialization resources, and gitignore compliance functionality. Key semantic entities include `pytest`, `asyncio`, `tempfile`, `MockContext`, `TestContext`, `unwrap_fastmcp_function`, `pathlib.Path`, `FastMCP` protocol simulation, `jesse://session/init-context`, `jesse://project/gitignore-files`, `StrandsClaude4Driver`, `Claude4SonnetConfig`, boundary marker validation (`--JESSE_FRAMEWORK_BOUNDARY_2025--`), HTTP status code testing, and comprehensive decision outcome validation through `DecisionOutcome`, `DecisionReason`, and `DecisionReport` structures.
+This directory provides comprehensive test coverage for the JESSE Framework MCP Server knowledge base system, specifically validating core functionality across resource endpoints, knowledge building workflows, HTTP formatting infrastructure, and hierarchical indexing operations. The test suite ensures system reliability through validation of `HierarchicalIndexer`, `KnowledgeBuilder`, `FileAnalysisCache`, `RebuildDecisionEngine`, `StrandsClaude4Driver`, `XAsyncHttpPath`, `IndexingConfig`, and `FastMCP` resource protocol compliance. Key semantic entities include `pytest` testing framework, `asyncio` async execution patterns, `tempfile` temporary environment management, `MockContext` simulation classes, `unwrap_fastmcp_function` utility, `jesse://session/init-context` meta-resource, `--JESSE_FRAMEWORK_BOUNDARY_2025--` boundary markers, `X-ASYNC-Content-Writable` headers, `.knowledge/` directory structures, `project-base` indexing rules, and `Claude4SonnetConfig` LLM integration. The testing architecture implements comprehensive validation through resource endpoint testing, knowledge building workflow verification, cache behavior validation, HTTP formatting compliance, and integration testing with real project data to ensure production readiness.
 
 ## File Knowledge Integration
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/.gitignore
 
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
 #### Functional Intent & Features
 
@@ -257,7 +251,7 @@ venv/
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/pyproject.toml
 
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
 #### Functional Intent & Features
 
@@ -348,7 +342,7 @@ path = "build_scripts/copy_jesse_content.py"
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/README.md
 
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
 #### Functional Intent & Features
 
@@ -448,7 +442,7 @@ const kbContent = await mcpClient.callTool("jesse_load_knowledge_base", {
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/utils.py
 
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
 #### Functional Intent & Features
 
@@ -528,7 +522,7 @@ print(f"Function: {metadata['name']}, Parameters: {metadata['parameters']}")
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/uv.lock
 
-*Last Updated: 2025-07-06T23:20:06Z*
+*Last Updated: 2025-07-07T10:14:42Z*
 
 #### Functional Intent & Features
 
@@ -606,7 +600,7 @@ uv lock
 ```
 
 ---
-*Generated: 2025-07-06T23:20:06Z*
+*Generated: 2025-07-07T10:14:42Z*
 *Source Directory: {PROJECT_ROOT}/jesse-framework-mcp*
 *Total Files: 5*
 *Total Subdirectories: 3*

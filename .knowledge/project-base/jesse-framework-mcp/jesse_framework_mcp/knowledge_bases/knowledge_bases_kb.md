@@ -8,63 +8,103 @@
 
 #### Functional Intent & Features
 
-This directory implements the comprehensive Knowledge Bases Hierarchical Indexing System for the Jesse Framework MCP, providing automated knowledge base maintenance through `FastMCP` tool and resource interfaces with intelligent caching and LLM-powered content analysis. The system delivers standardized MCP protocol integration enabling external clients to trigger indexing operations, monitor system status, and access configuration resources through `jesse://knowledge_bases/` URI endpoints. Key semantic entities include `register_knowledge_bases_tools` and `register_knowledge_bases_resources` functions for `FastMCP` server integration, `HierarchicalIndexer` orchestrating Plan-then-Execute architecture workflows, `KnowledgeBuilder` providing LLM-powered content summarization through `StrandsClaude4Driver`, `FileAnalysisCache` implementing timestamp-based staleness detection, `IndexingConfig` and `IndexingMode` for comprehensive configuration management, `DirectoryContext` and `FileContext` for hierarchical processing state tracking, `DecisionReport` and `ExecutionPlan` for audit trail maintenance, `MCP server` architecture enabling context loading and intelligent codebase understanding, background scanning technology with semantic context databases, and specialized handlers `ProjectBaseHandler` and `GitCloneHandler` for scenario-specific processing. The framework establishes automated knowledge base generation through leaf-first hierarchical processing, bottom-up assembly patterns, and progressive intelligence enhancement across `.knowledge/` directory structures.
+This directory implements the core Knowledge Bases Hierarchical Indexing System for the Jesse Framework MCP Server, providing comprehensive orchestration of LLM-powered content analysis, cache-first processing optimization, and Plan-then-Execute architecture for reliable knowledge base generation. The system enables automated conversion of source code repositories into structured markdown knowledge bases through bottom-up hierarchical processing, utilizing `HierarchicalIndexer` for workflow orchestration, `KnowledgeBuilder` for Claude 4 Sonnet integration, `FileAnalysisCache` for performance optimization, and `RebuildDecisionEngine` for centralized decision-making. Key semantic entities include `FastMCP` server integration, `register_knowledge_bases_tools` and `register_knowledge_bases_resources` functions, `IndexingConfig` configuration management, `DirectoryContext` and `FileContext` runtime tracking, `ExecutionPlan` and `AtomicTask` execution modeling, `ProcessingStatus` and `IndexingMode` enumerations, `DecisionReport` and `RebuildDecision` audit structures, `TruncationDetectedError` handling, `EnhancedPrompts` LLM templates, `KnowledgeFileGenerator` output creation, `DebugHandler` interaction capture, `MarkdownParser` AST manipulation, `GitCloneHandler` and `ProjectBaseHandler` specialized processing, `mistletoe` parsing integration, `StrandsClaude4Driver` LLM operations, `Claude4SonnetConfig` model configuration, and comprehensive change detection with selective cascading rebuilds through continuation-based retry mechanisms and defensive programming patterns ensuring reliable operation across diverse filesystem configurations and LLM processing scenarios.
 
 ##### Main Components
 
-The directory contains three primary MCP integration modules and five specialized subdirectories implementing the complete indexing architecture. Core MCP interface modules include `resources.py` providing `FastMCP` resource endpoints for configuration access and system documentation, `tools.py` implementing MCP tool interfaces for manual indexing operations and status monitoring, and `__init__.py` serving as the centralized package initialization with comprehensive component exports. The `indexing/` subdirectory contains the core hierarchical processing engine with `HierarchicalIndexer`, `KnowledgeBuilder`, `RebuildDecisionEngine`, `PlanGenerator`, and `ExecutionEngine` implementing Plan-then-Execute architecture. The `models/` subdirectory provides comprehensive data model foundation through `IndexingConfig`, `DirectoryContext`, `FileContext`, `DecisionReport`, and `ExecutionPlan` classes supporting type-safe configuration management and runtime context tracking. The `tests/` subdirectory represents testing infrastructure for system validation. Each component implements async-first architecture patterns with `FastMCP Context` integration, comprehensive error handling with graceful degradation, and defensive programming patterns ensuring robust operation across diverse filesystem configurations.
+The directory contains three primary implementation categories organized around MCP integration, core indexing functionality, and supporting infrastructure. The MCP integration layer includes `tools.py` providing `knowledge_bases_index_trigger`, `knowledge_bases_status`, and `knowledge_bases_search` tool implementations, `resources.py` exposing `jesse://knowledge_bases/config/default`, `jesse://knowledge_bases/templates/usage_examples`, and `jesse://knowledge_bases/documentation/system_overview` resource endpoints, and `__init__.py` centralizing package exports for clean dependency management. The core indexing functionality encompasses the `indexing/` subdirectory containing 14 specialized modules including `hierarchical_indexer.py` for Plan-then-Execute orchestration, `knowledge_builder.py` for LLM-powered content analysis, `file_analysis_cache.py` for performance optimization, `rebuild_decision_engine.py` for centralized decision logic, `execution_engine.py` and `plan_generator.py` for atomic task processing, `knowledge_prompts.py` for specialized LLM templates, `knowledge_file_generator.py` for template-based output, `debug_handler.py` for interaction capture, `markdown_parser.py` for AST-based document manipulation, `config_manager.py` for auto-generation capabilities, `defaults.py` for handler-specific templates, and `special_handlers.py` for git-clone and project-base scenarios. The supporting infrastructure includes the `models/` subdirectory with comprehensive data structures through `IndexingConfig`, `DirectoryContext`, `FileContext`, `DecisionReport`, `ExecutionPlan`, and related validation models, plus empty `tests/` directory representing future testing capabilities.
 
 ###### Architecture & Design
 
-The architecture implements a layered MCP integration pattern with `FastMCP` server interfaces bridging external client requests to internal hierarchical indexing capabilities through standardized tool and resource protocols. The design separates MCP protocol concerns from core indexing logic through clean abstraction layers, enabling independent evolution of client interfaces and processing algorithms. The system employs Plan-then-Execute architecture separating decision-making from execution through distinct phases: discovery builds complete directory hierarchy context, decision analysis generates comprehensive rebuild reports, plan generation converts decisions into atomic tasks with dependencies, and execution performs dependency-aware task processing. The indexing architecture follows leaf-first hierarchical processing ensuring proper dependency ordering where parent directories wait for all child completion through bottom-up assembly patterns. The design implements cache-first processing strategies through `FileAnalysisCache` integration with selective bypass mechanisms for rebuild scenarios, comprehensive configuration management through hierarchical `IndexingConfig` organization, and immutable data model architecture using frozen dataclasses ensuring thread safety and audit trail integrity across all processing components.
+The architecture implements a sophisticated Plan-then-Execute pattern separating decision-making from execution through distinct phases: Discovery builds complete directory hierarchies, Decision Analysis generates comprehensive rebuild reports, Plan Generation converts decisions into atomic tasks with dependencies, and Atomic Execution performs dependency-aware task processing. The design emphasizes cache-first processing strategies through `FileAnalysisCache` integration, avoiding unnecessary LLM calls when source files remain unchanged, and implements continuation-based retry mechanisms instead of fresh conversation restarts, providing 90%+ token savings through intelligent response completion and overlap detection. The system uses fail-fast principles with `TruncationDetectedError` preventing artifact creation when LLM output is incomplete, separates concerns between LLM operations, content processing, cache management, and debug handling through dedicated component classes, and employs hierarchical configuration management with specialized settings for different processing modes including project-base, git-clones, and pdf-knowledge handlers. The architecture implements selective cascading where content-driven rebuilds automatically trigger ancestor directory rebuilds while avoiding unnecessary sibling processing, uses immutable data model foundations through frozen dataclasses ensuring thread safety and preventing runtime modifications, and provides comprehensive MCP integration through `FastMCP` tool and resource registration patterns with HTTP-formatted responses maintaining JESSE Framework consistency.
 
 ####### Implementation Approach
 
-The implementation utilizes `FastMCP` decorator patterns with `@server.tool()` and `@server.resource()` for endpoint registration, enabling standardized MCP protocol integration with comprehensive parameter validation and HTTP-formatted response generation. Tool execution employs global state management through `_current_indexer` variable preventing concurrent operations while providing real-time progress reporting through `FastMCP Context` integration. Resource provision implements read-only access patterns ensuring system configuration integrity while delivering comprehensive documentation and usage guidance through structured HTTP responses. The core indexing implementation executes five-phase Plan-then-Execute workflows: recursive directory discovery building complete hierarchy context, centralized decision analysis through `RebuildDecisionEngine` with file-first optimization, atomic task generation via `PlanGenerator` with comprehensive dependency management, execution preview for debugging and validation, and dependency-aware task execution through `ExecutionEngine` with performance metrics collection. The system employs continuation-based retry mechanisms maintaining conversation context across truncation recovery attempts, timestamp-based staleness detection through direct filesystem comparison, and comprehensive path mapping between source files and knowledge base structure using project-base directory mirroring with portable path handling for cross-platform compatibility.
+The implementation utilizes async-first patterns throughout with `asyncio` concurrency control and `FastMCP` Context integration for progress reporting, implementing cache-first processing that checks `FileAnalysisCache` before making LLM calls with selective caching based on compliance review outcomes and timestamp-based staleness detection. The system employs intelligent response merging for continuation scenarios, detecting overlapping content at merge boundaries and removing duplicate sentences through sentence-level analysis, while handling empty files using filesystem metadata through `Path.stat().st_size` for efficient detection without content reading. Content extraction uses string processing to remove LLM-generated headers while preserving legitimate section structure through pattern matching and AST-based manipulation via `mistletoe` integration. The bounded loop reviewer workflow applies iterative corrections with configurable maximum iterations to prevent infinite loops while ensuring content compliance, and knowledge file generation uses template-based approaches through `KnowledgeFileGenerator` with alphabetical sorting and complete rebuild strategies. Debug handling provides comprehensive interaction capture with replay functionality for consistent testing workflows and deterministic debugging scenarios, while configuration management implements auto-generation of missing JSON files from centralized Python defaults with comprehensive `Pydantic` validation for type-safe parameter management.
 
 ######## External Dependencies & Integration Points
 
 **→ Inbound:**
-- `fastmcp.FastMCP` (external library) - MCP server framework enabling tool and resource registration with standardized protocol implementation
-- `fastmcp.Context` (external library) - MCP context interface for async progress reporting and user interaction throughout indexing workflows
-- `jesse_framework_mcp.llm.strands_agent_driver.StrandsClaude4Driver` - Claude 4 Sonnet LLM integration for content analysis and knowledge generation
-- `jesse_framework_mcp.llm.strands_agent_driver.Claude4SonnetConfig` - LLM configuration optimization for analysis tasks and conversation management
-- `jesse_framework_mcp.helpers.async_http_formatter.format_http_response` - HTTP response formatting utility ensuring JESSE Framework consistency across MCP endpoints
-- `jesse_framework_mcp.helpers.path_utils.get_portable_path` - Cross-platform path conversion utility for consistent path formatting and knowledge base organization
-- `mistletoe` (external library) - AST-based markdown parsing and rendering for reliable document manipulation and content extraction
-- `pathlib.Path` (external library) - Cross-platform path operations and filesystem metadata access for directory traversal and file processing
-- `asyncio` (external library) - Async programming patterns and concurrency control for performance optimization and parallel processing
-- `json` (external library) - Configuration serialization and debug metadata persistence for external system integration
-- `pydantic` (external library) - Configuration validation and type safety for indexing parameters and data model integrity
+- `fastmcp.FastMCP` (external library) - MCP server framework enabling tool and resource registration with async execution patterns
+- `fastmcp.Context` (external library) - Progress reporting and logging interface for real-time user feedback during operations
+- `jesse_framework_mcp.llm.strands_agent_driver.StrandsClaude4Driver` - Claude 4 Sonnet LLM integration driver for content analysis
+- `jesse_framework_mcp.llm.strands_agent_driver.Claude4SonnetConfig` - LLM configuration model for analysis task parameters
+- `jesse_framework_mcp.llm.strands_agent_driver.models.Claude4SonnetModel` - Official Claude 4 Sonnet model identifiers
+- `jesse_framework_mcp.helpers.async_http_formatter.format_http_response` - HTTP response formatting utility for JESSE Framework consistency
+- `jesse_framework_mcp.helpers.path_utils.get_portable_path` - Cross-platform path handling for knowledge base generation
+- `jesse_framework_mcp.helpers.path_utils.get_project_root` - Project root detection for automatic configuration defaulting
+- `jesse_framework_mcp.helpers.mistletoe_spacing` - Spacing preservation utilities for markdown manipulation
+- `mistletoe` (external library) - AST-based markdown parsing and rendering for document structure manipulation
+- `pydantic` (external library) - Configuration validation and type safety for hierarchical parameter management
+- `asyncio` (external library) - Async programming patterns for concurrent LLM operations and file processing
+- `pathlib` (external library) - Cross-platform file operations and path handling throughout the system
+- `json` (external library) - Configuration serialization and debug metadata management
+- `logging` (external library) - Structured logging for operations, error tracking, and debugging workflows
+- `datetime` (external library) - Timestamp tracking and processing duration calculations
+- `hashlib` (external library) - Content hashing for interaction identification and duplicate detection
 
 **← Outbound:**
-- `jesse_framework_mcp/main.py:JesseFrameworkMCPServer` - MCP server consuming package exports for knowledge base functionality integration and tool registration
-- `jesse_framework_mcp/server.py` - Server initialization consuming tool and resource registration functions for complete MCP service deployment
-- `{PROJECT_ROOT}/.knowledge/project-base/` - Generated knowledge base files with hierarchical structure mirroring source directory organization
-- `{PROJECT_ROOT}/.knowledge/git-clones/` - Specialized knowledge structures for git repository processing with read-only mirrored organization
-- `debug_output/llm_debug/` - Debug interaction capture files for development workflow support and LLM interaction replay
-- `cache_files/*.analysis.md` - Cached analysis files for performance optimization and staleness detection with metadata preservation
-- External MCP clients - Consuming registered tools and resources through standardized MCP protocol for knowledge base operations
-- Monitoring systems - Performance statistics and decision audit trails for system reliability tracking and optimization analysis
+- `jesse_framework_mcp.main.JesseFrameworkMCPServer` - MCP server consuming package exports for knowledge base functionality integration
+- `jesse_framework_mcp.server` - Server initialization consuming tool and resource registration functions
+- `External MCP clients` - Consuming registered tools and resources through FastMCP protocol for knowledge base operations
+- `generated/knowledge_files/*.md` - Structured knowledge files in markdown format consumed by knowledge management systems
+- `generated/cache_files/*.analysis.md` - Cached analysis files for performance optimization and incremental processing
+- `generated/debug_artifacts/` - Debug interaction files for replay, analysis, and troubleshooting workflows
+- `*.indexing-config.json` - Auto-generated configuration files for user customization and system setup
+- `Development tools` - Importing knowledge base components for automated documentation and maintenance workflows
+- `Configuration systems` - Using IndexingConfig and IndexingMode for system setup and parameter management
+- `Monitoring systems` - Accessing ProcessingStats and ExecutionResults for performance analysis and optimization
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Comprehensive MCP integration layer for the Jesse Framework knowledge base indexing system, serving as the primary interface between external MCP clients and internal hierarchical processing capabilities while coordinating all phases of automated knowledge base maintenance
-- **Ecosystem Position**: Core infrastructure component bridging MCP protocol requirements with specialized indexing algorithms, serving as the central orchestrator for knowledge base operations within the broader Jesse Framework MCP server architecture
-- **Integration Pattern**: Used by MCP server during initialization for tool and resource registration, consumed by external MCP clients through standardized protocol interfaces, integrated with specialized scenario handlers for comprehensive knowledge base coverage, and coordinating with LLM-powered content generation through structured Plan-then-Execute workflows while providing comprehensive debugging and monitoring capabilities for development and production environments
+- **System Role**: Core knowledge base processing engine for the Jesse Framework MCP Server, serving as the primary interface between source content repositories and structured knowledge base generation with comprehensive caching, optimization, and Plan-then-Execute workflow coordination
+- **Ecosystem Position**: Central infrastructure component in the knowledge management pipeline, bridging raw source files with LLM-powered analysis through hierarchical indexing workflows while providing standardized MCP tool and resource interfaces for external system integration
+- **Integration Pattern**: Used by MCP server during initialization for tool and resource registration, consumed by external MCP clients through protocol-standard interfaces, integrated with development workflows for automated knowledge base maintenance, and coordinated with FastMCP Context for progress reporting to human operators during long-running indexing operations
 
 ######### Edge Cases & Error Handling
 
-The system implements comprehensive error handling across multiple operational layers including MCP protocol validation, filesystem access restrictions, LLM processing failures, and concurrent operation conflicts. MCP tool execution handles invalid parameters through early validation with HTTP 400 Bad Request responses, concurrent operation prevention through global indexer state checking returning HTTP 409 Conflict responses, and comprehensive exception catching with structured logging and HTTP 500 Internal Server Error responses containing detailed debugging context. The indexing system addresses truncation detection through `TruncationDetectedError` preventing artifact creation when LLM responses are incomplete, empty directory handling by detecting contentless directories and skipping knowledge file generation, filesystem access restrictions with `OSError` and `PermissionError` catching enabling continued processing, and cache failures ensuring cache operations never break core knowledge building processes through conservative fallback decisions. Resource provision handles missing configuration files through automatic generation from centralized defaults, JSON parsing errors with descriptive error messages, and resource access failures providing clear guidance through formatted error responses. The system manages strategic pivot scenarios through comprehensive metrics tracking enabling rapid detection of market rejection, adoption challenges, or competitive response requiring strategic adjustment, while providing bounded loop reviewer workflows preventing infinite loops through maximum iteration limits and preserving LLM work through forced caching mechanisms.
+The system handles comprehensive edge cases including empty file scenarios with infinite rebuild loop prevention through standardized analysis generation, missing project root detection with setup guidance generation, filesystem permission issues with graceful degradation, and AWS credential validation with warning-level reporting for missing configurations. Error handling covers `FastMCP` decorator unwrapping failures, LLM driver initialization errors, cache staleness validation, and HTTP formatting edge cases including Unicode content handling and byte-perfect content-length calculations. The framework validates truncation detection through multiple strategies including programmatic marker checking with `--END OF LLM OUTPUT--` detection, LLM reviewer validation for structural compliance, and continuation-based recovery mechanisms using conversation ID preservation for 90%+ token savings. Concurrent operation safety is ensured through upfront cache structure preparation via `FileAnalysisCache.prepare_cache_structure()`, race condition detection, and semaphore-based resource management through `asyncio.Semaphore` concurrency control. Configuration validation includes unsupported handler type scenarios with descriptive error messages listing valid options, invalid JSON parsing with comprehensive field-level error reporting, and Pydantic model validation errors with detailed context information. The system provides comprehensive orphaned file detection with safety validation preventing accidental deletion of valid content through `is_safe_to_delete` metadata flags, handles circular dependency prevention in task execution through depth-first search algorithms, and manages filesystem errors during knowledge file writing with proper directory creation and structured error reporting.
 
 ########## Internal Implementation Details
 
-The MCP integration layer utilizes global `_current_indexer` variable with Optional typing for thread-safe operation coordination and conflict prevention during concurrent tool invocations. Tool registration employs nested function definitions within `register_knowledge_bases_tools()` enabling clean encapsulation and shared access to indexer state while maintaining FastMCP decorator compatibility. Resource endpoints implement URI-based identification following `jesse://knowledge_bases/` namespace conventions with hierarchical organization through `config/`, `templates/`, and `documentation/` path segments. The indexing system maintains performance tracking through `_decisions_made`, `_filesystem_operations`, and `_decision_start_time` counters for optimization monitoring across all processing phases. Cache implementation uses HTML comment metadata blocks with `CACHE_VERSION = "1.0"` for future compatibility and migration support, while employing direct timestamp comparison without tolerance for consistent staleness detection behavior. The execution engine maintains internal state through three sets tracking completed, failed, and running tasks with `asyncio.Semaphore(config.max_concurrent_operations)` for resource management. Configuration management uses `object.__setattr__()` to modify frozen dataclass fields during initialization when setting default knowledge directory, while implementing property accessors for backward compatibility delegation to hierarchical configuration groups. The debug system employs hash-based interaction identification combining prompt content hashes with timestamps for unique interaction IDs enabling efficient debug replay functionality with cross-platform filename compatibility through path normalization algorithms.
+The `FileAnalysisCache` uses HTML comment metadata blocks with `CACHE_VERSION = "1.0"` for future compatibility and includes portable source file paths using `get_portable_path()` for cross-environment compatibility, while the `DebugHandler` maintains pipeline stage organization through `PIPELINE_STAGES` dictionary with five distinct processing stages and uses hash-based interaction identification combining prompt content hashes with timestamps. The `ExecutionEngine` maintains internal state through three sets tracking completed, failed, and running tasks with `asyncio.Semaphore` concurrency control, while the `KnowledgeBuilder` implements dual truncation detection strategy combining programmatic marker checking with LLM reviewer validation, using conversation ID preservation for continuation-based retry mechanisms. The `MarkdownParser` leverages `mistletoe` line_number attributes for spacing-aware document manipulation and token-level AST manipulation for structure preservation, while configuration management uses deep copying for template immutability and hierarchical validation through nested Pydantic models. The system employs predictable filename generation based on normalized paths and pipeline stages, comprehensive metadata embedding for task execution context including file characteristics and decision reasoning, and performance tracking through counters and timing measurements across all major operations. Internal mechanisms include `datetime.now()` for processing timing, recursive directory traversal through specialized handler methods, status mapping between `ExecutionResults` and `IndexingStatus` formats for API compatibility, and resource management through cleanup methods delegating to component-specific resource cleanup procedures.
 
 ########### Usage Examples
 
-**Complete MCP server integration with knowledge base functionality:**
+**Basic hierarchical indexing workflow initialization and execution:**
 
-This example demonstrates initializing a FastMCP server with comprehensive knowledge base tools and resources, enabling external clients to perform indexing operations and access system configuration through standardized MCP protocol interfaces.
+This example demonstrates the complete workflow for initializing and executing hierarchical knowledge base indexing with progress reporting and error handling, showcasing the Plan-then-Execute architecture coordination.
+
+```python
+from pathlib import Path
+from fastmcp import Context
+from jesse_framework_mcp.knowledge_bases import (
+    HierarchicalIndexer, IndexingConfig, IndexingMode
+)
+
+# Initialize hierarchical indexer with comprehensive configuration
+config = IndexingConfig(
+    handler_type="project-base",
+    indexing_mode=IndexingMode.INCREMENTAL,
+    knowledge_output_directory=Path(".knowledge"),
+    max_concurrent_operations=4,
+    continue_on_file_errors=True
+)
+indexer = HierarchicalIndexer(config)
+
+# Execute complete indexing workflow with progress reporting
+async def run_knowledge_indexing():
+    ctx = Context()
+    source_root = Path("./src")
+    status = await indexer.index_hierarchy(source_root, ctx)
+    print(f"Indexing completed: {status.overall_status}")
+    print(f"Files processed: {status.processing_stats.files_completed}")
+    print(f"LLM calls made: {status.processing_stats.llm_calls_made}")
+    return status
+```
+
+**MCP server integration with tool and resource registration:**
+
+This example shows how to integrate the knowledge bases system with a FastMCP server, registering both tools for manual operations and resources for configuration access.
 
 ```python
 from fastmcp import FastMCP
@@ -75,108 +115,96 @@ from jesse_framework_mcp.knowledge_bases import (
 
 # Initialize FastMCP server with knowledge base functionality
 server = FastMCP("Jesse Framework MCP")
+
+# Register knowledge base tools for manual indexing operations
 register_knowledge_bases_tools(server)
+
+# Register knowledge base resources for configuration access
 register_knowledge_bases_resources(server)
 
-# Server now provides standardized MCP tools and resources
-# Tools: knowledge_bases_index_trigger, knowledge_bases_status, knowledge_bases_search
-# Resources: jesse://knowledge_bases/config/default, jesse://knowledge_bases/templates/usage_examples
+# Tools now available: knowledge_bases_index_trigger, knowledge_bases_status, knowledge_bases_search
+# Resources now available: jesse://knowledge_bases/config/default, jesse://knowledge_bases/templates/usage_examples
 ```
 
-**Manual indexing operation through MCP tool interface:**
+**Cache-first processing with LLM integration and debug capture:**
 
-This pattern shows how external MCP clients invoke knowledge base indexing operations with configurable parameters, progress reporting, and comprehensive error handling through the standardized tool interface.
+This example demonstrates leveraging the cache-first processing strategy for individual file analysis with Claude 4 Sonnet integration and comprehensive debug capture for troubleshooting.
 
 ```python
-# MCP client tool invocation for manual indexing (conceptual client-side code)
-indexing_response = await mcp_client.call_tool(
-    "knowledge_bases_index_trigger",
-    {
-        "target_path": "./src/",
-        "indexing_mode": "incremental",
-        "enable_git_clone_indexing": True,
-        "enable_project_base_indexing": False
-    }
+from jesse_framework_mcp.knowledge_bases.indexing import (
+    KnowledgeBuilder, FileAnalysisCache, DebugHandler
+)
+from jesse_framework_mcp.knowledge_bases.models import FileContext
+
+# Initialize knowledge builder with cache optimization and debug capture
+config = IndexingConfig(debug_enabled=True, enable_replay=True)
+builder = KnowledgeBuilder(config)
+await builder.initialize()
+
+# Process individual file with cache-first strategy and debug capture
+file_context = FileContext(
+    file_path=Path("example.py"),
+    file_size=1024,
+    last_modified=datetime.now()
 )
 
-# Expected response structure with comprehensive operation results
-{
-    "status": "completed",
-    "target_path": "/absolute/path/to/src/",
-    "indexing_mode": "incremental",
-    "statistics": {
-        "files_processed": 145,
-        "directories_processed": 23,
-        "llm_calls_made": 67,
-        "cache_hits": 78
-    },
-    "completion_percentage": 100.0,
-    "operation_summary": {
-        "total_files_discovered": 150,
-        "files_completed": 145,
-        "files_failed": 5,
-        "processing_duration": "00:05:23"
-    }
-}
+# Check cache first, then process with LLM if needed
+cached_analysis = await builder.analysis_cache.get_cached_analysis(
+    file_context.file_path, source_root
+)
+
+if cached_analysis:
+    result = cached_analysis
+    print("Using cached analysis")
+else:
+    result = await builder.build_file_knowledge(file_context, ctx, source_root)
+    print(f"Generated new analysis: {result.processing_status}")
 ```
 
-**Hierarchical indexing workflow with Plan-then-Execute architecture:**
+**Plan-then-Execute architecture with atomic task processing:**
 
-This example demonstrates the complete indexing workflow coordination from configuration through execution, showcasing the Plan-then-Execute architecture with comprehensive progress tracking and performance analysis.
+This example demonstrates the Plan-then-Execute architecture for converting decisions into atomic tasks with dependency management and concurrent execution coordination.
 
 ```python
-from jesse_framework_mcp.knowledge_bases import (
-    HierarchicalIndexer,
-    IndexingConfig,
-    IndexingMode
-)
-from pathlib import Path
-
-# Configure and execute comprehensive hierarchical indexing
-config = IndexingConfig(
-    handler_type="project-base",
-    indexing_mode=IndexingMode.INCREMENTAL,
-    max_concurrent_operations=4,
-    debug_mode=True
+from jesse_framework_mcp.knowledge_bases.indexing import (
+    RebuildDecisionEngine, PlanGenerator, ExecutionEngine
 )
 
-indexer = HierarchicalIndexer(config)
+# Phase 1: Generate comprehensive decision report
+decision_engine = RebuildDecisionEngine(config)
+decision_report = await decision_engine.analyze_hierarchy(
+    root_context, source_root, ctx
+)
 
-# Execute five-phase Plan-then-Execute workflow
-async def run_complete_indexing(source_root, ctx):
-    # Phase 1: Discovery - build complete directory hierarchy context
-    # Phase 2: Decision Analysis - generate comprehensive rebuild decisions
-    # Phase 3: Plan Generation - convert decisions to atomic tasks with dependencies
-    # Phase 4: Plan Preview - validate execution strategy and resource requirements
-    # Phase 5: Atomic Execution - perform dependency-aware task execution
-    
-    status = await indexer.index_hierarchy(source_root, ctx)
-    
-    print(f"Processing: {status.processing_stats.progress_percentage:.1f}%")
-    print(f"LLM calls: {status.processing_stats.llm_calls_made}")
-    print(f"Files processed: {status.processing_stats.files_processed}")
-    print(f"Cache hits: {status.processing_stats.cache_hits}")
-    
-    return status
+# Phase 2: Convert decisions to atomic execution plan
+plan_generator = PlanGenerator(config)
+execution_plan = await plan_generator.create_execution_plan(
+    root_context, decision_report, source_root, ctx
+)
 
-# Cleanup resources after processing
-await indexer.cleanup()
+# Phase 3: Execute plan with dependency-aware task processing
+execution_engine = ExecutionEngine(config)
+results = await execution_engine.execute_plan(execution_plan, ctx)
+
+print(f"Plan executed: {len(results.completed_tasks)} completed")
+print(f"LLM calls made: {results.llm_calls_made}")
+print(f"Total duration: {results.total_duration:.1f}s")
 ```
 
 ## Subdirectory Knowledge Integration
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/indexing/
-*Last Updated: 2025-07-06T23:12:03Z*
+*Last Updated: 2025-07-07T10:06:45Z*
 
-Comprehensive hierarchical knowledge base indexing system implementing Plan-then-Execute architecture for the Jesse Framework MCP Server, providing automated content analysis, structured knowledge file generation, and intelligent caching for large-scale codebase documentation. The system orchestrates LLM-powered content summarization through `HierarchicalIndexer`, `KnowledgeBuilder`, and `RebuildDecisionEngine` components with bottom-up assembly strategies ensuring child completion before parent processing. Enables developers to maintain synchronized knowledge bases through change detection, selective rebuilds, and atomic task execution with comprehensive error handling and performance optimization. Key semantic entities include `HierarchicalIndexer` for workflow orchestration, `FileAnalysisCache` for performance optimization, `ExecutionEngine` for dependency-aware task execution, `PlanGenerator` for decision-to-task translation, `StrandsClaude4Driver` for LLM integration, `IndexingConfig` for configuration management, `DirectoryContext` and `FileContext` for structure representation, `DecisionReport` and `ExecutionPlan` for workflow coordination, `EnhancedPrompts` for specialized analysis templates, and `DebugHandler` for development workflow support using async-first architecture patterns with `FastMCP` context integration.
+This directory implements the core hierarchical knowledge base indexing system for the Jesse Framework MCP Server, providing comprehensive orchestration of LLM-powered content analysis, cache-first processing optimization, and Plan-then-Execute architecture for reliable knowledge base generation. The system enables automated conversion of source code repositories into structured markdown knowledge bases through bottom-up hierarchical processing, utilizing `HierarchicalIndexer` for workflow orchestration, `KnowledgeBuilder` for Claude 4 Sonnet integration, `FileAnalysisCache` for performance optimization, and `RebuildDecisionEngine` for centralized decision-making. Key semantic entities include `ExecutionEngine`, `PlanGenerator`, `AtomicTask`, `DirectoryContext`, `FileContext`, `IndexingConfig`, `ProcessingStatus`, `DecisionReport`, `TruncationDetectedError`, `EnhancedPrompts`, `KnowledgeFileGenerator`, `DebugHandler`, `MarkdownParser`, `GitCloneHandler`, `ProjectBaseHandler`, `mistletoe` AST parsing, `StrandsClaude4Driver`, `Claude4SonnetConfig`, `FastMCP` Context integration, and specialized handlers for different content scenarios. The architecture implements comprehensive change detection, selective cascading rebuilds, continuation-based retry mechanisms, and defensive programming patterns ensuring reliable operation across diverse filesystem configurations and LLM processing scenarios.
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/models/
-*Last Updated: 2025-07-06T23:12:03Z*
+*Last Updated: 2025-07-07T10:06:45Z*
 
 Comprehensive data model foundation for the Jesse Framework MCP's Knowledge Bases Hierarchical Indexing System, providing type-safe configuration management, runtime context tracking, decision modeling, and execution planning through immutable dataclass structures. The system delivers centralized model definitions enabling consistent data contracts across all indexing components, comprehensive validation at initialization time, and serialization support for external system integration. Enables developers to implement robust knowledge base indexing workflows with structured configuration management, hierarchical processing state tracking, audit trail maintenance, and Plan-then-Execute architecture coordination. Key semantic entities include `IndexingConfig` for system configuration with handler-specific templates, `DirectoryContext` and `FileContext` for hierarchical processing state, `DecisionReport` and `RebuildDecision` for centralized decision logic, `ExecutionPlan` and `AtomicTask` for atomic task execution, `ProcessingStatus` and `IndexingMode` enumerations for state management, `@dataclass(frozen=True)` for immutable structures, `field(default_factory=datetime.now)` for automatic timestamp tracking, and comprehensive validation through `__post_init__()` methods ensuring data integrity across all model types.
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/tests/
-*Last Updated: 2025-07-06T23:12:03Z*
+*Last Updated: 2025-07-07T10:06:45Z*
 
 *No detailed content available from tests_kb.md*
 
@@ -184,7 +212,7 @@ Comprehensive data model foundation for the Jesse Framework MCP's Knowledge Base
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/__init__.py
 
-*Last Updated: 2025-07-06T23:12:03Z*
+*Last Updated: 2025-07-07T10:06:45Z*
 
 #### Functional Intent & Features
 
@@ -267,7 +295,7 @@ status = await indexer.index_hierarchy(Path("./knowledge"), ctx)
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/resources.py
 
-*Last Updated: 2025-07-06T23:12:03Z*
+*Last Updated: 2025-07-07T10:06:45Z*
 
 #### Functional Intent & Features
 
@@ -342,7 +370,7 @@ response_data = {
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases/tools.py
 
-*Last Updated: 2025-07-06T23:12:03Z*
+*Last Updated: 2025-07-07T10:06:45Z*
 
 #### Functional Intent & Features
 
@@ -440,7 +468,7 @@ response = await mcp_client.call_tool(
 ```
 
 ---
-*Generated: 2025-07-06T23:12:03Z*
+*Generated: 2025-07-07T10:06:45Z*
 *Source Directory: {PROJECT_ROOT}/jesse-framework-mcp/jesse_framework_mcp/knowledge_bases*
 *Total Files: 3*
 *Total Subdirectories: 3*

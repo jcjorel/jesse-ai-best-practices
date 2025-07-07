@@ -8,80 +8,70 @@
 
 #### Functional Intent & Features
 
-This project root directory implements the complete `Jesse AI Best Practices Framework` ecosystem, providing comprehensive AI-assisted development infrastructure through `MCP server` implementation, strategic product development methodology, operational documentation standards, and framework governance systems. The directory delivers integrated development platform capabilities through `FastMCP` protocol compliance, `Amazon's Working Backwards methodology` implementation, persistent knowledge management systems, automated workflow orchestration, and standardized development practices enabling transformation of AI coding assistants into intelligent development partners. Key semantic entities include `Jesse Framework MCP Server` with `FastMCP` native transport, `Amazon's Working Backwards methodology` strategic validation framework, `JESSE AI Best Practices Framework` governance system, `Cline` AI assistant integration patterns, `MCP Context Server` intelligent context management, `background scanning technology`, `semantic context database`, `intent-driven context selection`, `hierarchical knowledge base management`, `automated workflow systems`, `persistent knowledge storage`, `lazy loading strategies`, `Working Backwards stages completion`, `PR/FAQ methodology`, `customer journey mapping`, `success metrics framework`, `coaching session tracking`, comprehensive documentation standards through `howtos/` operational guides, build-time content embedding through `Hatchling` integration, `AWS Bedrock` LLM services integration, `Strands Agent SDK` coordination, version control exclusion patterns, `MIT License` legal framework, and complete development governance ensuring consistent AI-assisted development practices across the entire ecosystem.
+This directory implements the complete Jesse AI Best Practices Framework ecosystem, providing comprehensive AI-assisted development capabilities through integrated documentation, strategic planning, MCP server implementation, and operational guidance for transforming AI coding assistants into intelligent development partners. The system enables developers to establish persistent knowledge management, automated workflows, enforced coding standards, and strategic product development through `Amazon's Working Backwards methodology` while delivering self-contained MCP server distribution with embedded framework content. Key semantic entities include `Jesse AI Best Practices Framework` as the core system, `Cline AI coding assistant` integration via `https://github.com/cline/cline`, `FastMCP` protocol compliance through `jesse-framework-mcp` package, `${HOME}/Cline/Rules/` and `${HOME}/Cline/Workflows/` global installation directories, `.clinerules/` project-level installation structure, `JESSE_USER_IDENTITY.md` mandatory user identity file with PII protection, `29+ automated workflows` including `/jesse_wip_task_create.md` and `/jesse_wip_task_commit.md`, comprehensive knowledge management system with `.knowledge/` directory structure, `Amazon's Working Backwards methodology` for strategic validation, `MCP Context Server` architecture, `HierarchicalIndexer` and `KnowledgeBuilder` for intelligent content analysis, `StrandsClaude4Driver` for LLM integration, `pytest` testing framework with `MockContext` simulation, `hatchling` build system with custom hooks, `uv.lock` dependency management with 77 pinned packages, and complete operational documentation through `howtos/` directory covering `DOCUMENTATION_STANDARDS.md`, `WORKFLOW_REFERENCE.md`, `TASK_MANAGEMENT.md`, and specialized guidance files enabling rapid team onboarding and consistent project execution across development environments.
 
 ##### Main Components
 
-The directory contains four primary subdirectories and four foundational files providing complete framework ecosystem coverage. The `jesse-framework-mcp/` subdirectory implements the core MCP server package with `FastMCP` protocol compliance, embedded content delivery, hierarchical knowledge base management, LLM integration through `StrandsClaude4Driver`, comprehensive testing infrastructure, and build-time content preparation. The `working_backwards/` subdirectory houses strategic product development documentation implementing `Amazon's Working Backwards methodology` with market research, problem validation, solution architecture, customer experience design, and success measurement frameworks. The `howtos/` subdirectory provides operational documentation covering development standards, workflow management, task coordination, team collaboration, AI assistant integration, and knowledge organization procedures. Foundational files include `.gitignore` implementing comprehensive version control exclusion patterns with selective knowledge base preservation, `LICENSE` establishing `MIT License` legal framework, `README.md` providing complete framework documentation with installation procedures and architectural overview, and `HOWTO_USE.md` delivering comprehensive usage guidance with troubleshooting procedures and advanced configuration options.
+The directory contains comprehensive framework implementation with core documentation files, strategic planning materials, complete MCP server package, and operational guidance documentation. Primary documentation includes `README.md` establishing framework value proposition and installation procedures, `HOWTO_USE.md` providing detailed operational guidance with workflow commands and troubleshooting procedures, `LICENSE` defining MIT license terms for open source distribution, and `.gitignore` implementing comprehensive version control exclusions with selective knowledge base preservation. Strategic planning components encompass `working_backwards/` directory implementing `Amazon's Working Backwards methodology` with customer research, problem definition, solution architecture, and success metrics for evidence-based product validation. The complete MCP server implementation resides in `jesse-framework-mcp/` directory containing `jesse_framework_mcp/` core package with `main.py`, `constants.py`, and `__init__.py` files, specialized subdirectories including `knowledge_bases/` for hierarchical indexing, `helpers/` for utility functions, `llm/` for Claude 4 Sonnet integration, `resources/` for MCP resource handlers, and `embedded_content/` for framework rules and workflows, plus supporting infrastructure through `build_scripts/copy_jesse_content.py`, `tests/` directory with 22 comprehensive test files, `pyproject.toml` package configuration, `uv.lock` dependency management, and `utils.py` for `FastMCP` function unwrapping. Operational guidance documentation includes `howtos/` directory with nine specialized guides covering `DOCUMENTATION_STANDARDS.md`, `CODING_STANDARDS.md`, `WORKFLOW_REFERENCE.md`, `TASK_MANAGEMENT.md`, `TEAM_COLLABORATION.md`, `AI_ASSISTANT_INTEGRATION.md`, `AMAZON_PRFAQ_COACH.md`, `EXTERNAL_RESOURCES.md`, and `KNOWLEDGE_MANAGEMENT.md` providing comprehensive team coordination and development standards.
 
 ###### Architecture & Design
 
-The architecture implements a comprehensive framework ecosystem with clear separation between MCP protocol implementation, strategic product development, operational documentation, and framework governance through modular component organization and standardized integration patterns. The design emphasizes layered architecture with `FastMCP` server providing protocol compliance and resource delivery, strategic documentation enabling product validation and market positioning, operational guides ensuring consistent development practices, and foundational files establishing legal framework and usage guidance. The system employs resource-first architecture with individual resource access patterns, comprehensive session initialization through meta-resource aggregation, intelligent knowledge base management through hierarchical processing strategies, and embedded content access patterns using `importlib.resources` for package-bundled framework rules and workflows. Key design patterns include the MCP resource handler pattern with `FastMCP` decorators for endpoint registration, Plan-then-Execute architecture separating decision-making from execution through distinct phases, meta-resource aggregation pattern combining multiple contexts into unified responses, selective exclusion pattern using Git negation rules for knowledge base management, build-time content embedding pattern through `Hatchling` integration, and comprehensive documentation pattern with cross-referenced operational guides enabling consistent team coordination and development practices.
+The architecture implements a comprehensive framework ecosystem with multiple integration layers supporting both human developers and AI assistants through modular component design, strategic validation frameworks, and self-contained distribution mechanisms. The design employs a multi-tier architecture with strategic planning layer using `Amazon's Working Backwards methodology` for customer-centric validation, framework implementation layer providing persistent knowledge management and automated workflows, MCP server layer enabling AI assistant integration through `FastMCP` protocol compliance, and operational guidance layer establishing team coordination and development standards. The system uses embedded content delivery pattern through build-time content preparation ensuring self-contained framework distribution, resource-first MCP server design with individual and meta-resource access patterns, hierarchical knowledge base indexing with Plan-then-Execute architecture, and comprehensive testing infrastructure with mock-based validation. Key architectural patterns include the strategic validation pattern using evidence-based customer research and problem definition, framework integration pattern supporting both global and project-level deployment strategies, MCP protocol compliance pattern with `FastMCP` native transport and automatic lifecycle management, knowledge management pattern with persistent storage and lazy loading strategies, workflow automation pattern using markdown-based command syntax, and operational standardization pattern through template-driven documentation and procedural guidelines. The design emphasizes security-first principles with mandatory PII protection, automatic `.gitignore` pattern generation, and comprehensive access control mechanisms while maintaining cross-platform compatibility and multi-environment deployment support.
 
 ####### Implementation Approach
 
-The implementation uses `FastMCP` native transport with `server.run(transport="stdio")` eliminating manual event loop management while providing comprehensive resource registration through decorator-based auto-registration patterns. Strategic validation employs `Amazon's Working Backwards methodology` with structured frameworks including Problem Definition Template, Solution Evaluation Matrix, Customer Journey Mapping, and Success Metrics Framework ensuring comprehensive validation coverage before development investment. Knowledge management implementation employs automatic capture mechanisms from external sources, structured storage in `.knowledge/` subdirectories, and lazy loading mechanisms for context window optimization through hierarchical indexing with `HierarchicalIndexer`, `KnowledgeBuilder`, and `RebuildDecisionEngine` components. Build system integration uses `Hatchling` build hooks with `JesseBuildHook` class implementing `BuildHookInterface` for automated content copying from `artifacts/.clinerules/` to `embedded_content/` during package creation. The approach implements comprehensive path resolution using portable path variables `{PROJECT_ROOT}`, `{HOME}`, `{CLINE_RULES}`, cross-platform compatibility through `pathlib.Path` operations, and defensive programming patterns with comprehensive error handling and graceful degradation across all operational components.
+The implementation uses multi-layered integration strategy combining strategic validation through `Amazon's Working Backwards methodology`, comprehensive framework delivery through embedded content packaging, and operational standardization through template-driven documentation systems. Strategic validation employs systematic customer research using `Perplexity` platform, quantitative market analysis with specific benchmarks including 30% AI adoption rates and $30 billion market opportunity, and evidence-based problem definition using `Amazon Problem Definition Template` criteria. Framework implementation utilizes interactive AI-guided installation with temporary repository cloning and mandatory cleanup procedures, dual installation strategies supporting global (`${HOME}/Cline/Rules/`) and project-level (`.clinerules/`) deployment, and comprehensive security implementation through mandatory user identity collection and global-only file placement. MCP server implementation employs `FastMCP` native transport with automatic lifecycle management, comprehensive resource discovery through dynamic component scanning, HTTP-formatted content delivery with criticality classifications, and build-time content embedding using `hatchling` build system with custom hooks. Knowledge management implementation uses cache-first processing strategies through `FileAnalysisCache` integration, Plan-then-Execute architecture with atomic task execution, and LLM integration through `StrandsClaude4Driver` for Claude 4 Sonnet capabilities. Testing implementation utilizes `pytest` framework with `MockContext` simulation, comprehensive validation across 22 test files, and integration testing with real project data. The approach implements working directory management with project root detection, sequential loading with progress reporting, conditional output strategies for context optimization, and comprehensive error handling with graceful degradation across all system components.
 
 ######## External Dependencies & Integration Points
 
 **→ References:**
-- `FastMCP` (external library) - MCP server framework providing native transport, resource registration, and protocol compliance with automatic lifecycle management
-- `Amazon's Working Backwards methodology` - strategic framework providing systematic customer-centric product validation and development guidance
-- `Cline` AI assistant via `https://github.com/cline/cline` - primary integration target for framework functionality and MCP server consumption
-- `Strands Agent SDK` (external library) - agent framework for Claude 4 Sonnet interaction with real-time streaming capabilities and AWS Bedrock integration
-- `boto3` (external library) - AWS SDK for Python enabling Amazon Bedrock service access and authentication for LLM operations
-- `Hatchling` (external library) - modern Python build backend providing package creation and distribution capabilities
-- `Git` version control system - repository management, workflow integration, and version control exclusion pattern enforcement
-- `GitHub` repository platform - framework distribution, community building, and AI-generated code analysis
-- `Perplexity` research service - external knowledge capture and automatic integration for market research and competitive analysis
+- `Cline AI coding assistant` via `https://github.com/cline/cline` - primary integration target for framework functionality and MCP server communication
+- `Amazon's Working Backwards methodology` - strategic framework for customer-centric product validation and development decision making
+- `FastMCP` framework via `fastmcp~=2.9.2` - MCP protocol implementation providing native transport and automatic lifecycle management
+- `hatchling` build system - modern Python build backend with custom hook support for automated content embedding
+- `boto3>=1.38.46` - AWS SDK for Amazon Bedrock service access and Claude 4 Sonnet LLM integration
+- `strands-agents>=0.1.0` - agent framework for AI assistant coordination and streaming capabilities
+- `pytest` testing framework - comprehensive testing infrastructure with async support and fixture management
+- `Perplexity` research platform - market analysis and AI adoption statistics for strategic validation
+- `Git` version control system - repository management, workflow integration, and temporary installation procedures
+- `PyPI` package repository - distribution platform for `jesse-framework-mcp` package installation and dependency management
+- AWS environment variables `AWS_REGION`, `AWS_PROFILE`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` - authentication configuration for Bedrock integration
 
 **← Referenced By:**
-- `MCP clients` - consuming comprehensive framework resources through standardized MCP protocol with resource and prompt endpoints
-- `AI coding assistants` - accessing framework initialization prompts, workflow resources as slash commands, and comprehensive session context
-- `Development teams` - using Jesse Framework resources for AI-assisted development workflows, operational procedures, and strategic planning
-- `Product development processes` - consuming strategic validation results for feature prioritization, roadmap planning, and technical architecture decisions
-- `Package distribution platforms` - PyPI and other repositories using package metadata for distribution and installation
-- `CI/CD pipeline systems` - consuming test results, build artifacts, and deployment validation reports
-- `Quality assurance procedures` - utilizing troubleshooting and consistency checking guidance for framework maintenance
+- AI coding assistants - consuming framework resources through MCP protocol for enhanced development capabilities and persistent knowledge management
+- Development teams - using framework for standardized workflows, coding standards enforcement, and team coordination procedures
+- MCP client applications - accessing comprehensive session context and workflow resources through standardized MCP endpoints
+- Package distribution systems - distributing complete framework through PyPI with embedded content and dependency management
+- Strategic planning processes - consuming market validation, customer research, and success metrics for product development decisions
+- Quality assurance procedures - utilizing framework standards, testing infrastructure, and validation protocols for development quality
+- Knowledge management systems - processing generated knowledge base files, cached analysis content, and persistent learning artifacts
+- Training and onboarding materials - referencing framework capabilities, operational procedures, and team coordination guidelines
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Complete AI-assisted development platform serving as the central orchestrator for intelligent development workflows with embedded content delivery, strategic product validation, operational standardization, and comprehensive framework governance
-- **Ecosystem Position**: Core infrastructure platform providing complete MCP protocol compliance while bridging embedded framework governance with runtime project knowledge loading, strategic business validation, and operational team coordination
-- **Integration Pattern**: Used by MCP clients through stdio transport for resource and prompt access, consumed by AI assistants for framework initialization and workflow guidance, integrated with AWS Bedrock services through specialized driver implementations, coordinated with development tools through standardized resource endpoints, built through Python packaging ecosystem with automated content preparation, and distributed through package managers while supporting comprehensive development workflows through embedded content delivery and intelligent knowledge base management
+- **System Role**: Comprehensive AI-assisted development framework ecosystem providing strategic validation, persistent knowledge management, automated workflows, MCP server implementation, and operational standardization for transforming AI coding assistants into intelligent development partners
+- **Ecosystem Position**: Central infrastructure platform serving as the foundation for AI-enhanced development workflows, bridging strategic product development with tactical implementation through customer-validated solutions and comprehensive operational guidance
+- **Integration Pattern**: Used by developers and AI assistants for enhanced development capabilities, consumed by development teams for standardized workflows and coordination, integrated with strategic planning processes for evidence-based validation, deployed through package managers for self-contained distribution, and coordinated with external tools and platforms for comprehensive development ecosystem integration
 
 ######### Edge Cases & Error Handling
 
-The system implements comprehensive error handling across multiple operational layers including MCP protocol validation, filesystem access restrictions, LLM processing failures, embedded content access issues, build system integration problems, strategic validation risks, and operational documentation maintenance challenges. `FastMCP` server startup failures are managed through comprehensive exception handling with descriptive error logging and proper exception propagation for debugging support. Knowledge base processing addresses truncation detection through `TruncationDetectedError` preventing artifact creation when LLM responses are incomplete, empty directory handling by detecting contentless directories and skipping knowledge file generation, and filesystem access restrictions with graceful degradation enabling continued processing. Strategic framework validation addresses market validation risks through multiple data source triangulation and conservative growth projections to prevent over-optimistic market assumptions, problem validation risks through Amazon's systematic validation criteria, and solution evaluation risks through phased implementation approaches with early warning indicators. Version control exclusion handles nested directory structures through recursive wildcard patterns, conflicting patterns through Git's precedence rules, and cross-platform compatibility through comprehensive temporary file patterns covering multiple operating systems. Build system integration handles missing JESSE project root through validation with descriptive error messages, missing source directories through existence checking, and Hatchling build hook failures through proper exception propagation.
+The system handles comprehensive edge cases across strategic validation, framework installation, MCP server operation, and team coordination scenarios through systematic error detection and resolution procedures. Strategic validation addresses market validation risks through multiple data source triangulation, customer segment misidentification through systematic validation frameworks, and solution selection risks through `Amazon's Solution Evaluation Process` comparing technical approaches with documented rejection rationale. Framework installation manages missing project root scenarios through validation with fallback to setup guidance, security violations through strict enforcement of user identity file placement restrictions, and installation option conflicts through clear decision guidance comparing global versus project-level deployment strategies. MCP server operation handles `FastMCP` server startup failures through exception handling with descriptive error logging, knowledge base processing manages empty files with infinite rebuild loop prevention, LLM integration addresses missing Strands Agent SDK through conditional imports with mock class definitions, and resource delivery handles missing embedded content through comprehensive error messages. Build-time content preparation manages missing `artifacts/.clinerules/` structure through project root discovery failures, testing infrastructure handles mock context simulation failures with automatic cleanup, and package distribution addresses Python version compatibility through explicit requirements specification. Team coordination handles documentation conflicts through procedure validation checklists, process adaptation requirements through alternative workflow paths, and tool integration conflicts through fallback documentation strategies. The system provides comprehensive troubleshooting procedures covering session initialization failures, knowledge base consistency issues, workflow execution problems, and context window overload scenarios with specific resolution steps and escalation procedures.
 
 ########## Internal Implementation Details
 
-The MCP server uses `FastMCP` native transport with `server = FastMCP("JESSE Framework")` initialization and automatic lifecycle management eliminating manual event loop creation while providing comprehensive resource registration through decorator-based patterns. Strategic validation utilizes specific quantitative benchmarks including 30.1% US AI adoption leadership, $30 billion projected market size by 2032, 15% target customer adoption within 12 months, 70+ NPS score requirements, and 2-3 second context loading performance targets across all strategic documents. Knowledge base processing maintains performance tracking through decision counters and timing metrics while implementing Plan-then-Execute architecture with five distinct phases from discovery through atomic execution. Build system integration uses `sys.path.insert()` for dynamic import path manipulation, `shutil.copy2()` for metadata-preserving file copying, and `shutil.copytree()` for recursive directory structure preservation. Version control exclusion uses Git ignore syntax with hash comments for section organization, directory exclusion with trailing slashes, and negation patterns for selective file preservation. The system maintains consistency through shared terminology definitions, standardized section structures, and common formatting conventions across all documentation files with cross-reference linking systems and template inheritance patterns.
+The framework uses multi-component integration with strategic validation through quantitative benchmarks including 30% AI adoption rates, 2-3 hours daily context setup time loss, and $150-225 daily cost per developer for comprehensive market validation. Installation implementation employs temporary git clone operations with mandatory cleanup requirements, user identity management through strict global-only file placement at `${HOME}/Cline/Rules/JESSE_USER_IDENTITY.md`, and automatic `.gitignore` pattern generation including multiple protection layers. MCP server implementation uses `FastMCP` native transport initialization with `server = FastMCP("JESSE Framework")`, resource discovery through dynamic component scanning including rule enumeration and knowledge base scanning, and HTTP formatting with `format_http_section()` applying specific criticality classifications. Knowledge base system implements cache-first processing with `FileAnalysisCache` using HTML comment metadata blocks and SHA-256 hashing, Plan-then-Execute architecture with atomic task processing through `ExecutionEngine`, and comprehensive decision-making via `RebuildDecisionEngine`. Build-time content preparation uses `copy_jesse_content()` orchestration with `find_jesse_project_root()` for project discovery, `shutil.copy2()` for individual rule files, and `JesseBuildHook` integration for automated execution during package creation. Testing infrastructure employs `pytest` framework with `MockContext` classes for `FastMCP` simulation, temporary directory creation for isolated testing environments, and comprehensive validation across 22 test files covering all functional areas. Package configuration uses `hatchling` build backend with custom hook integration, dependency management through `uv.lock` with 77 pinned packages ensuring reproducible builds, and comprehensive metadata including version, authors, and entry points. Operational documentation implements cross-reference linking systems between files, template inheritance patterns for consistent formatting, and version control integration for documentation maintenance with standardized section structures and common formatting conventions.
 
 ########### Usage Examples
 
-**Complete Jesse Framework MCP Server initialization and operation:**
+**Complete framework installation and AI assistant integration:**
 
-This example demonstrates the primary startup pattern for the complete Jesse Framework ecosystem with MCP server functionality and comprehensive resource access. The approach provides complete MCP protocol compliance with automatic lifecycle management and embedded content delivery.
-
-```bash
-# Install and run complete Jesse Framework MCP Server with embedded content
-pip install jesse-framework-mcp
-jesse-framework-mcp  # Starts MCP server with stdio transport
-
-# Alternative installation using UV package manager for optimal dependency management
-uv add jesse-framework-mcp
-uv run jesse-framework-mcp
-```
-
-**Comprehensive framework installation and AI assistant integration:**
-
-This pattern shows the complete framework setup process including temporary repository cloning, automated file copying, and mandatory cleanup procedures with AI assistant configuration for seamless integration.
+This example demonstrates the comprehensive setup process for the Jesse AI Best Practices Framework with AI assistant integration. The installation provides complete framework functionality through standardized procedures with security validation and cleanup requirements.
 
 ```bash
 # AI-guided installation command for interactive framework setup with security validation
+# Initiates comprehensive installation with user identity collection and cleanup procedures
 "Please install (or update) the JESSE AI Best Practices Framework at https://github.com/jcjorel/jesse-ai-best-practices"
 
-# Manual installation with temporary cloning and mandatory cleanup
+# Alternative manual installation with temporary cloning and mandatory cleanup
 git clone https://github.com/jcjorel/jesse-ai-best-practices.git
 cd jesse-ai-best-practices
 mkdir -p "${HOME}/Cline/Rules" "${HOME}/Cline/Workflows"
@@ -90,58 +80,90 @@ cp -r workflows/* "${HOME}/Cline/Workflows/"
 cd .. && rm -rf jesse-ai-best-practices  # CRITICAL: Mandatory cleanup
 ```
 
-**Strategic product development using Amazon's Working Backwards methodology:**
+**MCP server deployment with comprehensive framework integration:**
 
-This example demonstrates the complete strategic validation workflow from market research through success measurement using the framework's comprehensive strategic documentation and validation criteria.
+This example showcases the MCP server installation and configuration for AI assistant integration with complete JESSE framework functionality. The deployment provides self-contained distribution with embedded content and standardized MCP protocol communication.
+
+```bash
+# Install Jesse Framework MCP Server package with embedded content and dependencies
+# Provides complete JESSE framework functionality through standardized package distribution
+pip install jesse-framework-mcp
+
+# Configure Cline AI assistant for MCP server integration with stdio transport
+# Enables seamless JESSE framework access through standardized MCP protocol
+```
+
+```json
+{
+  "mcpServers": {
+    "jesse-framework": {
+      "command": "uv",
+      "args": ["run", "jesse-framework-mcp"],
+      "transport": "stdio"
+    }
+  }
+}
+```
+
+**Strategic validation using Amazon's Working Backwards methodology:**
+
+This example demonstrates the systematic approach to strategic product validation using Amazon's proven methodology. The framework provides comprehensive customer research, problem definition, and solution validation before development investment.
 
 ```yaml
-# Complete Amazon Working Backwards methodology execution for product validation
-strategic_validation_process:
-  stage_1_market_research:
-    deliverables:
-      - market_analysis: "30.1% US AI adoption, 25% CAGR growth, $30B market"
-      - customer_segments: "Senior Developers, DevOps Engineers, Product Managers"
-      - competitive_positioning: "Copilot, Cline, Cursor analysis"
+# Amazon Working Backwards Methodology Implementation
+customer_validation:
+  target_segment: "Senior/Lead Developers at growth companies (50-500 employees)"
+  problem_quantification: "2-3 hours daily lost to AI context setup and management"
+  market_opportunity: "$30 billion AI coding assistant market, 25% CAGR growth"
   
-  stage_2_problem_validation:
-    amazon_template_criteria:
-      - specificity_test: "PASSED - growth companies 50-500 employees"
-      - customer_language_test: "PASSED - developer terminology accuracy"
-      - data_validation_test: "PASSED - multiple source triangulation"
-      - impact_assessment: "PASSED - $150-225 daily cost quantification"
+solution_architecture:
+  phase_1: "MCP Context Server with fast context loading"
+  phase_2: "Intelligent context selection with LLM integration"
+  phase_3: "Advanced intelligence with predictive capabilities"
   
-  stage_3_solution_evaluation:
-    amazon_evaluation_matrix:
-      selected_solution: "Intelligent MCP Context Server"
-      scoring_criteria:
-        customer_impact: "HIGH"
-        implementation_effort: "HIGH"
-        time_to_market: "MEDIUM"
-        strategic_value: "HIGH"
+success_metrics:
+  adoption_target: "15% customer adoption within 12 months"
+  satisfaction_benchmark: "70+ NPS score, 4.5/5 CSAT rating"
+  productivity_impact: "2-3 hours daily time savings per developer"
+```
+
+**Comprehensive workflow automation and knowledge management:**
+
+This example illustrates the complete workflow automation system with persistent knowledge management and team coordination. The system provides standardized procedures for development lifecycle management with AI assistant integration.
+
+```bash
+# Essential workflow commands for comprehensive development lifecycle management
+# Provides automated task management, knowledge capture, and quality assurance
+/jesse_wip_task_create.md          # Create new work-in-progress task with complexity assessment
+/jesse_wip_task_switch.md          # Switch between existing tasks with context preservation
+/jesse_wip_kb_git_clone_import.md  # Import external repository with automated indexing
+/jesse_wip_task_capture_knowledge.md  # Manual knowledge capture with structured storage
+/jesse_wip_task_commit.md          # Commit with standards compliance and quality checks
+/jesse_wip_task_complete.md        # Complete task with knowledge extraction and archival
 ```
 
 ## Subdirectory Knowledge Integration
 
 ### {PROJECT_ROOT}/howtos/
-*Last Updated: 2025-07-06T23:36:34Z*
+*Last Updated: 2025-07-07T11:45:20Z*
 
 The `howtos/` directory provides comprehensive operational documentation and standardized procedures for software development teams, establishing consistent practices across documentation creation, workflow management, task coordination, and team collaboration. This documentation system enables developers to maintain quality standards through `DOCUMENTATION_STANDARDS.md`, manage development workflows via `WORKFLOW_REFERENCE.md`, coordinate tasks using `TASK_MANAGEMENT.md`, integrate AI assistance through `AI_ASSISTANT_INTEGRATION.md`, apply Amazon's `PRFAQ` methodology via `AMAZON_PRFAQ_COACH.md`, facilitate team coordination through `TEAM_COLLABORATION.md`, access external resources via `EXTERNAL_RESOURCES.md`, enforce coding practices through `CODING_STANDARDS.md`, and organize knowledge through `KNOWLEDGE_MANAGEMENT.md`. Key semantic entities include structured templates, workflow definitions, collaboration protocols, coding conventions, and knowledge organization frameworks that enable rapid team onboarding and consistent project execution.
 
 ### {PROJECT_ROOT}/jesse-framework-mcp/
-*Last Updated: 2025-07-06T23:36:34Z*
+*Last Updated: 2025-07-07T11:45:20Z*
 
-This directory implements the complete Jesse Framework MCP Server project, providing a comprehensive AI-assisted development platform through `FastMCP` protocol integration with embedded content delivery, hierarchical knowledge base management, and intelligent resource orchestration for modern development workflows. The system delivers complete MCP server functionality through standardized resource endpoints, automated knowledge indexing, LLM-powered content analysis, and embedded framework rules enabling consistent AI-assisted development practices. Key semantic entities include `FastMCP` server instance with `server = FastMCP("JESSE Framework")`, primary entry point `main()` function using `server.run(transport="stdio")`, comprehensive resource handlers including `framework_index()` decorated with `@server.resource("jesse://index")`, knowledge base integration via `register_knowledge_bases_tools()` and `register_knowledge_bases_resources()`, embedded content access through `load_embedded_content()` and `get_jesse_rule_files()`, hierarchical indexing system with `HierarchicalIndexer`, `KnowledgeBuilder`, and `RebuildDecisionEngine` components, LLM integration through `StrandsClaude4Driver` with `Claude4SonnetConfig` factory methods, HTTP formatting utilities `format_http_section()` and `format_multi_section_response()` with `XAsyncContentCriticality` classifications, resource URIs including `jesse://framework/rule/{rule_name}`, `jesse://session/init-context`, `jesse://wip-ta...
+This directory implements the complete Jesse Framework MCP Server package, providing comprehensive AI-assisted development capabilities through `FastMCP` protocol compliance with resource-first architecture, embedded content delivery, and intelligent knowledge base management for modern development workflows. The system enables MCP clients to access framework rules, project contexts, workflows, and knowledge bases through standardized resource endpoints while supporting both granular individual access and consolidated meta-resource delivery for efficient AI assistant integration. Key semantic entities include `FastMCP` server instance with `server = FastMCP("JESSE Framework")`, primary resource handlers `framework_index()`, `jesse_framework_start_prompt()`, `jesse_wip_task_create_prompt()`, and `jesse_knowledge_capture_prompt()`, centralized constants `JESSE_RULE_FILES`, `HTTP_BOUNDARY_MARKER`, and `DEFAULT_CRITICALITY`, comprehensive helper utilities through `content_loaders`, `session_management`, `knowledge_scanners`, `path_utils`, `async_http_formatter`, and `mistletoe_spacing` modules, knowledge base system with `HierarchicalIndexer`, `KnowledgeBuilder`, `FileAnalysisCache`, and `RebuildDecisionEngine`, LLM integration via `StrandsClaude4Driver` and `Claude4SonnetConfig`, resource endpoints including `jesse://index`, `jesse://framework/rule/{rule_name}`, `jesse://session/init-context`, `jesse://project/knowledge`, `jesse://wip-tasks`, and `file://workflows/{workflow_name...
 
 ### {PROJECT_ROOT}/working_backwards/
-*Last Updated: 2025-07-06T23:36:34Z*
+*Last Updated: 2025-07-07T11:45:20Z*
 
-This strategic product development directory implements `Amazon's Working Backwards methodology` for the `JESSE AI Best Practices Framework`, providing comprehensive product validation and market entry strategy through systematic customer-centric analysis and evidence-based decision making. The directory delivers complete strategic documentation ecosystem spanning market research, problem validation, solution architecture, customer experience design, and success measurement to guide product development from concept through market launch. Key semantic entities include `Amazon's Working Backwards methodology`, `JESSE AI Best Practices Framework`, `MCP Context Server`, `Intelligent context management`, `Senior/Lead Developers`, `growth companies`, `AI coding assistants`, `Cline` integration, `context loss elimination`, `2-3 hours daily time savings`, `background scanning technology`, `semantic context database`, `intent-driven context selection`, `30% productivity gains`, `15% adoption targets`, `70+ NPS scores`, `GitHub community growth`, `enterprise integration`, `CI/CD pipeline support`, `Working Backwards stages completion`, `PR/FAQ methodology`, `customer journey mapping`, `success metrics framework`, `coaching session tracking`, `Amazon Problem Definition Template`, `Solution Evaluation Matrix`, `Customer Experience Design`, and `Comprehensive Metrics Framework`.
+This directory implements `Amazon's Working Backwards methodology` for strategic product development of the `JESSE AI Best Practices Framework`, providing comprehensive market validation, customer research, and product strategy documentation to guide development decisions and market positioning before development investment. The directory serves as the strategic foundation for validating product-market fit through systematic customer analysis, problem definition, solution architecture, and success measurement using evidence-based validation frameworks. Key semantic entities include `Amazon's Working Backwards methodology`, `JESSE AI Best Practices Framework`, `MCP Context Server`, `Intelligent MCP Context Server`, `Senior/Lead Developers`, `growth companies`, `context loss`, `AI assistants`, `Cline AI coding assistant`, `background scanning`, `semantic context database`, `intent-driven context selection`, `Net Promoter Score (NPS)`, `Customer Satisfaction (CSAT)`, `25% CAGR`, `$30 billion` market opportunity, `Stage 3: INVENT`, `Stage 4: REFINE`, `PR/FAQ Document`, `Most Lovable Product (MLP)`, `THE ONE BENEFIT`, `Amazon's Solution Evaluation Process`, `Amazon's Comprehensive Metrics Framework`, `Amazon Problem Definition Template`, `Perplexity` market research platform, `GitHub` repository metrics, `VS Code`, `Cursor IDE`, `Node.
 
 ## File Knowledge Integration
 
 ### {PROJECT_ROOT}/.gitignore
 
-*Last Updated: 2025-07-06T23:36:34Z*
+*Last Updated: 2025-07-07T11:45:20Z*
 
 #### Functional Intent & Features
 
@@ -226,7 +248,7 @@ env/
 
 ### {PROJECT_ROOT}/HOWTO_USE.md
 
-*Last Updated: 2025-07-06T23:36:34Z*
+*Last Updated: 2025-07-07T11:45:20Z*
 
 #### Functional Intent & Features
 
@@ -312,7 +334,7 @@ This example illustrates the external resource integration commands for importin
 
 ### {PROJECT_ROOT}/LICENSE
 
-*Last Updated: 2025-07-06T23:36:34Z*
+*Last Updated: 2025-07-07T11:45:20Z*
 
 #### Functional Intent & Features
 
@@ -395,7 +417,7 @@ Copyright (c) 2025 Jean-Charles Jorel
 
 ### {PROJECT_ROOT}/README.md
 
-*Last Updated: 2025-07-06T23:36:34Z*
+*Last Updated: 2025-07-07T11:45:20Z*
 
 #### Functional Intent & Features
 
@@ -484,7 +506,7 @@ This example illustrates the essential workflow commands for framework operation
 ```
 
 ---
-*Generated: 2025-07-06T23:36:34Z*
+*Generated: 2025-07-07T11:45:20Z*
 *Source Directory: {PROJECT_ROOT}/.*
 *Total Files: 4*
 *Total Subdirectories: 3*

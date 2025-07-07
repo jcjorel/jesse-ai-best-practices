@@ -8,144 +8,134 @@
 
 #### Functional Intent & Features
 
-This comprehensive strategic planning directory implements Amazon's Working Backwards methodology for the JESSE AI Best Practices Framework, providing systematic product validation and development guidance through customer-centric analysis and market validation. The directory delivers end-to-end strategic documentation spanning market research, customer experience design, solution architecture, and success measurement to guide product development decisions and market positioning. Key semantic entities include `Amazon's Working Backwards methodology`, `JESSE AI Best Practices Framework`, `MCP Context Server`, `Intelligent context management`, `Senior/Lead Developers`, `growth companies`, `AI coding assistants`, `Cline` integration, `context loss elimination`, `2-3 hours daily time savings`, `background scanning technology`, `semantic context database`, `intent-driven context selection`, `30% productivity gains`, `15% adoption targets`, `70+ NPS scores`, `GitHub community growth`, `enterprise integration`, `CI/CD pipeline support`, `Working Backwards stages completion`, `PR/FAQ methodology`, `customer journey mapping`, `success metrics framework`, and `coaching session tracking`. The framework establishes comprehensive product strategy validation through quantitative market analysis, customer persona development, technical solution evaluation, and measurable success criteria definition.
+This directory implements Amazon's Working Backwards methodology for strategic product development of the JESSE AI Best Practices Framework, providing comprehensive market validation, customer research, and product strategy documentation to guide development decisions and market positioning. The directory serves as the strategic foundation for validating product-market fit through systematic customer analysis, problem definition, solution architecture, and success measurement before development investment. Key semantic entities include `Amazon's Working Backwards methodology`, `JESSE AI Best Practices Framework`, `MCP Context Server`, `Intelligent MCP Context Server`, `Senior/Lead Developers`, `growth companies`, `context loss`, `AI assistants`, `Cline AI coding assistant`, `background scanning`, `semantic context database`, `intent-driven context selection`, `Net Promoter Score (NPS)`, `Customer Satisfaction (CSAT)`, `25% CAGR`, `$30 billion` market opportunity, `Stage 3: INVENT`, `Stage 4: REFINE`, `PR/FAQ Document`, `Most Lovable Product (MLP)`, `THE ONE BENEFIT`, `Amazon's Solution Evaluation Process`, `Amazon's Comprehensive Metrics Framework`, and `Amazon Problem Definition Template`. The framework establishes strategic product validation through quantified customer pain points (2-3 hours daily context setup) and measurable solution benefits (2-second context loading) with comprehensive success criteria spanning adoption rates, satisfaction scores, and business impact metrics.
 
 ##### Main Components
 
-The directory contains eight primary strategic documents: `customer_research.md` providing quantitative market analysis with 30.1% US AI adoption rates and three customer segment profiles, `success_metrics.md` establishing comprehensive measurement framework with NPS targets and technical performance benchmarks, `solution_development.md` documenting systematic solution evaluation and MCP Context Server selection rationale, `experience_design.md` mapping end-to-end customer journey with "Aha" moment design and persona vignettes, `pr_faq_draft.md` combining external press release content with internal strategic FAQ analysis, `five_questions_answers.md` implementing Amazon's core validation questions with evidence-based customer analysis, `coaching_session_state.md` tracking methodology execution progress and completion status, and `problem_definition.md` providing structured problem validation with customer-centric articulation and evidence-based rationale. Each document implements specific components of Amazon's Working Backwards framework while maintaining strategic coherence across the complete product validation workflow.
+The directory contains eight strategic documents organized around Amazon's Working Backwards methodology phases and supporting analysis. Core methodology documents include `five_questions_answers.md` providing comprehensive customer validation, `problem_definition.md` establishing evidence-based problem articulation, `solution_development.md` detailing technical architecture selection, `experience_design.md` mapping customer journey optimization, and `success_metrics.md` defining measurable outcomes. Supporting strategic documents include `customer_research.md` providing market analysis and customer segmentation, `pr_faq_draft.md` combining external marketing content with internal strategic validation, and `coaching_session_state.md` tracking methodology execution progress. The directory also contains an empty `working_backwards_stages.md` file representing a placeholder for future content or cleared documentation structure.
 
 ###### Architecture & Design
 
-The directory architecture implements Amazon's Working Backwards methodology as a systematic product validation framework structured around customer-centric analysis and evidence-based decision making. The design separates market validation components from technical solution design and customer experience optimization, enabling comprehensive product strategy development through multiple validation layers. The architectural pattern progresses from foundational market research and problem definition through solution evaluation and experience design to success measurement and coaching support, creating a complete strategic development workflow. The document architecture uses consistent formatting patterns with quantified metrics, customer persona development, and systematic validation criteria across all strategic components. The integration architecture spans multiple customer segments (Senior Developers, DevOps Engineers, Product Managers) and technical integration points (`MCP server`, `Cline`, `GitHub`, `CI/CD platforms`) to create comprehensive market positioning and technical feasibility validation.
+The architecture implements Amazon's Working Backwards methodology structure with systematic progression from customer identification through problem validation to solution design and success measurement. The design separates market research and customer analysis from technical solution development, enabling data-driven decision making and customer-centric product development. The document architecture uses evidence-based validation throughout, combining quantitative metrics (30% AI adoption rates, 2-3 hours daily time loss) with qualitative customer insights (persona development, journey mapping) to establish credible product foundation. The methodology architecture implements multiple validation checkpoints including problem validation criteria, solution evaluation matrices, experience design validation, and comprehensive success measurement frameworks to ensure systematic product validation before development investment.
 
 ####### Implementation Approach
 
-The strategic implementation employs a phased validation approach combining quantitative market analysis with qualitative customer research to establish product-market fit before development investment. The methodology implementation uses Amazon's structured frameworks including Problem Definition Template, Solution Evaluation Matrix, Customer Journey Mapping, and Success Metrics Framework to ensure comprehensive validation coverage. Market validation utilizes specific adoption metrics (30.1% US leadership, 25% CAGR growth), customer segment analysis (growth companies 50-500 employees), and competitive positioning relative to existing AI coding assistants. Technical solution validation implements systematic evaluation across five solution options with quantified scoring criteria covering Customer Impact, Implementation Effort, Time to Market, and Strategic Value dimensions. Customer experience implementation uses persona-based validation (Sarah Chen at GrowthTech) with specific transformation scenarios and measurable outcomes to validate experience design assumptions and value proposition delivery.
+The implementation strategy employs Amazon's systematic validation approach with specific quantitative benchmarks and timeline-based milestone assessment across multiple dimensions. Customer validation utilizes market research data, persona development, and problem quantification to establish credible customer understanding and problem-market fit. Solution development implements a three-phase technical architecture (MCP server foundation, intelligent context selection, advanced intelligence) with specific capability progression and implementation timelines. Experience design uses customer journey mapping with emotional response engineering and "Aha" moment design within 5 minutes to optimize adoption and value realization. Success measurement combines leading indicators (adoption rates, usage frequency) with lagging indicators (productivity gains, customer satisfaction) through comprehensive metrics frameworks spanning quantitative, qualitative, and behavioral assessment dimensions.
 
 ######## External Dependencies & Integration Points
 
 **→ References:**
-- `Amazon's Working Backwards methodology` - strategic framework providing systematic customer-centric product validation and development guidance
-- `Perplexity` - market research platform providing AI adoption statistics and competitive analysis data
-- `GitHub` - repository platform for AI-generated code analysis, community building, and framework distribution
-- `Cline` - AI assistant platform requiring MCP server integration for intelligent context delivery
-- `MCP server` - Model Context Protocol architecture enabling fast context loading and semantic understanding
-- `VS Code`, `Cursor` - IDE platforms requiring seamless integration for developer workflow embedding
-- `Git`, `CI/CD platforms` - development infrastructure requiring integration for context extraction and team synchronization
-- `Jira`, `Confluence`, `Figma` - enterprise tool ecosystem requiring integration for comprehensive workflow support
+- `Amazon's Working Backwards methodology` - strategic framework for customer-centric product validation and development
+- `Perplexity` - market research platform providing AI adoption statistics and competitive analysis
+- `GitHub` - repository platform for framework distribution, community building, and AI-generated code analysis
+- `Cline AI coding assistant` - primary integration target for MCP Context Server functionality
+- `MCP server` - Model Context Protocol server architecture for intelligent context management
+- `VS Code`, `Cursor IDE` - supported development environments for framework integration
+- `Git version control` - required infrastructure for project context and team synchronization
+- `CI/CD platforms` - modern development stack integration requirements
+- `Jira`, `Confluence`, `Figma` - enterprise tool ecosystem integration points
+- Market research data sources - 30% AI adoption statistics, 25% CAGR growth projections, $30 billion market sizing
 
 **← Referenced By:**
-- `Product development teams` - consume strategic validation results for feature prioritization, roadmap planning, and technical architecture decisions
-- `Marketing strategy processes` - leverage customer research, persona development, and competitive positioning for messaging and campaign development
-- `Sales enablement workflows` - reference customer journey mapping, value proposition articulation, and success metrics for prospect engagement
-- `Engineering implementation planning` - utilize solution architecture specifications, technical requirements, and integration points for development execution
-- `Executive strategic planning` - consume comprehensive market validation, success measurement framework, and risk assessment for investment decisions
-- `Community management initiatives` - reference customer experience design and engagement patterns for developer relations and ecosystem building
+- Product development roadmaps consuming strategic validation results for feature prioritization and implementation planning
+- Marketing strategy documents leveraging customer research, positioning analysis, and competitive differentiation insights
+- Engineering implementation plans referencing technical architecture specifications and integration requirements
+- Sales enablement materials utilizing customer personas, problem articulation, and value proposition messaging
+- Executive strategic planning processes consuming market validation, success metrics, and business impact projections
+- Community management strategies referencing customer journey design and engagement optimization approaches
 
 **⚡ System role and ecosystem integration:**
-- **System Role**: Comprehensive strategic foundation that validates product-market fit, guides technical development decisions, and establishes market positioning for the JESSE AI Best Practices Framework through systematic customer-centric analysis
-- **Ecosystem Position**: Core strategic component that bridges market research with product development, serving as the primary validation and guidance system for all product, marketing, and business decisions within the JESSE Framework ecosystem
-- **Integration Pattern**: Used by cross-functional teams for strategic alignment, consumed by product managers for development prioritization, referenced by marketing teams for customer communication, utilized by engineering teams for technical implementation guidance, and integrated with executive planning processes for strategic decision validation and resource allocation
+- **System Role**: Strategic validation foundation that guides all product development, marketing, and business decisions for the JESSE AI Best Practices Framework through comprehensive customer-centric analysis and evidence-based validation
+- **Ecosystem Position**: Core strategic component that bridges market research with product development, serving as the primary validation artifact for customer-centric product development and market entry decisions
+- **Integration Pattern**: Used by cross-functional teams for strategic alignment, consumed by product managers for roadmap decisions, referenced by marketing teams for customer messaging and positioning, and integrated with executive planning processes for investment and resource allocation decisions
 
 ######### Edge Cases & Error Handling
 
-The strategic framework addresses market validation risks through multiple data source triangulation and conservative growth projections to prevent over-optimistic market assumptions. Customer segment validation risks are managed through detailed persona development with specific company size parameters (50-500 vs 500+ employees) and role-based responsibility matrices to prevent broad market targeting errors. Technical solution risks including performance impact, context accuracy, and integration complexity are mitigated through phased implementation approach and configurable processing intensity with early warning indicators. Customer adoption barriers are addressed through Most Lovable Product feature focus, 15-minute setup targets, and immediate value demonstration within first 5 minutes of use. Success measurement risks including over-dependence on framework, security concerns, and competitive response are handled through comprehensive risk assessment with specific mitigation strategies and early warning systems. The coaching methodology addresses incomplete execution through detailed progress tracking and systematic validation criteria ensuring comprehensive Working Backwards methodology completion.
+The methodology addresses validation risks through comprehensive problem validation criteria testing specificity, customer language accuracy, data validation, and impact assessment to prevent solution development based on incorrect assumptions. Market validation risks include customer segment misidentification, problem mischaracterization, and insufficient evidence supporting problem significance, managed through multiple data source triangulation and systematic validation frameworks. Solution selection risks are mitigated through Amazon's evaluation matrix comparing five distinct technical approaches across customer impact, implementation effort, time to market, competitive advantages, and strategic value criteria. Experience design risks including adoption barriers and value realization delays are addressed through "Aha" moment engineering, progressive value delivery, and comprehensive customer journey optimization. Success measurement risks are managed through multi-dimensional metrics frameworks combining quantitative benchmarks, qualitative indicators, and behavioral measures with early warning systems for adoption issues and performance concerns.
 
 ########## Internal Implementation Details
 
-The strategic validation utilizes specific quantitative benchmarks including 30.1% US AI adoption leadership, $30 billion projected market size by 2032, 15% target customer adoption within 12 months, 70+ NPS score requirements, and 2-3 second context loading performance targets. Customer segmentation employs detailed technical requirements including modern development stack usage, Git version control, CI/CD platforms, and specific team size parameters (5-15 developers for growth companies). Solution evaluation implements Amazon's systematic scoring methodology across five criteria dimensions with quantified assessment of Customer Impact, Implementation Effort, Time to Market, Amazon Advantages, and Strategic Value. Success measurement framework combines leading indicators (adoption rates, usage frequency) with lagging indicators (productivity gains, customer satisfaction) using specific timeline validation at 30-day, 90-day, 6-month, and 12-month checkpoints. The coaching implementation uses ISO 8601 timestamp tracking, percentage-based progress indicators, and systematic completion validation across all Working Backwards methodology stages with detailed improvement documentation and quality enhancement tracking.
+The methodology utilizes specific quantitative benchmarks throughout including 30% AI code generation adoption rates, 2-3 hours daily context setup time loss, 15-30 minute session setup requirements, $150-225 daily cost per developer, 15% target customer adoption within 12 months, 70+ NPS score requirements, and 4.5/5 customer satisfaction ratings. Customer segmentation employs detailed characteristics including company size (50-500 employees for growth companies, 500+ for enterprise), team size (5-15 developers), and role responsibilities with specific tool ecosystem requirements. Technical architecture specifies three development phases with distinct capabilities: Phase 1 (3-4 months) MCP server foundation with fast context loading, Phase 2 (6-8 months) intelligent context selection with LLM integration, and Phase 3 (12+ months) advanced intelligence with predictive capabilities. Success measurement implements timeline-based validation with 30-day metrics (100+ daily active developers), 90-day metrics (500+ sustained users), 6-month metrics (2,000+ active developers), and 12-month metrics (5,000+ active developers with market leadership recognition).
 
 ########### Usage Examples
 
-**Strategic validation workflow implementation:**
+**Amazon Working Backwards methodology execution framework:**
 
-This example demonstrates how to execute the complete Amazon Working Backwards methodology using the directory's structured approach. The workflow enables systematic product validation from market research through success measurement with specific deliverable requirements and validation criteria.
+This example demonstrates how to implement the complete Working Backwards methodology for strategic product validation. The framework provides systematic customer-centric validation before development investment with specific deliverables and validation criteria.
 
-```yaml
-# Working Backwards Methodology Execution
-strategic_validation_workflow:
-  stage_1_customer_research:
-    deliverables:
-      - market_analysis: "30.1% US AI adoption, 25% CAGR growth"
-      - customer_segments: "Senior Developers, DevOps Engineers, Product Managers"
-      - pain_point_quantification: "2-3 hours daily context setup loss"
-    
-  stage_2_problem_definition:
-    validation_criteria:
-      - specificity_test: "PASSED - growth companies 50-500 employees"
-      - customer_language_test: "PASSED - developer terminology accuracy"
-      - data_validation_test: "PASSED - multiple source triangulation"
-      - impact_assessment: "PASSED - $150-225 daily cost quantification"
-    
-  stage_3_solution_evaluation:
-    selected_solution: "Intelligent MCP Context Server"
-    evaluation_matrix:
-      customer_impact: "HIGH"
-      implementation_effort: "HIGH"  
-      time_to_market: "MEDIUM"
-      strategic_value: "HIGH"
+```markdown
+# Working Backwards Methodology Implementation
+## Phase 1: Customer Identification & Problem Definition
+- Customer Profile: Senior/Lead Developers at growth companies (50-500 employees)
+- Problem Statement: 2-3 hours daily lost to AI context setup and management
+- Validation Criteria: Specificity, customer language, data validation, impact assessment
+
+## Phase 2: Solution Architecture & Experience Design  
+- Technical Solution: Intelligent MCP Context Server with three-phase implementation
+- Customer Experience: 15-minute setup, 5-minute "Aha" moment, instant context loading
+- Success Metrics: 15% adoption, 70+ NPS, 2-3 hours daily time savings
+
+## Phase 3: Market Validation & Strategic Planning
+- Market Opportunity: $30 billion AI coding assistant market, 25% CAGR growth
+- Competitive Positioning: Unique Working Backwards + AI coding integration
+- Go-to-Market: Open source strategy with enterprise features and community building
 ```
 
-**Customer experience design and validation framework:**
+**Customer research and market validation framework:**
 
-This pattern shows how to implement the customer journey mapping and experience optimization using the directory's persona-based validation approach. The framework enables systematic experience design with measurable outcomes and emotional response engineering.
+This pattern shows how to structure comprehensive customer research and market analysis for strategic product development. The framework combines quantitative market data with qualitative customer insights for evidence-based validation.
 
 ```yaml
-# Customer Experience Validation Framework
-experience_design_implementation:
-  customer_persona:
-    name: "Sarah Chen"
-    role: "Senior Software Engineer"
-    company: "GrowthTech (150 employees)"
-    current_pain: "20-30 minutes context setup per session"
+# Customer Research Framework
+market_analysis:
+  adoption_rates:
+    us_market_leadership: 30.1  # percentage of AI-generated code
+    growth_projection: 25  # CAGR percentage 2024-2032
+    market_size_2032: 30  # billion USD projected market size
     
-  journey_optimization:
-    discovery_phase:
-      triggering_events: ["team productivity concerns", "AI standardization needs"]
-      information_sources: ["GitHub", "developer communities", "professional networks"]
-      
-    onboarding_experience:
-      setup_target: "15 minutes total"
-      aha_moment: "within first 5 minutes"
-      value_demonstration: "instant context loading vs 20-30 minute manual setup"
-      
-    transformation_results:
-      time_recovery: "2-3 hours daily"
-      productivity_increase: "30% team improvement"
-      context_consistency: "same intelligent context for all team members"
+customer_segments:
+  primary_segment:
+    role: "Senior/Lead Developers"
+    company_size: "50-500 employees"
+    team_size: "5-15 developers"
+    pain_point: "2-3 hours daily context setup"
+    value_proposition: "instant context loading"
+    
+validation_metrics:
+  problem_significance: "15-30 minutes per session setup"
+  market_evidence: "30% productivity gains with proper AI integration"
+  customer_impact: "$150-225 daily cost per developer"
 ```
 
-**Success measurement and risk mitigation tracking:**
+**Success measurement and milestone tracking system:**
 
-This example demonstrates the comprehensive success metrics framework with specific targets and risk mitigation strategies. The implementation enables systematic validation of product success and proactive risk management throughout the development lifecycle.
+This example demonstrates the comprehensive success metrics framework for validating product development and market success. The system combines quantitative benchmarks with qualitative indicators and behavioral measures for complete validation coverage.
 
 ```yaml
-# Success Metrics and Risk Management Framework
-success_measurement_implementation:
-  quantitative_targets:
-    adoption_metrics:
-      target_customer_adoption: "15% within 12 months"
-      daily_usage_frequency: "80% within 30 days"
-      mcp_integration_adoption: "90% within first week"
-      
-    performance_benchmarks:
-      context_loading_speed: "<2 seconds"
-      memory_footprint: "<100MB"
-      cpu_utilization: "<5%"
-      context_accuracy: "95%"
-      
-  risk_mitigation_strategies:
-    over_dependence_risk:
-      early_warning: "developers unable without framework"
-      mitigation: "educational content + optional manual mode"
-      
-    performance_impact_risk:
-      early_warning: "system slowdown complaints"
-      mitigation: "configurable processing intensity + background optimization"
-      
-    context_overload_risk:
-      early_warning: "information overwhelm reports"
-      mitigation: "AI-powered relevance filtering + progressive revelation"
+# Success Metrics Framework
+timeline_validation:
+  30_day_metrics:
+    active_developers: 100
+    satisfaction_rating: 4.5
+    context_loading_success: 85
+    daily_time_savings: 2  # hours
+    
+  6_month_metrics:
+    active_developers: 2000
+    nps_score: 70
+    market_penetration: 5  # percentage
+    enterprise_adoptions: 30
+    
+  12_month_metrics:
+    active_developers: 5000
+    market_recognition: "leading_framework"
+    community_ecosystem: "self_sustaining"
+    
+risk_mitigation:
+  over_dependence_risk: "educational content + manual mode options"
+  performance_impact: "configurable processing + hardware guidelines"
+  context_overload: "AI relevance filtering + progressive revelation"
+  security_concerns: "local processing + enterprise encryption"
 ```
 
 ## Subdirectory Knowledge Integration
@@ -156,7 +146,7 @@ success_measurement_implementation:
 
 ### {PROJECT_ROOT}/working_backwards/current/coaching_session_state.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -235,7 +225,7 @@ This example shows the improvement tracking structure referenced in the coaching
 
 ### {PROJECT_ROOT}/working_backwards/current/customer_research.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -336,7 +326,7 @@ This example demonstrates how to leverage the research findings for competitive 
 
 ### {PROJECT_ROOT}/working_backwards/current/experience_design.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -475,7 +465,7 @@ customer_vignette:
 
 ### {PROJECT_ROOT}/working_backwards/current/five_questions_answers.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -565,7 +555,7 @@ This example shows the success measurement framework structure described in the 
 
 ### {PROJECT_ROOT}/working_backwards/current/pr_faq_draft.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -656,7 +646,7 @@ console.log(`Architecture patterns: ${projectContext.patterns.length}`);
 
 ### {PROJECT_ROOT}/working_backwards/current/problem_definition.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -740,7 +730,7 @@ This example shows the validation criteria framework referenced in the problem d
 
 ### {PROJECT_ROOT}/working_backwards/current/solution_development.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -872,7 +862,7 @@ phase_3_advanced:
 
 ### {PROJECT_ROOT}/working_backwards/current/success_metrics.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
 #### Functional Intent & Features
 
@@ -1013,12 +1003,35 @@ milestone_tracking:
 
 ### {PROJECT_ROOT}/working_backwards/current/working_backwards_stages.md
 
-*Last Updated: 2025-07-06T23:33:29Z*
+*Last Updated: 2025-07-07T08:36:36Z*
 
-[Knowledge content from file analysis]
+# File Analysis: working_backwards_stages.md
+
+## Summary
+This is an empty file with no content to analyze.
+
+## Content Analysis
+- **File Size**: 0 bytes
+- **Content**: No content present
+- **Purpose**: File exists but contains no data
+- **Analysis Status**: Standard empty file - no further analysis required
+
+## Technical Details
+- **File Type**: .md file
+- **Last Modified**: 2025-06-26T15:47:20.925623
+- **Processing Status**: Processed with standard empty file handling
+
+## Empty File Characteristics
+The file exists in the filesystem but contains no data. This may indicate:
+- Placeholder file for future content
+- File cleared of content but structure preserved
+- Template or stub file awaiting implementation
+- Intentionally empty configuration or data file
+
+--END OF LLM OUTPUT--
 
 ---
-*Generated: 2025-07-06T23:33:29Z*
+*Generated: 2025-07-07T08:36:36Z*
 *Source Directory: {PROJECT_ROOT}/working_backwards/current*
 *Total Files: 9*
 *Total Subdirectories: 0*
