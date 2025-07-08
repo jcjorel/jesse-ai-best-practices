@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from .exceptions import ModelConfigurationError
+from ...helpers.aws_session_manager import AWSSessionManager
 
 
 class Claude4SonnetModel(str, Enum):
@@ -106,12 +107,11 @@ class Claude4SonnetConfig:
             )
     
     def _set_aws_defaults(self):
-        """Set AWS defaults from environment if not specified."""
-        if self.aws_region is None:
-            self.aws_region = os.getenv("AWS_REGION", "us-east-1")
-        
-        if self.aws_profile is None:
-            self.aws_profile = os.getenv("AWS_PROFILE")
+        """Set AWS defaults using centralized AWS session manager - deprecated method kept for compatibility."""
+        # Note: This method is kept for backward compatibility but AWS configuration
+        # is now handled by the centralized AWSSessionManager in the driver initialization.
+        # The actual AWS configuration will be resolved when to_strands_model_kwargs() is called.
+        pass
     
     def to_bedrock_params(self) -> Dict[str, Any]:
         """Convert configuration to Bedrock model parameters."""
@@ -125,8 +125,31 @@ class Claude4SonnetConfig:
             }
         }
     
-    def to_strands_model_kwargs(self) -> Dict[str, Any]:
-        """Convert configuration to Strands BedrockModel kwargs."""
+    async def to_strands_model_kwargs_async(self) -> Dict[str, Any]:
+        """
+        [Function intent]
+        Convert configuration to Strands BedrockModel kwargs using centralized AWS session management.
+        
+        [Design principles]
+        Uses centralized AWS session manager for reliable region and profile detection.
+        Maintains backward compatibility while leveraging improved AWS configuration hierarchy.
+        
+        [Implementation details]
+        Gets AWS configuration from AWSSessionManager singleton with proper validation.
+        Builds Strands BedrockModel kwargs with detected AWS settings and model parameters.
+        
+        Returns:
+            Dictionary with Strands BedrockModel configuration parameters
+            
+        Raises:
+            AWSConfigurationError: When AWS configuration is invalid
+            AWSConnectionError: When AWS connection validation fails
+        """
+        # Get centralized AWS configuration
+        aws_session_manager = AWSSessionManager()
+        aws_config = await aws_session_manager.get_aws_config()
+        
+        # Build Strands-specific kwargs with model parameters
         kwargs = {
             "model_id": self.model_id,
             "temperature": self.temperature,
@@ -134,11 +157,47 @@ class Claude4SonnetConfig:
             "top_p": self.top_p,
             "top_k": self.top_k,
             "streaming": self.streaming,
-            "region": self.aws_region
+            "region": aws_config["region"]  # Always use validated region
         }
         
-        if self.aws_profile:
-            kwargs["profile"] = self.aws_profile
+        # Add profile only if using profile-based credentials
+        if aws_config["profile"]:
+            kwargs["profile"] = aws_config["profile"]
+        
+        return kwargs
+    
+    def to_strands_model_kwargs(self) -> Dict[str, Any]:
+        """
+        [Function intent]
+        Legacy synchronous method for Strands BedrockModel kwargs - deprecated in favor of async version.
+        
+        [Design principles]
+        Maintained for backward compatibility but uses basic environment variable fallback.
+        New code should use to_strands_model_kwargs_async() for proper AWS session management.
+        
+        [Implementation details]
+        Uses simple environment variable detection without validation or hierarchy.
+        Does not benefit from centralized AWS session management capabilities.
+        
+        Returns:
+            Dictionary with basic Strands BedrockModel configuration parameters
+        """
+        # Legacy implementation for backward compatibility
+        # New code should use to_strands_model_kwargs_async() instead
+        kwargs = {
+            "model_id": self.model_id,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "top_p": self.top_p,
+            "top_k": self.top_k,
+            "streaming": self.streaming,
+            "region": self.aws_region or os.getenv("AWS_REGION", "us-east-1")
+        }
+        
+        # Add profile if specified
+        profile = self.aws_profile or os.getenv("AWS_PROFILE")
+        if profile:
+            kwargs["profile"] = profile
         
         return kwargs
     

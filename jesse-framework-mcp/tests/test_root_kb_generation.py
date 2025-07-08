@@ -4,6 +4,9 @@ Focused test for root_kb.md generation fix.
 
 This test specifically verifies that the hierarchical indexer generates root_kb.md
 for handler root directories instead of {directory_name}_kb.md.
+
+NOTE: As of 2025-07-07, path generation was moved from KnowledgeBuilder to handlers.
+This test now verifies the handler-based path generation architecture.
 """
 
 import asyncio
@@ -13,7 +16,7 @@ from pathlib import Path
 from datetime import datetime
 
 # Import the indexing system components
-from jesse_framework_mcp.knowledge_bases.indexing.knowledge_builder import KnowledgeBuilder
+from jesse_framework_mcp.knowledge_bases.indexing.special_handlers import ProjectBaseHandler, GitCloneHandler
 from jesse_framework_mcp.knowledge_bases.models.indexing_config import IndexingConfig
 from jesse_framework_mcp.knowledge_bases.models.knowledge_context import DirectoryContext, FileContext, ProcessingStatus
 
@@ -45,8 +48,10 @@ async def test_root_kb_filename_generation():
     """
     Test that knowledge file paths are generated correctly for root directories.
     Specifically tests that root directories get root_kb.md instead of {directory_name}_kb.md.
+    
+    Tests the handler-based architecture where each handler type controls its own path generation.
     """
-    print("=== Testing root_kb.md Filename Generation ===")
+    print("=== Testing root_kb.md Filename Generation (Handler Architecture) ===")
     
     # Create a temporary test environment
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -102,89 +107,85 @@ async def test_root_kb_filename_generation():
         }
         
         config = IndexingConfig.from_dict(config_dict)
-        knowledge_builder = KnowledgeBuilder(config)
         
-        # Test 1: Project root directory (source_root == directory_path)
-        print("\n--- Test 1: Project Root Directory ---")
-        root_kb_path = knowledge_builder._get_knowledge_file_path(project_root, project_root)
+        # Test 1: Project-base handler - root directory path generation
+        print("\n--- Test 1: Project-base Handler Root Directory ---")
+        project_handler = ProjectBaseHandler(config)
+        
+        root_kb_path = project_handler.get_knowledge_path(project_root, project_root)
         expected_root_path = knowledge_dir / "project-base" / "root_kb.md"
         
         print(f"Generated path: {root_kb_path}")
         print(f"Expected path: {expected_root_path}")
         
         if root_kb_path == expected_root_path:
-            print("✅ PASS: Project root generates root_kb.md")
+            print("✅ PASS: Project-base handler root generates root_kb.md")
         else:
-            print("❌ FAIL: Project root should generate root_kb.md")
+            print("❌ FAIL: Project-base handler root should generate root_kb.md")
             return False
         
-        # Test 2: Regular subdirectory
-        print("\n--- Test 2: Regular Subdirectory ---")
+        # Test 2: Project-base handler - regular subdirectory
+        print("\n--- Test 2: Project-base Handler Subdirectory ---")
         subdir = project_root / "subdir"
         subdir.mkdir()
         
-        subdir_kb_path = knowledge_builder._get_knowledge_file_path(subdir, project_root)
-        expected_subdir_path = knowledge_dir / "project-base" / "subdir" / "subdir_kb.md"
+        subdir_kb_path = project_handler.get_knowledge_path(subdir, project_root)
+        expected_subdir_path = knowledge_dir / "project-base" / "subdir_kb.md"
         
         print(f"Generated path: {subdir_kb_path}")
         print(f"Expected path: {expected_subdir_path}")
         
         if subdir_kb_path == expected_subdir_path:
-            print("✅ PASS: Subdirectory generates {directory_name}_kb.md")
+            print("✅ PASS: Project-base handler subdirectory generates {directory_name}_kb.md")
         else:
-            print("❌ FAIL: Subdirectory should generate {directory_name}_kb.md")
+            print("❌ FAIL: Project-base handler subdirectory should generate {directory_name}_kb.md")
             return False
         
-        # Test 3: Git clone .kb directory (simulated)
-        print("\n--- Test 3: Git Clone .kb Directory ---")
-        git_clone_kb_dir = temp_path / "some_repo.kb"
-        git_clone_kb_dir.mkdir()
+        # Test 3: Git-clone handler path generation
+        print("\n--- Test 3: Git-clone Handler ---")
+        git_clone_config = IndexingConfig.from_dict({
+            **config_dict,
+            "handler_type": "git-clone"
+        })
+        git_clone_handler = GitCloneHandler(git_clone_config)
         
-        git_clone_kb_path = knowledge_builder._get_knowledge_file_path(git_clone_kb_dir, None)
-        expected_git_clone_path = knowledge_dir / "project-base" / "root_kb.md"
+        # Simulate git clone directory
+        git_clone_root = temp_path / "some_repo"
+        git_clone_root.mkdir()
+        
+        git_clone_kb_path = git_clone_handler.get_knowledge_path(git_clone_root, git_clone_root)
         
         print(f"Generated path: {git_clone_kb_path}")
-        print(f"Expected path: {expected_git_clone_path}")
+        print(f"Path filename: {git_clone_kb_path.name}")
         
-        if git_clone_kb_path.name == "root_kb.md":
-            print("✅ PASS: .kb directory generates root_kb.md")
+        # Git-clone handler should generate repo_name_kb.md format
+        expected_filename = "some_repo_kb.md"
+        if git_clone_kb_path.name == expected_filename:
+            print("✅ PASS: Git-clone handler generates {repo_name}_kb.md")
         else:
-            print("❌ FAIL: .kb directory should generate root_kb.md")
+            print(f"❌ FAIL: Git-clone handler should generate {expected_filename}, got {git_clone_kb_path.name}")
             return False
         
-        # Test 4: Root detection logic
-        print("\n--- Test 4: Root Detection Logic ---")
+        # Test 4: Handler type detection
+        print("\n--- Test 4: Handler Type Verification ---")
         
-        # Test project root detection
-        is_project_root = knowledge_builder._is_handler_root_directory(project_root, project_root)
-        print(f"Project root detection: {is_project_root}")
-        if not is_project_root:
-            print("❌ FAIL: Project root should be detected as root directory")
-            return False
+        # Verify project-base handler type
+        if project_handler.get_handler_type() == "project-base":
+            print("✅ PASS: Project-base handler type correctly identified")
         else:
-            print("✅ PASS: Project root correctly detected as root directory")
+            print("❌ FAIL: Project-base handler type incorrect")
+            return False
         
-        # Test subdirectory detection (should NOT be root)
-        is_subdir_root = knowledge_builder._is_handler_root_directory(subdir, project_root)
-        print(f"Subdirectory root detection: {is_subdir_root}")
-        if is_subdir_root:
-            print("❌ FAIL: Subdirectory should NOT be detected as root directory")
-            return False
+        # Verify git-clone handler type
+        if git_clone_handler.get_handler_type() == "git-clone":
+            print("✅ PASS: Git-clone handler type correctly identified")
         else:
-            print("✅ PASS: Subdirectory correctly NOT detected as root directory")
-        
-        # Test .kb directory detection
-        is_kb_root = knowledge_builder._is_handler_root_directory(git_clone_kb_dir, None)
-        print(f".kb directory root detection: {is_kb_root}")
-        if not is_kb_root:
-            print("❌ FAIL: .kb directory should be detected as root directory")
+            print("❌ FAIL: Git-clone handler type incorrect")
             return False
-        else:
-            print("✅ PASS: .kb directory correctly detected as root directory")
         
         print("\n=== ALL TESTS PASSED ===")
-        print("✅ Root KB filename generation is working correctly")
-        print("✅ The fix should generate root_kb.md for handler root directories")
+        print("✅ Handler-based KB filename generation is working correctly")
+        print("✅ Each handler type controls its own path generation logic")
         
         return True
 

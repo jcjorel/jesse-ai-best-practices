@@ -109,6 +109,9 @@ from ..models.rebuild_decisions import (
 from .file_analysis_cache import FileAnalysisCache
 from .handler_interface import HandlerRegistry
 
+# Import shared utilities for DRY compliance
+from .shared_utilities import HandlerPathManager, HandlerResolutionError, TimestampManager, IndexingErrorHandler
+
 logger = logging.getLogger(__name__)
 
 
@@ -138,142 +141,80 @@ class RebuildDecisionEngine:
     def __init__(self, config: IndexingConfig):
         """
         [Class method intent]
-        Initializes decision engine with configuration and handler registry integration.
-        Sets up file analysis cache, handler registry, and decision tracking capabilities
-        for comprehensive decision-making operations using handler-delegated path management.
+        Initializes decision engine with configuration, shared utilities, and handler registry integration.
+        Sets up file analysis cache, handler registry, and shared utilities for DRY compliance
+        eliminating duplicate code patterns across decision-making operations.
 
         [Design principles]
         Configuration-driven behavior supporting different decision scenarios and requirements.
+        Shared utilities integration eliminating duplicate timestamp and path handling code.
         Handler registry integration enabling informed decision-making through specialized handler consultation.
         Decision tracking preparation supporting comprehensive audit trails and performance monitoring.
-        Path calculation delegation to handlers eliminating hardcoded path assumptions.
 
         [Implementation details]
-        Creates FileAnalysisCache instance for staleness checking and performance optimization.
+        Creates FileAnalysisCache instance with handler registry for shared utility integration.
         Initializes HandlerRegistry for specialized path calculation and processing decisions.
+        Initializes HandlerPathManager for centralized path operations eliminating duplicate code.
         Sets up decision timing and audit trail tracking capabilities.
-        Eliminates hardcoded path roots in favor of handler-delegated path management.
         """
         self.config = config
-        self.file_cache = FileAnalysisCache(config)
         self.handler_registry = HandlerRegistry(config)
+        
+        # Initialize FileAnalysisCache with handler registry for shared utilities
+        self.file_cache = FileAnalysisCache(config, self.handler_registry)
+        
+        # Initialize shared utilities for DRY compliance
+        self.path_manager = HandlerPathManager(self.handler_registry)
         
         # Decision tracking
         self._decision_start_time: Optional[datetime] = None
         self._decisions_made = 0
         self._filesystem_operations = 0
         
-        logger.info("Initialized RebuildDecisionEngine with handler-delegated path management")
+        logger.info("Initialized RebuildDecisionEngine with shared utilities and handler-delegated path management")
     
     # =========================================================================
     # CONSOLIDATED HELPER METHODS - Eliminating DRY Violations
     # =========================================================================
     
-    def _get_file_timestamp_safe(self, file_path: Path) -> Optional[datetime]:
-        """
-        [Class method intent]
-        Safely retrieves file modification timestamp with consistent error handling.
-        Consolidates repeated timestamp retrieval patterns from multiple methods.
-
-        [Design principles]
-        Centralized timestamp retrieval eliminating scattered duplicate logic.
-        Consistent error handling preventing filesystem access failures from breaking operations.
-        Performance optimization through single consolidated timestamp access pattern.
-
-        [Implementation details]
-        Uses Path.stat().st_mtime for cross-platform timestamp access.
-        Converts filesystem timestamp to datetime object for comparison operations.
-        Returns None on any filesystem error for graceful degradation handling.
-        """
-        try:
-            return datetime.fromtimestamp(file_path.stat().st_mtime)
-        except (OSError, FileNotFoundError):
-            return None
-    
-    def _is_timestamp_newer(self, newer_time: datetime, older_time: datetime) -> bool:
-        """
-        [Class method intent]
-        Compares timestamps directly for reliable staleness detection.
-        Consolidates repeated timestamp comparison logic from multiple decision methods.
-
-        [Design principles]
-        Centralized timestamp comparison eliminating duplicate comparison logic.
-        Direct timestamp comparison without tolerance for simplicity and consistency.
-        Clear boolean result simplifying conditional logic in decision methods.
-
-        [Implementation details]
-        Direct timestamp comparison: newer_time > older_time.
-        Returns True if newer_time is strictly newer than older_time.
-        Used by all staleness checking methods for consistent comparison behavior.
-        """
-        return newer_time > older_time
+# REMOVED: _get_file_timestamp_safe and _is_timestamp_newer methods
+# These are now provided by shared TimestampManager for DRY compliance
     
     def _calculate_cache_path_safe(self, file_path: Path, source_root: Path) -> Path:
         """
         [Class method intent]
-        Calculates cache file path using handler-delegated path management with error handling.
-        Consolidates duplicate cache path calculation logic from multiple methods using HandlerRegistry.
+        Calculates cache file path using shared HandlerPathManager with fail-fast behavior.
+        Delegates to shared utilities eliminating duplicate path calculation logic.
 
         [Design principles]
-        Handler-delegated cache path calculation eliminating hardcoded path assumptions.
-        Specialized handler logic ensuring appropriate cache structure for different content types.
-        Graceful fallback handling for path calculation errors ensuring operations continue.
+        Shared utilities integration eliminating duplicate handler-delegated path calculation code.
+        Fail-fast approach using HandlerPathManager.get_cache_path_strict() without fallback logic.
+        Consistent error handling through shared utility error propagation patterns.
 
         [Implementation details]
-        Uses HandlerRegistry to get appropriate handler for file's parent directory.
-        Delegates cache path calculation to handler ensuring correct structure for content type.
-        Provides fallback to default handler on path calculation or handler resolution errors.
+        Uses HandlerPathManager.get_cache_path_strict() for consistent path calculation behavior.
+        Propagates HandlerResolutionError exceptions for fail-fast error handling approach.
+        Eliminates duplicate handler resolution and fallback logic through shared utility delegation.
         """
-        try:
-            # Get appropriate handler for the file's parent directory
-            handler = self.handler_registry.get_handler_for_path(file_path.parent)
-            return handler.get_cache_path(file_path, source_root)
-        except Exception as e:
-            logger.warning(f"Handler-delegated cache path calculation failed for {file_path}: {e}")
-            # Fallback: use project-base handler as default
-            try:
-                project_base_handler = self.handler_registry.get_project_base_handler()
-                return project_base_handler.get_cache_path(file_path, source_root)
-            except Exception as fallback_error:
-                logger.error(f"Fallback cache path calculation failed for {file_path}: {fallback_error}")
-                # Ultimate fallback: construct basic cache path
-                cache_filename = f"{file_path.name}.analysis.md"
-                return self.config.knowledge_output_directory / "project-base" / cache_filename
+        return self.path_manager.get_cache_path_strict(file_path, source_root)
     
     def _calculate_knowledge_path_safe(self, directory_path: Path, source_root: Path, is_project_root: bool = False) -> Path:
         """
         [Class method intent]
-        Calculates knowledge file path using handler-delegated path management with error handling.
-        Consolidates duplicate knowledge path calculation logic from multiple methods using HandlerRegistry.
+        Calculates knowledge file path using shared HandlerPathManager with fail-fast behavior.
+        Delegates to shared utilities eliminating duplicate path calculation logic.
 
         [Design principles]
-        Handler-delegated knowledge path calculation eliminating hardcoded path assumptions.
-        Specialized handler logic ensuring appropriate knowledge structure for different content types.
-        Graceful fallback handling for path calculation errors ensuring operations continue.
+        Shared utilities integration eliminating duplicate handler-delegated path calculation code.
+        Fail-fast approach using HandlerPathManager.get_knowledge_path_strict() without fallback logic.
+        Consistent error handling through shared utility error propagation patterns.
 
         [Implementation details]
-        Uses HandlerRegistry to get appropriate handler for directory path.
-        Delegates knowledge path calculation to handler ensuring correct structure for content type.
-        Provides fallback to default handler on path calculation or handler resolution errors.
+        Uses HandlerPathManager.get_knowledge_path_strict() for consistent path calculation behavior.
+        Propagates HandlerResolutionError exceptions for fail-fast error handling approach.
+        Eliminates duplicate handler resolution and fallback logic through shared utility delegation.
         """
-        try:
-            # Get appropriate handler for the directory
-            handler = self.handler_registry.get_handler_for_path(directory_path)
-            return handler.get_knowledge_path(directory_path, source_root)
-        except Exception as e:
-            logger.warning(f"Handler-delegated knowledge path calculation failed for {directory_path}: {e}")
-            # Fallback: use project-base handler as default
-            try:
-                project_base_handler = self.handler_registry.get_project_base_handler()
-                return project_base_handler.get_knowledge_path(directory_path, source_root)
-            except Exception as fallback_error:
-                logger.error(f"Fallback knowledge path calculation failed for {directory_path}: {fallback_error}")
-                # Ultimate fallback: construct basic knowledge path
-                if is_project_root or directory_path == source_root:
-                    knowledge_filename = "root_kb.md"
-                else:
-                    knowledge_filename = f"{directory_path.name}_kb.md"
-                return self.config.knowledge_output_directory / "project-base" / knowledge_filename
+        return self.path_manager.get_knowledge_path_strict(directory_path, source_root)
     
     def _map_analysis_file_to_source_safe(self, analysis_file: Path, source_root: Path) -> Optional[Path]:
         """
@@ -684,19 +625,19 @@ class RebuildDecisionEngine:
     def _check_directory_staleness_internal(self, directory_context: DirectoryContext, source_root: Path) -> Tuple[bool, str]:
         """
         [Class method intent]
-        Internal directory staleness checking since FileAnalysisCache no longer provides path generation.
+        Internal directory staleness checking using shared TimestampManager utilities.
         Determines if directory knowledge file needs rebuild by comparing against source files and subdirectory knowledge files.
 
         [Design principles]
-        Direct timestamp comparison without tolerance for simplicity and reliability.
-        Checks against source files and subdirectory knowledge files for comprehensive staleness detection.
+        Shared utilities integration eliminating duplicate timestamp handling code.
+        Direct timestamp comparison using TimestampManager.is_timestamp_newer() for consistency.
         Conservative approach returning stale on any error to ensure knowledge file generation.
 
         [Implementation details]
         Calculates knowledge file path using consolidated helper method.
-        Compares knowledge file timestamp against all source files in directory.
+        Uses TimestampManager for all timestamp operations eliminating duplicate timestamp handling.
         Compares against subdirectory knowledge files for hierarchical consistency.
-        Returns boolean staleness status with detailed reasoning including precise timestamps.
+        Returns boolean staleness status with detailed reasoning using shared formatting utilities.
         """
         try:
             # Calculate knowledge file path
@@ -709,31 +650,32 @@ class RebuildDecisionEngine:
             if not knowledge_file_path.exists():
                 return True, "Knowledge file does not exist"
             
-            try:
-                knowledge_mtime = datetime.fromtimestamp(knowledge_file_path.stat().st_mtime)
-                knowledge_mtime_str = knowledge_mtime.strftime("%Y-%m-%d %H:%M:%S")
-            except OSError:
+            # Get knowledge file timestamp using shared utility
+            knowledge_mtime = TimestampManager.get_file_timestamp_safe(knowledge_file_path)
+            if not knowledge_mtime:
                 return True, "Cannot access knowledge file timestamp"
+                
+            knowledge_mtime_str = TimestampManager.format_timestamp_for_display(knowledge_mtime)
             
-            # Check source files only
+            # Check source files using shared timestamp utilities
             for file_context in directory_context.file_contexts:
-                source_mtime_str = file_context.last_modified.strftime("%Y-%m-%d %H:%M:%S")
-                if file_context.last_modified > knowledge_mtime:
+                source_mtime_str = TimestampManager.format_timestamp_for_display(file_context.last_modified)
+                if TimestampManager.is_timestamp_newer(file_context.last_modified, knowledge_mtime):
                     return True, f"Source file newer: {file_context.file_path.name} ({source_mtime_str}) > knowledge file ({knowledge_mtime_str})"
             
-            # Check subdirectory knowledge files
+            # Check subdirectory knowledge files using shared timestamp utilities
             for subdir_context in directory_context.subdirectory_contexts:
                 subdir_knowledge_path = self._calculate_knowledge_path_safe(
                     subdir_context.directory_path, source_root, False
                 )
                 if subdir_knowledge_path.exists():
-                    try:
-                        subdir_mtime = datetime.fromtimestamp(subdir_knowledge_path.stat().st_mtime)
-                        subdir_mtime_str = subdir_mtime.strftime("%Y-%m-%d %H:%M:%S")
-                        if subdir_mtime > knowledge_mtime:
-                            return True, f"Subdirectory knowledge file newer: {subdir_context.directory_path.name} ({subdir_mtime_str}) > knowledge file ({knowledge_mtime_str})"
-                    except OSError:
+                    subdir_mtime = TimestampManager.get_file_timestamp_safe(subdir_knowledge_path)
+                    if not subdir_mtime:
                         return True, f"Cannot access subdirectory knowledge timestamp: {subdir_context.directory_path.name}"
+                    
+                    if TimestampManager.is_timestamp_newer(subdir_mtime, knowledge_mtime):
+                        subdir_mtime_str = TimestampManager.format_timestamp_for_display(subdir_mtime)
+                        return True, f"Subdirectory knowledge file newer: {subdir_context.directory_path.name} ({subdir_mtime_str}) > knowledge file ({knowledge_mtime_str})"
             
             # All checks passed - knowledge file is up to date
             return False, f"Knowledge file is up to date ({knowledge_mtime_str})"

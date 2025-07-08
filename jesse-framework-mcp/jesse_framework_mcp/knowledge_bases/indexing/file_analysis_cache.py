@@ -89,9 +89,12 @@ from ...helpers.path_utils import get_portable_path
 from fastmcp import Context
 from typing import List, Dict, Any, Optional, Tuple, TYPE_CHECKING
 
+# Import shared utilities for DRY compliance
+from .shared_utilities import HandlerPathManager, HandlerResolutionError, TimestampManager, IndexingErrorHandler
+
 # Import handler interface for type checking
 if TYPE_CHECKING:
-    from .handler_interface import IndexingHandler
+    from .handler_interface import IndexingHandler, HandlerRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -124,26 +127,32 @@ class FileAnalysisCache:
     METADATA_END = "<!-- CACHE_METADATA_END -->"
     CACHE_VERSION = "1.0"
     
-    def __init__(self, config: IndexingConfig):
+    def __init__(self, config: IndexingConfig, handler_registry: 'HandlerRegistry' = None):
         """
         [Class method intent]
-        Initializes file analysis cache with configuration for paths and freshness checking.
-        Sets up cache directory structure and timestamp tolerance for reliable operation.
+        Initializes file analysis cache with configuration and shared utilities for DRY compliance.
+        Sets up cache directory structure using shared utilities eliminating duplicate code patterns.
 
         [Design principles]
         Configuration-driven behavior supporting different cache requirements and tolerances.
-        Timestamp tolerance setup accommodating filesystem precision variations.
-        Cache directory preparation ensuring proper structure for mirror organization.
+        Shared utilities integration eliminating duplicate timestamp and path handling code.
+        Fail-fast approach with explicit handler path management preventing fallback logic.
 
         [Implementation details]
         Stores configuration reference for cache paths and timestamp tolerance.
-        Calculates timestamp tolerance from configuration for freshness checking.
-        Prepares cache directory structure following project-base indexing rules.
+        Initializes HandlerPathManager for centralized path operations if handler registry provided.
+        Uses shared TimestampManager for all timestamp operations eliminating duplicate code.
         """
         self.config = config
         self.timestamp_tolerance = timedelta(seconds=config.timestamp_tolerance_seconds)
         
-        logger.info(f"Initialized FileAnalysisCache with {config.timestamp_tolerance_seconds}s tolerance")
+        # Initialize shared utilities for DRY compliance
+        if handler_registry:
+            self.path_manager = HandlerPathManager(handler_registry)
+        else:
+            self.path_manager = None
+            
+        logger.info(f"Initialized FileAnalysisCache with shared utilities and {config.timestamp_tolerance_seconds}s tolerance")
     
     async def get_cached_analysis(self, file_path: Path, source_root: Path, handler: 'IndexingHandler') -> Optional[str]:
         """
@@ -241,54 +250,41 @@ class FileAnalysisCache:
     def is_cache_fresh(self, file_path: Path, source_root: Path, handler: 'IndexingHandler') -> Tuple[bool, str]:
         """
         [Class method intent]
-        Determines if cached analysis is fresh by comparing source file timestamp with cache timestamp.
+        Determines if cached analysis is fresh using shared TimestampManager for DRY compliance.
         Uses handler-specific cache path calculation to ensure git-clone and project-base files
         check freshness in their appropriate directory structures without cross-contamination.
 
         [Design principles]
         Handler-aware freshness checking ensuring git-clone and project-base files use separate cache structures.
-        Direct timestamp comparison without tolerance for simplicity and reliability.
+        Shared utilities integration eliminating duplicate timestamp handling code patterns.
         Conservative approach treating missing or inaccessible cache as requiring fresh analysis.
-        Explicit error handling when handler cannot determine cache paths preventing silent fallbacks.
-        Detailed reasoning return supporting debugging and decision audit trails.
+        Detailed reasoning return supporting debugging and decision audit trails through shared utilities.
 
         [Implementation details]
         Delegates cache path calculation to handler.get_cache_path() method eliminating hardcoded paths.
-        Compares source file modification time with cache file modification time directly.
-        Cache is fresh if it's newer than or equal to source file (no tolerance needed).
-        Returns tuple with boolean freshness status and detailed reasoning including precise timestamps.
-        Handles missing files and filesystem errors by returning False with detailed error information.
+        Uses shared TimestampManager.is_cache_fresh_with_reasoning() for consistent behavior.
+        Returns tuple with boolean freshness status and detailed reasoning from shared utilities.
+        Handles handler resolution and filesystem errors with consistent error reporting patterns.
         """
         try:
             # Use handler to determine cache path - NO fallbacks to project-base
             cache_path = handler.get_cache_path(file_path, source_root)
             
-            # Cache file must exist
-            if not cache_path.exists():
-                reason = f"Cache file does not exist for {file_path.name}"
-                logger.debug(f"Cache miss for {file_path.name}: cache file does not exist")
-                return False, reason
+            # Use shared TimestampManager for cache freshness checking (DRY compliance)
+            is_fresh, reason = TimestampManager.is_cache_fresh_with_reasoning(cache_path, file_path)
             
-            # Get timestamps
-            source_mtime = datetime.fromtimestamp(file_path.stat().st_mtime)
-            cache_mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
-            
-            # Cache is fresh if it's newer than or equal to source file
-            is_fresh = cache_mtime >= source_mtime
-            
-            # Detailed reasoning with timestamps
-            source_mtime_str = source_mtime.strftime("%Y-%m-%d %H:%M:%S")
-            cache_mtime_str = cache_mtime.strftime("%Y-%m-%d %H:%M:%S")
-            
+            # Log debug information using consistent patterns
             if is_fresh:
-                reason = f"Cache ({cache_mtime_str}) >= source ({source_mtime_str}) for {file_path.name}"
-                logger.debug(f"Cache hit for {file_path.name}: cache ({cache_mtime_str}) >= source ({source_mtime_str})")
+                logger.debug(f"Cache hit for {file_path.name}: {reason}")
             else:
-                reason = f"Cache ({cache_mtime_str}) < source ({source_mtime_str}) for {file_path.name}"
-                logger.debug(f"Cache stale for {file_path.name}: cache ({cache_mtime_str}) < source ({source_mtime_str})")
+                logger.debug(f"Cache stale for {file_path.name}: {reason}")
                 
             return is_fresh, reason
             
+        except HandlerResolutionError as e:
+            reason = f"Handler path resolution failed for {file_path.name}: {e}"
+            logger.error(f"❌ HANDLER RESOLUTION FAILED for {file_path.name}: {e}")
+            return False, reason
         except Exception as e:
             reason = f"Cache freshness check failed for {file_path.name}: {e} - Handler: {handler.get_handler_type()}"
             logger.error(f"❌ CACHE FRESHNESS CHECK FAILED for {file_path.name}: {e} - Handler: {handler.get_handler_type()}")

@@ -25,6 +25,7 @@ from .exceptions import (
     StreamingError,
     TokenLimitError
 )
+from ...helpers.aws_session_manager import AWSSessionManager, AWSConnectionError, AWSConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -104,8 +105,28 @@ class StrandsClaude4Driver:
         """Async context manager exit."""
         await self.cleanup()
     
-    async def initialize(self) -> None:
-        """Initialize the driver and underlying Strands components."""
+    async def initialize(self, ctx=None) -> None:
+        """
+        [Function intent]
+        Initialize the driver and underlying Strands components with centralized AWS session validation.
+        
+        [Design principles]
+        Validates AWS connectivity once at startup using centralized session manager.
+        Creates Strands BedrockModel with validated AWS configuration.
+        
+        [Implementation details]
+        Uses AWSSessionManager for one-time connection validation and configuration.
+        Falls back to legacy configuration method if context not available.
+        Creates Strands Agent with validated BedrockModel configuration.
+        
+        Args:
+            ctx: Optional FastMCP Context for AWS validation logging
+            
+        Raises:
+            BedrockConnectionError: When initialization fails
+            AWSConfigurationError: When AWS configuration is invalid
+            AWSConnectionError: When AWS connection validation fails
+        """
         if self._is_initialized:
             return
         
@@ -114,8 +135,24 @@ class StrandsClaude4Driver:
                 return
             
             try:
-                # Initialize Bedrock model with Claude 4 Sonnet
-                model_kwargs = self.config.to_strands_model_kwargs()
+                # Validate AWS connection once at startup if context available
+                if ctx:
+                    logger.info("Validating AWS connection for Strands Claude 4 Driver...")
+                    aws_session_manager = AWSSessionManager()
+                    await aws_session_manager.validate_connection_once(ctx)
+                    logger.info("AWS connection validated successfully")
+                
+                # Initialize Bedrock model with Claude 4 Sonnet using centralized AWS config
+                try:
+                    # Try to use centralized AWS session manager
+                    model_kwargs = await self.config.to_strands_model_kwargs_async()
+                    logger.info("Using centralized AWS session management for Strands configuration")
+                except (AWSConfigurationError, AWSConnectionError) as aws_error:
+                    logger.warning(f"Centralized AWS configuration failed: {aws_error}")
+                    logger.info("Falling back to legacy AWS configuration method")
+                    # Fall back to legacy method for backward compatibility
+                    model_kwargs = self.config.to_strands_model_kwargs()
+                
                 self._bedrock_model = BedrockModel(**model_kwargs)
                 
                 # Initialize Strands Agent with the model
@@ -127,12 +164,24 @@ class StrandsClaude4Driver:
                 
                 self._is_initialized = True
                 logger.info(f"Initialized Strands Claude 4 Driver with model: {self.config.model_id}")
+                logger.info(f"AWS region: {model_kwargs.get('region', 'unknown')}")
+                if model_kwargs.get('profile'):
+                    logger.info(f"AWS profile: {model_kwargs['profile']}")
+                else:
+                    logger.info("Using AWS environment credentials")
                 
+            except (AWSConfigurationError, AWSConnectionError) as aws_error:
+                logger.error(f"AWS configuration error in Strands Claude 4 Driver: {aws_error}")
+                raise BedrockConnectionError(
+                    f"AWS configuration failed for Claude 4 Sonnet: {str(aws_error)}",
+                    region=getattr(self.config, 'aws_region', 'unknown')
+                ) from aws_error
+            
             except Exception as e:
                 logger.error(f"Failed to initialize Strands Claude 4 Driver: {e}")
                 raise BedrockConnectionError(
                     f"Failed to initialize Claude 4 Sonnet connection: {str(e)}",
-                    region=self.config.aws_region
+                    region=getattr(self.config, 'aws_region', 'unknown')
                 ) from e
     
     async def cleanup(self) -> None:
