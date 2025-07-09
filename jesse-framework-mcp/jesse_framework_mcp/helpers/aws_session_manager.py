@@ -62,6 +62,18 @@ from fastmcp import Context
 logger = logging.getLogger(__name__)
 
 
+class MockContext:
+    """Mock context for testing purposes when FastMCP context is not available"""
+    
+    async def info(self, message: str) -> None:
+        """Mock info logging - does nothing"""
+        pass
+    
+    async def error(self, message: str) -> None:
+        """Mock error logging - does nothing"""
+        pass
+
+
 class AWSConfigurationError(Exception):
     """Raised when AWS configuration is invalid or incomplete"""
     pass
@@ -357,6 +369,37 @@ class AWSSessionManager:
             raise AWSConnectionError("AWS connection must be validated before accessing caller identity")
         
         return self._validation_result.caller_identity
+    
+    async def validate_connection(self, ctx: Optional[Context] = None) -> bool:
+        """
+        [Function intent]
+        Simple connection validation method that returns boolean result for testing purposes.
+        
+        [Design principles]
+        Provides simple boolean interface for connection validation testing.
+        Internally delegates to comprehensive validation method.
+        
+        [Implementation details]
+        Calls validate_connection_once and returns True on success, False on failure.
+        Suitable for test scenarios that need simple pass/fail validation.
+        
+        Args:
+            ctx: Optional FastMCP Context for logging (uses mock context if None)
+            
+        Returns:
+            True if connection validates successfully, False otherwise
+        """
+        try:
+            # Create a mock context if none provided
+            if ctx is None:
+                ctx = MockContext()
+            
+            await self.validate_connection_once(ctx)
+            return True
+        except (AWSConnectionError, AWSConfigurationError):
+            return False
+        except Exception:
+            return False
     
     async def get_aws_config(self) -> Dict[str, Any]:
         """

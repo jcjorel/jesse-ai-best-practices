@@ -63,6 +63,7 @@ dependencies = [
     "strands-agents>=0.1.0",
     "mistletoe>=1.4.0",
     "PyYAML>=6.0",
+    "click>=8.0.0",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -83,6 +84,7 @@ Documentation = "https://github.com/jesse-framework/jesse-framework-mcp#readme"
 
 [project.scripts]
 jesse-framework-mcp = "jesse_framework_mcp:main"
+jesse-cli = "jesse_framework_mcp.jesse_cli.main:main"
 
 # Build configuration with custom hook for JESSE content copying
 [tool.hatch.build.hooks.custom]

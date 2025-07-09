@@ -209,12 +209,18 @@ class HierarchicalIndexer:
             self._current_status.current_operation = "Previewing execution plan"
             await self._preview_execution_plan(execution_plan, ctx)
             
-            # Phase 5: Atomic Execution (NEW - dependency-aware task execution)
-            self._current_status.current_operation = "Executing atomic tasks"
-            execution_results = await self._execute_plan_with_progress(execution_plan, ctx)
-            
-            # Create final status from execution results
-            final_status = self._create_final_status(execution_results)
+            # Check for dry-run mode - skip execution if enabled
+            if self.config.dry_run:
+                await ctx.info("🔍 DRY-RUN MODE: Skipping execution phase")
+                final_status = self._create_dry_run_status(execution_plan)
+                await ctx.info(f"🎯 Dry-run completed - execution plan ready for review")
+            else:
+                # Phase 5: Atomic Execution (NEW - dependency-aware task execution)
+                self._current_status.current_operation = "Executing atomic tasks"
+                execution_results = await self._execute_plan_with_progress(execution_plan, ctx)
+                
+                # Create final status from execution results
+                final_status = self._create_final_status(execution_results)
             
             duration = final_status.processing_stats.processing_duration
             await ctx.info(f"🎯 Plan-then-Execute indexing completed in {duration:.2f} seconds")
@@ -670,6 +676,46 @@ class HierarchicalIndexer:
         else:
             self._current_status.overall_status = ProcessingStatus.FAILED
             self._current_status.current_operation = f"Indexing failed: {execution_results.success_rate:.1%} success rate"
+        
+        return self._current_status
+    
+    def _create_dry_run_status(self, execution_plan: ExecutionPlan) -> IndexingStatus:
+        """
+        [Class method intent]
+        Creates IndexingStatus for dry-run mode indicating successful plan completion without execution.
+        Provides comprehensive dry-run results showing what would have been executed.
+
+        [Design principles]
+        Dry-run status creation providing clear indication of plan-only completion without execution.
+        Comprehensive statistics showing discovered files, planned tasks, and estimated operations.
+        Clear messaging indicating dry-run mode completion for user understanding.
+
+        [Implementation details]
+        Sets processing end time to indicate completion of dry-run planning phase.
+        Maps execution plan statistics to processing stats for comprehensive dry-run reporting.
+        Sets overall status to COMPLETED with clear dry-run completion messaging.
+        Provides estimated execution metrics without performing actual execution.
+        """
+        # Update timing to show dry-run completion
+        self._current_status.processing_stats.processing_end_time = datetime.now()
+        
+        # Map execution plan to dry-run statistics
+        stats = self._current_status.processing_stats
+        stats.files_processed = 0  # No files actually processed in dry-run
+        stats.files_completed = 0  # No files actually completed in dry-run
+        stats.files_failed = 0     # No files failed in dry-run
+        stats.directories_processed = 0  # No directories actually processed in dry-run
+        stats.directories_completed = 0  # No directories actually completed in dry-run
+        
+        # Add dry-run specific information
+        stats.add_error(f"DRY-RUN: Would execute {len(execution_plan.tasks)} tasks")
+        stats.add_error(f"DRY-RUN: Would make {execution_plan.expensive_task_count} LLM calls")
+        stats.add_error(f"DRY-RUN: {stats.total_files_discovered} files discovered")
+        stats.add_error(f"DRY-RUN: {stats.total_directories_discovered} directories discovered")
+        
+        # Set successful dry-run completion status
+        self._current_status.overall_status = ProcessingStatus.COMPLETED
+        self._current_status.current_operation = "Dry-run completed - execution plan ready for review"
         
         return self._current_status
 

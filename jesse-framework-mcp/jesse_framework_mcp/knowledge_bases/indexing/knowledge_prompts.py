@@ -35,6 +35,13 @@
 # <system>: typing - Type hints for prompt template parameters and response structures
 ###############################################################################
 # [GenAI tool change history]
+# 2025-07-08T22:48:00Z : FIXED GLOBAL SUMMARY REDUNDANCY - Modified global summary prompt to avoid duplicating subdirectory "Functional Intent & Features" content by CodeAssistant
+# * MODIFIED: Global summary Level 4 header description to focus on system-wide synthesis rather than individual component functionality
+# * ADDED: "GLOBAL SUMMARY NON-DUPLICATION MANDATE" critical requirement to prevent repeating assembled subdirectory content
+# * ENHANCED: Level 4 description changed to "System-wide functional intent...cross-component integration features...global semantic entities not covered in individual subdirectory analyses"
+# * ADDED: "AVOID SUBDIRECTORY CONTENT DUPLICATION" formatting requirement with explicit non-duplication guidance
+# * UPDATED: Final instruction to emphasize global architectural insights and avoid duplicating assembled subdirectory analyses
+# * SOLUTION: Global summaries now provide additive system-wide synthesis rather than redundant individual component repetition
 # 2025-07-07T23:32:00Z : FIXED REMAINING OUTBOUND REFERENCES - Completed Level 8 simplification by removing all remaining outbound mentions by CodeAssistant
 # * FIXED: Hierarchy Design Principles Level 8 description changed from "(inbound and outbound)" to "(inbound only)"
 # * FIXED: LEVEL_8_FORMATTING_SPEC visual symbols section removed "←" and "⚡" symbols entirely, keeping only "→" (inbound)
@@ -55,11 +62,6 @@
 # * Shifted Level 9 (External dependencies) to Level 8, Level 10 (Edge cases) to Level 9, Level 11 (Internal implementation) to Level 10
 # * Updated all prompt templates, specifications, and references to reflect new level ordering
 # * Renamed LEVEL_9_FORMATTING_SPEC to LEVEL_8_FORMATTING_SPEC to match new external dependencies level
-# 2025-07-04T08:36:00Z : Renamed Integration section to "System role and ecosystem integration" with enhanced consumer analysis by CodeAssistant
-# * Updated Level 9 section header from "Integration" to "System role and ecosystem integration" for clearer positioning context
-# * Enhanced Integration Pattern to focus on "Who is using this file and how" including humans, external processes, and codebase parts
-# * Added Ecosystem Position element to identify whether components are central/core, peripheral/support, or auxiliary
-# * Updated visual symbol description and all formatting specifications to reflect system role and ecosystem integration focus
 # 2025-07-04T08:20:00Z : Enhanced Level 9 Integration section to require context-specific system role analysis by CodeAssistant
 # * Added comprehensive Integration section requirements to eliminate generic boilerplate content
 # * Enhanced LEVEL_9_FORMATTING_SPEC with context-specific content guidelines and developer actionability focus
@@ -601,13 +603,15 @@ Analyze this complete directory content and generate a hierarchical semantic tre
 
 🚨 **PROGRESSIVE COMPLETENESS**: Each level must provide complete context at its depth without requiring higher detail levels.
 
+🚨 **GLOBAL SUMMARY NON-DUPLICATION MANDATE**: The global summary MUST NOT duplicate information already present in the subdirectory "Functional Intent & Features" sections included in the assembled content. Focus on **system-wide synthesis and cross-component integration** rather than repeating individual component functionality.
+
 **HIERARCHICAL SEMANTIC TREE STRUCTURE:**
 🚨 **GENERIC HEADER REQUIREMENT**: Headers must contain ONLY generic section purposes. Do NOT include any specific information about the directory in the header text itself.
 
 Use this EXACT structure with these EXACT header levels:
 
 #### Functional Intent & Features
-*Functional intent (why this exists), features (what it provides), usage value (why developers should work with it), and key semantic entities enabling rapid codebase orientation and navigation*
+*System-wide functional intent (why this directory system exists as a whole), cross-component integration features (how components work together), collective usage value (why developers should work with this integrated system), and global semantic entities not covered in individual subdirectory analyses*
 
 ##### Main Components
 *Primary subdirectories, file types, and main components without implementation details*
@@ -649,6 +653,7 @@ Use this EXACT structure with these EXACT header levels:
 - Use clear, professional technical writing
 - **NEVER STATE THE OBVIOUS**: Avoid stating information known by any modern AI LLM. Focus on unique, valuable insights at each level
 - **NO SUBJECTIVE JUDGMENTS**: Do not judge or propose enhancements. Focus on structured, detailed analysis without opinions or suggestions
+- **AVOID SUBDIRECTORY CONTENT DUPLICATION**: Do NOT repeat functional intent, features, or semantic entities already documented in subdirectory "Functional Intent & Features" sections. Focus on system-wide synthesis, cross-component relationships, and global integration patterns not covered in individual component analyses.
 
 **RESPONSE VALIDATION:**
 Before submitting, verify:
@@ -666,7 +671,7 @@ Before submitting, verify:
 
 **FAILURE TO INCLUDE THIS LINE WILL RESULT IN TRUNCATION DETECTION AND RETRY.**
 
-Generate a hierarchical semantic tree global summary that synthesizes all the individual file analyses and subdirectory content into a cohesive understanding of this directory's purpose and implementation.
+Generate a hierarchical semantic tree global summary that synthesizes all the individual file analyses and subdirectory content into a cohesive understanding of this directory's system-wide purpose and cross-component integration patterns. Focus on global architectural insights and avoid duplicating information already present in the assembled subdirectory analyses.
 """
 
         # File Analysis Reviewer Prompt

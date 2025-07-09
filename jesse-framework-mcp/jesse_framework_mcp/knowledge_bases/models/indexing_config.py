@@ -63,7 +63,7 @@ and special handling requirements.
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Set, Optional, Dict, Any
+from typing import Set, Optional, Dict, Any, List
 from enum import Enum
 import sys
 import os
@@ -196,15 +196,33 @@ class DebugConfig:
     """
     [Class intent]
     Configuration for debug and development features.
-    Controls debug mode, output persistence, and replay functionality.
+    Controls debug mode, output persistence, replay functionality, and dry-run operations.
 
     [Design principles]
     Isolated debug configuration to avoid interfering with production settings.
     Clear separation of debug concerns from operational configuration.
+    Dry-run mode integration enabling plan-only execution for testing and validation.
     """
     debug_mode: bool = False                            # Enable debug mode for LLM output persistence
     debug_output_directory: Optional[Path] = None      # Directory for debug artifacts
     enable_llm_replay: bool = False                    # Use saved LLM outputs instead of making new calls
+    dry_run: bool = False                              # Enable dry-run mode (discovery + planning only, no execution)
+
+
+@dataclass(frozen=True)
+class CleanupConfig:
+    """
+    [Class intent]
+    Configuration for cleanup operations during indexing.
+    Controls test scenarios requiring file cleanup while maintaining framework integration.
+
+    [Design principles]
+    Test-focused cleanup configuration enabling rebuild scenarios through atomic execution.
+    Handler-scoped cleanup ensuring each handler only cleans its own files.
+    Framework integration through Plan-then-Execute architecture rather than direct operations.
+    """
+    cleanup_mode_enabled: bool = False                    # Enable cleanup operations
+    cleanup_types: List[str] = field(default_factory=list)  # Types of cleanup: ["kb_files", "analysis_files"]
 
 
 @dataclass(frozen=True)
@@ -239,6 +257,7 @@ class IndexingConfig:
     error_handling: ErrorHandlingConfig = field(default_factory=ErrorHandlingConfig)
     output_config: OutputConfig = field(default_factory=OutputConfig)
     debug_config: DebugConfig = field(default_factory=DebugConfig)
+    cleanup_config: CleanupConfig = field(default_factory=CleanupConfig)
     
     # Convenience Properties for Backward Compatibility Access
     @property
@@ -312,6 +331,18 @@ class IndexingConfig:
     @property
     def enable_llm_replay(self) -> bool:
         return self.debug_config.enable_llm_replay
+    
+    @property
+    def dry_run(self) -> bool:
+        return self.debug_config.dry_run
+    
+    @property
+    def cleanup_mode_enabled(self) -> bool:
+        return self.cleanup_config.cleanup_mode_enabled
+    
+    @property
+    def cleanup_types(self) -> List[str]:
+        return self.cleanup_config.cleanup_types
     
     def __post_init__(self):
         """
@@ -477,7 +508,12 @@ class IndexingConfig:
             'debug_config': {
                 'debug_mode': self.debug_config.debug_mode,
                 'debug_output_directory': str(self.debug_config.debug_output_directory) if self.debug_config.debug_output_directory else None,
-                'enable_llm_replay': self.debug_config.enable_llm_replay
+                'enable_llm_replay': self.debug_config.enable_llm_replay,
+                'dry_run': self.debug_config.dry_run
+            },
+            'cleanup_config': {
+                'cleanup_mode_enabled': self.cleanup_config.cleanup_mode_enabled,
+                'cleanup_types': self.cleanup_config.cleanup_types
             }
         }
     
@@ -590,7 +626,15 @@ class IndexingConfig:
         debug_config = DebugConfig(
             debug_mode=debug_config_data.get('debug_mode', False),
             debug_output_directory=debug_output_directory,
-            enable_llm_replay=debug_config_data.get('enable_llm_replay', False)
+            enable_llm_replay=debug_config_data.get('enable_llm_replay', False),
+            dry_run=debug_config_data.get('dry_run', False)
+        )
+        
+        # Process cleanup_config configuration
+        cleanup_config_data = config_data.get('cleanup_config', {})
+        cleanup_config = CleanupConfig(
+            cleanup_mode_enabled=cleanup_config_data.get('cleanup_mode_enabled', False),
+            cleanup_types=cleanup_config_data.get('cleanup_types', [])
         )
         
         # Create IndexingConfig instance with hierarchical configuration groups
@@ -603,7 +647,8 @@ class IndexingConfig:
             change_detection=change_detection,
             error_handling=error_handling,
             output_config=output_config,
-            debug_config=debug_config
+            debug_config=debug_config,
+            cleanup_config=cleanup_config
         )
     
     @classmethod

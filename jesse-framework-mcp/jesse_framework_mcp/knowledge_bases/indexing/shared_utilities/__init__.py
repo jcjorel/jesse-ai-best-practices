@@ -54,10 +54,12 @@ fail-fast behavior and explicit error handling.
 from .handler_path_manager import HandlerPathManager, HandlerResolutionError
 from .timestamp_manager import TimestampManager
 from .error_handler import IndexingErrorHandler
+from .cleanup_manager import CleanupManager
 
 __all__ = [
     'HandlerPathManager',
     'HandlerResolutionError',
     'TimestampManager', 
-    'IndexingErrorHandler'
+    'IndexingErrorHandler',
+    'CleanupManager'
 ]

@@ -523,3 +523,71 @@ class FileAnalysisCache:
         logger.error("Cache statistics now require handler-aware logic - use handler-specific cache monitoring")
         
         return stats
+
+    def is_knowledge_file_stale(self, kb_path: Path, directory_context: DirectoryContext, source_root: Path, handler: 'IndexingHandler') -> Tuple[bool, str]:
+        """
+        [Class method intent]
+        Determines if knowledge file needs rebuilding based on constituent file analysis cache freshness.
+        Uses handler-aware cache checking to ensure proper staleness detection across different handler types.
+
+        [Design principles]
+        Handler-aware staleness checking ensuring proper cache path resolution for different handler types.
+        Comprehensive constituent checking verifying knowledge file is newer than all constituent analyses.
+        Conservative approach treating missing or inaccessible files as requiring rebuilding.
+
+        [Implementation details]
+        Checks knowledge file timestamp against all constituent file analysis cache timestamps.
+        Uses handler-provided cache paths to ensure proper path resolution for git-clone vs project-base scenarios.
+        Returns detailed reasoning for debugging and decision audit trails.
+        """
+        try:
+            if not kb_path.exists():
+                return True, f"Knowledge file does not exist: {kb_path.name}"
+            
+            kb_mtime = datetime.fromtimestamp(kb_path.stat().st_mtime)
+            
+            # Check against all constituent files
+            for file_context in directory_context.file_contexts:
+                try:
+                    cache_path = handler.get_cache_path(file_context.file_path, source_root)
+                    if cache_path.exists():
+                        cache_mtime = datetime.fromtimestamp(cache_path.stat().st_mtime)
+                        if cache_mtime > kb_mtime:
+                            return True, f"Cache file {cache_path.name} is newer than knowledge file"
+                except Exception as e:
+                    logger.warning(f"Could not check cache timestamp for {file_context.file_path}: {e}")
+                    continue
+            
+            # Check against subdirectory knowledge files
+            for subdir_context in directory_context.subdirectory_contexts:
+                try:
+                    subdir_kb_path = handler.get_knowledge_file_path(subdir_context.directory_path, source_root)
+                    if subdir_kb_path.exists():
+                        subdir_mtime = datetime.fromtimestamp(subdir_kb_path.stat().st_mtime)
+                        if subdir_mtime > kb_mtime:
+                            return True, f"Subdirectory KB {subdir_kb_path.name} is newer than knowledge file"
+                except Exception as e:
+                    logger.warning(f"Could not check subdirectory KB timestamp for {subdir_context.directory_path}: {e}")
+                    continue
+            
+            return False, f"Knowledge file {kb_path.name} is up to date"
+            
+        except Exception as e:
+            logger.error(f"Knowledge file staleness check failed for {kb_path}: {e}")
+            return True, f"Error checking knowledge file staleness: {e}"
+
+    def get_cache_path(self, file_path: Path, source_root: Path, handler: 'IndexingHandler') -> Path:
+        """
+        [Class method intent]
+        Delegates cache path calculation to handler to ensure proper path resolution.
+        Provides compatibility method for code that expects FileAnalysisCache to provide cache paths.
+
+        [Design principles]
+        Handler delegation ensuring proper cache path resolution for different handler types.
+        Compatibility method maintaining existing API while ensuring handler-aware behavior.
+
+        [Implementation details]
+        Directly delegates to handler.get_cache_path() method without any fallback logic.
+        Ensures consistent cache path resolution across all code that needs cache paths.
+        """
+        return handler.get_cache_path(file_path, source_root)

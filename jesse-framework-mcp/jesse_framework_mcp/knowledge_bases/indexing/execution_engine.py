@@ -553,7 +553,9 @@ class ExecutionEngine:
             await ctx.debug(f"🔍 Cache verification skipped: {file_path.name} (unreadable file)")
             return
         
-        is_fresh, reason = self.file_cache.is_cache_fresh(file_path, source_root)
+        # Get appropriate handler for cache freshness checking
+        handler = self._create_handler_for_path(source_root)
+        is_fresh, reason = self.file_cache.is_cache_fresh(file_path, source_root, handler)
         if not is_fresh:
             raise RuntimeError(f"Cache verification failed: {reason}")
         
@@ -564,9 +566,9 @@ class ExecutionEngine:
         directory_path = task.target_path
         source_root = Path(task.metadata['source_root'])
         
-        # Simplified verification - check if KB file exists and is newer than source
-        kb_path = self.file_cache.get_knowledge_file_path(directory_path, source_root)
-        if not kb_path.exists():
+        # Get KB path from task metadata (set by handler during planning)
+        kb_path = Path(task.metadata.get('knowledge_file_path', ''))
+        if not kb_path or not kb_path.exists():
             raise RuntimeError(f"KB file does not exist: {kb_path}")
         
         await ctx.debug(f"🔍 KB freshness verified: {directory_path.name}")
@@ -612,7 +614,9 @@ class ExecutionEngine:
         Handles file system errors gracefully to prevent task failures.
         """
         try:
-            cache_path = self.file_cache.get_cache_path(file_path, source_root)
+            # Get appropriate handler for cache path resolution
+            handler = self._create_handler_for_path(source_root)
+            cache_path = self.file_cache.get_cache_path(file_path, source_root, handler)
             if cache_path.exists():
                 raw_content = cache_path.read_text(encoding='utf-8')
                 # Strip metadata tags before returning clean content
